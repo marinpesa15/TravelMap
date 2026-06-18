@@ -7,10 +7,10 @@ const _activeMarkers = [];
  */
 export function renderAllMarkers(map, userData, onRemove) {
   clearAllMarkers();
-  userData.visited_cities.forEach(city =>
+  (userData.visited_cities ?? []).forEach(city =>
     _addMarker(map, city, 'visited', onRemove)
   );
-  userData.wishlist_cities.forEach(city =>
+  (userData.wishlist_cities ?? []).forEach(city =>
     _addMarker(map, city, 'wishlist', onRemove)
   );
 }
@@ -21,6 +21,11 @@ export function clearAllMarkers() {
 }
 
 function _addMarker(map, city, type, onRemove) {
+  if (!city || typeof city.lng !== 'number' || typeof city.lat !== 'number'
+      || isNaN(city.lng) || isNaN(city.lat)) {
+    console.warn('TravelMap: skipping city with invalid coords', city);
+    return;
+  }
   const el = _createMarkerEl(city, type, onRemove);
   const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
     .setLngLat([city.lng, city.lat])
