@@ -1,0 +1,274 @@
+/* ===== Reset ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+/* ===== Auth Screen ===== */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a1628 0%, #0d2233 60%, #0a1a20 100%);
+  color: #e0e0f0;
+}
+.auth-card {
+  text-align: center;
+  padding: 48px 40px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  max-width: 360px;
+  width: 90%;
+}
+.auth-card h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+.auth-card p  { color: #94a3b8; font-size: 0.9rem; margin-bottom: 32px; }
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 20px;
+  background: white;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-google:hover { background: #f1f5f9; }
+.auth-error {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #f87171;
+  min-height: 20px;
+}
+
+/* ===== Map Layout ===== */
+#map { position: absolute; inset: 0; }
+
+/* ===== Floating Panel ===== */
+#panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  background: rgba(255,255,255,0.93);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  min-width: 180px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  backdrop-filter: blur(8px);
+}
+#panel h2 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+.stat-row {
+  font-size: 0.8rem;
+  color: #475569;
+  margin-bottom: 3px;
+}
+#panel hr { border: none; border-top: 1px solid #e2e8f0; margin: 10px 0; }
+#city-search {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  color: #1e293b;
+}
+#city-search:focus { border-color: #3b82f6; }
+#search-results {
+  margin-top: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.search-result-item {
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  color: #334155;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.search-result-item:hover { background: #f1f5f9; }
+.btn-signout {
+  margin-top: 10px;
+  width: 100%;
+  padding: 6px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-signout:hover { color: #475569; border-color: #cbd5e1; }
+
+/* ===== Country Tooltip ===== */
+#country-tooltip {
+  position: absolute;
+  z-index: 20;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  min-width: 160px;
+  display: none;
+}
+#country-tooltip h3 { font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+.tooltip-btn {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+.tooltip-btn.visited  { background: #dcfce7; color: #166534; }
+.tooltip-btn.wishlist { background: #ffedd5; color: #9a3412; }
+.tooltip-btn.remove   { background: #f1f5f9; color: #64748b; }
+.tooltip-btn:hover { filter: brightness(0.95); }
+#tooltip-close {
+  position: absolute;
+  top: 8px; right: 10px;
+  background: none; border: none;
+  font-size: 1rem; color: #94a3b8;
+  cursor: pointer; line-height: 1;
+}
+
+/* ===== City Dialog ===== */
+#city-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+}
+#city-dialog.open { display: flex; }
+.dialog-card {
+  background: white;
+  border-radius: 14px;
+  padding: 24px;
+  min-width: 280px;
+  max-width: 340px;
+  width: 90%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+.dialog-card h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 16px; }
+.dialog-label { font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.radio-group { display: flex; gap: 8px; margin-bottom: 14px; }
+.radio-opt {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.15s;
+  user-select: none;
+}
+.radio-opt.selected { border-color: #3b82f6; color: #1d4ed8; background: #eff6ff; }
+.color-group { display: flex; gap: 8px; margin-bottom: 14px; }
+.color-opt {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.color-opt.red  { color: #dc2626; }
+.color-opt.yellow { color: #ca8a04; }
+.color-opt.selected { border-color: currentColor; background: #fafafa; }
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #334155;
+  cursor: pointer;
+}
+#lived-checkbox { width: 16px; height: 16px; accent-color: #3b82f6; cursor: pointer; }
+.color-section { margin-bottom: 14px; }
+.dialog-actions { display: flex; gap: 8px; }
+.btn-cancel {
+  flex: 1; padding: 9px; border: 1px solid #e2e8f0;
+  border-radius: 8px; background: white; color: #64748b;
+  font-size: 0.85rem; cursor: pointer;
+}
+.btn-add {
+  flex: 2; padding: 9px; border: none;
+  border-radius: 8px; background: #3b82f6; color: white;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer;
+}
+.btn-add:hover { background: #2563eb; }
+
+/* ===== City Remove Popup ===== */
+#city-popup {
+  position: absolute;
+  z-index: 20;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  display: none;
+  min-width: 140px;
+}
+#city-popup p { font-size: 0.82rem; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+.btn-remove-city {
+  width: 100%;
+  padding: 6px;
+  background: #fef2f2;
+  border: none;
+  border-radius: 5px;
+  color: #dc2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+#city-popup-close {
+  position: absolute; top: 6px; right: 8px;
+  background: none; border: none;
+  font-size: 0.9rem; color: #94a3b8; cursor: pointer;
+}
+
+/* ===== Toast ===== */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; }
