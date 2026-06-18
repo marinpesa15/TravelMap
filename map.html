@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelMap</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+</head>
+<body>
+
+  <!-- Mapbox container -->
+  <div id="map"></div>
+
+  <!-- Floating Stats Panel -->
+  <div id="panel">
+    <h2>🗺️ TravelMap</h2>
+    <div class="stat-row" id="stat-visited-countries">🟦 0 Länder besucht</div>
+    <div class="stat-row" id="stat-visited-cities">🔴 0 Städte besucht</div>
+    <div class="stat-row" id="stat-lived">🏠 0 dort gewohnt</div>
+    <div class="stat-row" id="stat-wishlist">⭐ 0 auf Wunschliste</div>
+    <hr>
+    <input type="text" id="city-search" placeholder="🔍 Stadt suchen..." autocomplete="off">
+    <div id="search-results"></div>
+    <button class="btn-signout" id="btn-signout">Abmelden</button>
+  </div>
+
+  <!-- Country Tooltip -->
+  <div id="country-tooltip">
+    <button id="tooltip-close">✕</button>
+    <h3 id="tooltip-country-name">Deutschland</h3>
+    <button class="tooltip-btn visited"  id="tooltip-visited">✓ Besucht</button>
+    <button class="tooltip-btn wishlist" id="tooltip-wishlist">⭐ Wunschliste</button>
+    <button class="tooltip-btn remove"   id="tooltip-remove">✕ Entfernen</button>
+  </div>
+
+  <!-- City Add Dialog -->
+  <div id="city-dialog">
+    <div class="dialog-card">
+      <h3 id="dialog-city-name">München</h3>
+
+      <div class="dialog-label">Typ</div>
+      <div class="radio-group">
+        <div class="radio-opt selected" data-type="visited">✓ Besucht</div>
+        <div class="radio-opt"          data-type="wishlist">⭐ Wunschliste</div>
+      </div>
+
+      <div class="color-section" id="color-section">
+        <div class="dialog-label">Pin-Farbe</div>
+        <div class="color-group">
+          <div class="color-opt red selected"    data-color="red">🔴 Rot</div>
+          <div class="color-opt yellow"           data-color="yellow">🟡 Gelb</div>
+        </div>
+      </div>
+
+      <label class="checkbox-row" id="lived-row">
+        <input type="checkbox" id="lived-checkbox">
+        🏠 Dort gewohnt
+      </label>
+
+      <div class="dialog-actions">
+        <button class="btn-cancel" id="dialog-cancel">Abbrechen</button>
+        <button class="btn-add"    id="dialog-add">Hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- City Remove Popup -->
+  <div id="city-popup">
+    <button id="city-popup-close">✕</button>
+    <p id="city-popup-name">München</p>
+    <button class="btn-remove-city" id="btn-remove-city">🗑️ Entfernen</button>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
