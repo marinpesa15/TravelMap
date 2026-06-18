@@ -1,14 +1,18 @@
+// Copy this file to js/config.js and fill in your real values
+// Get these from: https://console.firebase.google.com → Project Settings → Web App
+// Get Mapbox token from: js/constants.js
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_PROJECT.firebaseapp.com",
-  projectId: "DEIN_PROJECT_ID",
-  storageBucket: "DEIN_PROJECT.appspot.com",
-  messagingSenderId: "DEINE_SENDER_ID",
-  appId: "DEINE_APP_ID"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);

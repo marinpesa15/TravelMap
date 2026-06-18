@@ -1,0 +1,5 @@
+# Firebase config with real API keys — copy from config.example.js and fill in
+js/config.js
+
+# OS
+.DS_Store
