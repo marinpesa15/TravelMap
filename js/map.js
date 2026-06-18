@@ -24,6 +24,8 @@ export function getMap() { return _map; }
  * Call once after map.on('load').
  */
 export function setupCountryLayers(visitedCountries, wishlistCountries) {
+  if (!_map) return;
+  if (_map.getSource('country-boundaries')) return;
   _map.addSource('country-boundaries', {
     type: 'vector',
     url: 'mapbox://mapbox.country-boundaries-v1'
