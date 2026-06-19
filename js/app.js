@@ -11,9 +11,10 @@ import {
   showCityPopup, hideCityPopup, showToast
 } from './ui.js';
 
-let _uid      = null;
-let _userData = null;
-let _map      = null;
+let _uid        = null;
+let _userData   = null;
+let _map        = null;
+let _refreshing = false; // prevents concurrent _refresh() race conditions
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -21,7 +22,7 @@ onAuthChange(async user => {
     window.location.href = 'index.html';
     return;
   }
-  if (_uid) return; // Already initialized
+  if (_uid === user.uid) return; // Already initialized for this user
   _uid = user.uid;
   await _init();
 });
@@ -38,7 +39,7 @@ async function _init() {
     setupCitySearch(_onAddCity);
 
     document.getElementById('btn-signout').addEventListener('click', async () => {
-      await signOutUser();
+      try { await signOutUser(); } catch { /* ignore — redirect anyway */ }
       window.location.href = 'index.html';
     });
 
@@ -98,8 +99,14 @@ async function _onRemoveCity(city, type) {
 
 // ===== Refresh =====
 async function _refresh() {
-  _userData = await loadUserData(_uid);
-  updateCountryLayers(_userData.visited_countries, _userData.wishlist_countries);
-  renderAllMarkers(_map, _userData, _onCityRemoveRequest);
-  updateStats(_userData);
+  if (_refreshing) return; // drop concurrent calls — DB write already committed
+  _refreshing = true;
+  try {
+    _userData = await loadUserData(_uid);
+    updateCountryLayers(_userData.visited_countries, _userData.wishlist_countries);
+    renderAllMarkers(_map, _userData, _onCityRemoveRequest);
+    updateStats(_userData);
+  } finally {
+    _refreshing = false;
+  }
 }
