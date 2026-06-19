@@ -43,8 +43,11 @@ async function _init() {
       window.location.href = 'index.html';
     });
 
-    // Close tooltip / city popup on map background click
-    _map.on('click', () => {
+    // Close tooltip / city popup on map background click.
+    // Skip if a layer-specific handler already processed this click
+    // (Mapbox fires both handlers for the same event — layer click first, then generic).
+    _map.on('click', (e) => {
+      if (e.originalEvent._handled) return;
       document.getElementById('country-tooltip').style.display = 'none';
       hideCityPopup();
     });

@@ -26,6 +26,10 @@ export function setupCountryTooltip(map, onAction) {
   const tooltip = document.getElementById('country-tooltip');
 
   map.on('click', 'country-click', (e) => {
+    // Mark the native event so the generic map click handler in app.js
+    // knows a layer feature was clicked and should NOT close the tooltip.
+    e.originalEvent._handled = true;
+
     const props = e.features[0]?.properties;
     if (!props) return;
 
