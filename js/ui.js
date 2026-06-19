@@ -88,6 +88,7 @@ export function hideCityPopup() {
 // ===== City Search + Dialog =====
 
 let _selectedCity = null; // { name, lat, lng, country }
+let _searchAbort  = null; // AbortController for in-flight geocoding requests
 
 export function setupCitySearch(onAddCity) {
   const input   = document.getElementById('city-search');
@@ -148,10 +149,14 @@ export function setupCitySearch(onAddCity) {
 }
 
 async function _searchCities(query, resultsEl) {
+  // Cancel any in-flight request before starting a new one
+  if (_searchAbort) _searchAbort.abort();
+  _searchAbort = new AbortController();
+
   resultsEl.innerHTML = '<div class="search-result-item">Suche...</div>';
   try {
     const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=place&limit=5&access_token=${MAPBOX_TOKEN}`;
-    const res  = await fetch(url);
+    const res  = await fetch(url, { signal: _searchAbort.signal });
     const data = await res.json();
 
     if (!data.features?.length) {
@@ -161,6 +166,7 @@ async function _searchCities(query, resultsEl) {
 
     resultsEl.innerHTML = '';
     data.features.forEach(f => {
+      if (!f.center) return; // skip malformed features without coordinates
       const item = document.createElement('div');
       item.className   = 'search-result-item';
       item.textContent = f.place_name;
@@ -176,7 +182,8 @@ async function _searchCities(query, resultsEl) {
       });
       resultsEl.appendChild(item);
     });
-  } catch {
+  } catch (e) {
+    if (e.name === 'AbortError') return; // stale request cancelled — ignore
     resultsEl.innerHTML = '<div class="search-result-item">Fehler bei der Suche</div>';
   }
 }
