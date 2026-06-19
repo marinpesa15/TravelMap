@@ -1,5 +1,6 @@
-# Firebase config with real API keys — copy from config.example.js and fill in
+# Secret config files — copy from *.example.js and fill in real values
 js/config.js
+js/constants.js
 
 # OS
 .DS_Store
