@@ -3,12 +3,13 @@ import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_PROJECT.firebaseapp.com",
-  projectId: "DEIN_PROJECT_ID",
-  storageBucket: "DEIN_PROJECT.appspot.com",
-  messagingSenderId: "DEINE_SENDER_ID",
-  appId: "DEINE_APP_ID"
+  apiKey: "AIzaSyAznb3h6BEVv_N1kotmBRrg2vWZg7vrh8Q",
+  authDomain: "travelmap-f4e3a.firebaseapp.com",
+  projectId: "travelmap-f4e3a",
+  storageBucket: "travelmap-f4e3a.firebasestorage.app",
+  messagingSenderId: "1079049719393",
+  appId: "1:1079049719393:web:35e9c33db285830d022420",
+  measurementId: "G-3JQLJ05V37"
 };
 
 const app = initializeApp(firebaseConfig);
