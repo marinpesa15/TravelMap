@@ -7,7 +7,7 @@ export function initMap() {
 
   _map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/outdoors-v12',
+    style: 'mapbox://styles/mapbox/light-v11',
     center: [10, 20],
     zoom: 1.5
   });

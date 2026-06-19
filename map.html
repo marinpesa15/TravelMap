@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelMap</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="css/style.css">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
@@ -13,16 +14,23 @@
   <!-- Mapbox container -->
   <div id="map"></div>
 
+  <!-- Top Search Bar -->
+  <div id="search-bar">
+    <input type="text" id="city-search" placeholder="🔍 Stadt suchen..." autocomplete="off">
+    <div id="search-results"></div>
+  </div>
+
   <!-- Floating Stats Panel -->
   <div id="panel">
-    <h2>🗺️ TravelMap</h2>
+    <div class="panel-brand">
+      <span class="panel-brand-icon">🗺️</span>
+      <span class="panel-brand-name">TravelMap</span>
+    </div>
     <div class="stat-row" id="stat-visited-countries">🟦 0 Länder besucht</div>
     <div class="stat-row" id="stat-visited-cities">🔴 0 Städte besucht</div>
     <div class="stat-row" id="stat-lived">🏠 0 dort gewohnt</div>
     <div class="stat-row" id="stat-wishlist">⭐ 0 auf Wunschliste</div>
-    <hr>
-    <input type="text" id="city-search" placeholder="🔍 Stadt suchen..." autocomplete="off">
-    <div id="search-results"></div>
+    <hr class="panel-divider">
     <button class="btn-signout" id="btn-signout">Abmelden</button>
   </div>
 
