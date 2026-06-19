@@ -14,7 +14,7 @@ import {
 let _uid        = null;
 let _userData   = null;
 let _map        = null;
-let _refreshing = false; // prevents concurrent _refresh() race conditions
+let _refreshing = false;
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -24,13 +24,16 @@ onAuthChange(async user => {
   }
   if (_uid === user.uid) return; // Already initialized for this user
   _uid = user.uid;
-  await _init();
+  await _init(user);
 });
 
-async function _init() {
+async function _init(user) {
   try {
     _map      = await initMap();
     _userData = await loadUserData(_uid);
+
+    // Show user profile in top-right pill
+    _showUserProfile(user);
 
     setupCountryLayers(_userData.visited_countries, _userData.wishlist_countries);
     renderAllMarkers(_map, _userData, _onCityRemoveRequest);
@@ -38,14 +41,18 @@ async function _init() {
     setupCountryTooltip(_map, _onCountryAction);
     setupCitySearch(_onAddCity);
 
+    // Sign out
     document.getElementById('btn-signout').addEventListener('click', async () => {
       try { await signOutUser(); } catch { /* ignore — redirect anyway */ }
       window.location.href = 'index.html';
     });
 
-    // Close tooltip / city popup on map background click.
-    // Skip if a layer-specific handler already processed this click
-    // (Mapbox fires both handlers for the same event — layer click first, then generic).
+    // "Add New Location" button → focus search input
+    document.getElementById('btn-add-location')?.addEventListener('click', () => {
+      document.getElementById('city-search')?.focus();
+    });
+
+    // Close tooltip / city popup on map background click
     _map.on('click', (e) => {
       if (e.originalEvent._handled) return;
       document.getElementById('country-tooltip').style.display = 'none';
@@ -55,6 +62,21 @@ async function _init() {
   } catch (err) {
     showToast('Fehler beim Laden. Seite neu laden.');
     console.error(err);
+  }
+}
+
+// ===== User Profile =====
+function _showUserProfile(user) {
+  const avatarEl = document.getElementById('user-avatar');
+  const nameEl   = document.getElementById('user-name');
+  if (avatarEl && user.photoURL) {
+    avatarEl.src = user.photoURL;
+  } else if (avatarEl) {
+    // Fallback: first letter of display name as text avatar
+    avatarEl.style.display = 'none';
+  }
+  if (nameEl) {
+    nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
   }
 }
 
@@ -102,7 +124,7 @@ async function _onRemoveCity(city, type) {
 
 // ===== Refresh =====
 async function _refresh() {
-  if (_refreshing) return; // drop concurrent calls — DB write already committed
+  if (_refreshing) return;
   _refreshing = true;
   try {
     _userData = await loadUserData(_uid);

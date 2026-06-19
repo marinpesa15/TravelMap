@@ -26,7 +26,7 @@ function _addMarker(map, city, type, onRemove) {
     console.warn('TravelMap: skipping city with invalid coords', city);
     return;
   }
-  const el = _createMarkerEl(city, type, onRemove);
+  const el     = _createMarkerEl(city, type, onRemove);
   const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
     .setLngLat([city.lng, city.lat])
     .addTo(map);
@@ -34,29 +34,22 @@ function _addMarker(map, city, type, onRemove) {
 }
 
 function _createMarkerEl(city, type, onRemove) {
-  const el = document.createElement('div');
-  el.title = city.name;
-  el.style.cursor = 'pointer';
+  const el      = document.createElement('div');
+  el.title      = city.name;
+  el.className  = 'marker-dot';
 
+  // Color scheme: indigo = visited, amber = lived, emerald = wishlist
+  let color;
   if (type === 'wishlist') {
-    el.textContent = '⭐';
-    el.style.fontSize = '18px';
-    el.style.lineHeight = '1';
+    color = '#10b981'; // emerald
   } else if (city.lived) {
-    el.textContent = '🏠';
-    el.style.fontSize = '18px';
-    el.style.lineHeight = '1';
+    color = '#f59e0b'; // amber
   } else {
-    // Colored circle pin
-    const color = city.color === 'yellow' ? '#eab308' : '#ef4444';
-    el.style.cssText = `
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: ${color};
-      border: 2px solid white;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
-    `;
+    color = '#6366f1'; // indigo
   }
+
+  el.style.background = color;
+  el.style.color      = color; // drives the ::after pulse ring via currentColor
 
   el.addEventListener('click', (e) => {
     e.stopPropagation();

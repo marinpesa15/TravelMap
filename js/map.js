@@ -7,7 +7,7 @@ export function initMap() {
 
   _map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/light-v11',
+    style: 'mapbox://styles/mapbox/dark-v11',
     center: [10, 20],
     zoom: 1.5
   });
@@ -47,7 +47,7 @@ export function setupCountryLayers(visitedCountries, wishlistCountries) {
     source: 'country-boundaries',
     'source-layer': 'country_boundaries',
     filter: _buildFilter(visitedCountries),
-    paint: { 'fill-color': '#3b82f6', 'fill-opacity': 0.4 }
+    paint: { 'fill-color': '#6366f1', 'fill-opacity': 0.3 }
   });
 
   // Visited countries — blue outline
@@ -57,7 +57,7 @@ export function setupCountryLayers(visitedCountries, wishlistCountries) {
     source: 'country-boundaries',
     'source-layer': 'country_boundaries',
     filter: _buildFilter(visitedCountries),
-    paint: { 'line-color': '#3b82f6', 'line-width': 1.5 }
+    paint: { 'line-color': '#818cf8', 'line-width': 1.5 }
   });
 
   // Wishlist countries — orange dashed outline
@@ -68,7 +68,7 @@ export function setupCountryLayers(visitedCountries, wishlistCountries) {
     'source-layer': 'country_boundaries',
     filter: _buildFilter(wishlistCountries),
     paint: {
-      'line-color': '#fb923c',
+      'line-color': '#f59e0b',
       'line-width': 2,
       'line-dasharray': [3, 2]
     }

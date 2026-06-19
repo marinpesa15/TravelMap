@@ -1,17 +1,52 @@
 import { MAPBOX_TOKEN } from './constants.js';
 
-// ===== Stats Panel =====
+// ===== Stats & Sidebar =====
 
 export function updateStats(userData) {
-  const vc     = (userData.visited_countries  ?? []).length;
-  const vcities = (userData.visited_cities    ?? []).length;
-  const lived  = (userData.visited_cities     ?? []).filter(c => c.lived).length;
-  const wc     = (userData.wishlist_countries ?? []).length + (userData.wishlist_cities ?? []).length;
+  const countries = (userData.visited_countries  ?? []).length;
+  const cities    = (userData.visited_cities     ?? []).length;
+  const lived     = (userData.visited_cities     ?? []).filter(c => c.lived).length;
+  const wishlist  = (userData.wishlist_countries ?? []).length
+                  + (userData.wishlist_cities    ?? []).length;
 
-  document.getElementById('stat-visited-countries').textContent = `🟦 ${vc} ${vc === 1 ? 'Land' : 'Länder'} besucht`;
-  document.getElementById('stat-visited-cities').textContent    = `🔴 ${vcities} ${vcities === 1 ? 'Stadt' : 'Städte'} besucht`;
-  document.getElementById('stat-lived').textContent             = `🏠 ${lived} dort gewohnt`;
-  document.getElementById('stat-wishlist').textContent          = `⭐ ${wc} auf Wunschliste`;
+  // Snapshot grid
+  _setText('stat-countries-num', countries);
+  _setText('stat-cities-num',    cities);
+
+  // Collection nav badges
+  _setText('nav-visited-count',  cities);
+  _setText('nav-wishlist-count', wishlist);
+  _setText('nav-lived-count',    lived);
+
+  // Recent logs (last 3 visited cities, newest first)
+  _updateRecentLogs(userData.visited_cities ?? []);
+}
+
+function _setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function _updateRecentLogs(visitedCities) {
+  const el = document.getElementById('recent-logs');
+  if (!el) return;
+
+  const recent = [...visitedCities].reverse().slice(0, 3);
+
+  if (recent.length === 0) {
+    el.innerHTML = '<p class="recent-log-meta" style="color:#374151">No cities logged yet.</p>';
+    return;
+  }
+
+  el.innerHTML = recent.map(city => `
+    <div class="recent-log-item">
+      <div class="recent-log-icon">📍</div>
+      <div>
+        <p class="recent-log-city">${city.name}</p>
+        <p class="recent-log-meta">${city.country || '—'}</p>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ===== Country Tooltip =====
@@ -170,7 +205,7 @@ async function _searchCities(query, resultsEl) {
 
     resultsEl.innerHTML = '';
     data.features.forEach(f => {
-      if (!f.center) return; // skip malformed features without coordinates
+      if (!f.center) return;
       const item = document.createElement('div');
       item.className   = 'search-result-item';
       item.textContent = f.place_name;
@@ -187,17 +222,16 @@ async function _searchCities(query, resultsEl) {
       resultsEl.appendChild(item);
     });
   } catch (e) {
-    if (e.name === 'AbortError') return; // stale request cancelled — ignore
+    if (e.name === 'AbortError') return;
     resultsEl.innerHTML = '<div class="search-result-item">Fehler bei der Suche</div>';
   }
 }
 
 function _openDialog(cityName) {
   document.getElementById('dialog-city-name').textContent = cityName;
-  // Reset to defaults
   document.querySelectorAll('.radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
   document.querySelectorAll('.color-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
-  document.getElementById('lived-checkbox').checked    = false;
+  document.getElementById('lived-checkbox').checked       = false;
   document.getElementById('color-section').style.display = 'block';
   document.getElementById('lived-row').style.display     = 'flex';
   document.getElementById('city-dialog').classList.add('open');
