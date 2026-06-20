@@ -1,4 +1,4 @@
-import { MAPBOX_TOKEN } from './constants.js?v=4';
+import { MAPBOX_TOKEN } from './constants.js?v=12';
 
 // ===== Stats & Sidebar =====
 
@@ -6,14 +6,16 @@ export function updateStats(userData) {
   const countries = (userData.visited_countries  ?? []).length;
   const cities    = (userData.visited_cities     ?? []).length;
   const lived     = (userData.visited_cities     ?? []).filter(c => c.lived).length;
-  const wishlist  = (userData.wishlist_countries ?? []).length
-                  + (userData.wishlist_cities    ?? []).length;
+  const wCities   = (userData.wishlist_cities    ?? []).length;
+  const wCountries= (userData.wishlist_countries ?? []).length;
+  const wishlist  = wCities + wCountries;
 
   // Snapshot grid
   _setText('stat-countries-num', countries);
   _setText('stat-cities-num',    cities);
 
   // Collection nav badges
+  _setText('nav-all-count',      cities + wCities);
   _setText('nav-visited-count',  cities);
   _setText('nav-wishlist-count', wishlist);
   _setText('nav-lived-count',    lived);
@@ -180,14 +182,14 @@ async function _searchCities(query, resultsEl) {
   if (_searchAbort) _searchAbort.abort();
   _searchAbort = new AbortController();
 
-  resultsEl.innerHTML = '<div class="search-result-item">Suche...</div>';
+  resultsEl.innerHTML = '<div class="search-result-item">Searching…</div>';
   try {
     const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=place&limit=5&access_token=${MAPBOX_TOKEN}`;
     const res  = await fetch(url, { signal: _searchAbort.signal });
     const data = await res.json();
 
     if (!data.features?.length) {
-      resultsEl.innerHTML = '<div class="search-result-item">Keine Ergebnisse</div>';
+      resultsEl.innerHTML = '<div class="search-result-item">No results</div>';
       return;
     }
 
@@ -211,7 +213,7 @@ async function _searchCities(query, resultsEl) {
     });
   } catch (e) {
     if (e.name === 'AbortError') return;
-    resultsEl.innerHTML = '<div class="search-result-item">Fehler bei der Suche</div>';
+    resultsEl.innerHTML = '<div class="search-result-item">Search error</div>';
   }
 }
 

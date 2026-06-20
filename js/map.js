@@ -1,4 +1,4 @@
-import { MAPBOX_TOKEN } from './constants.js?v=4';
+import { MAPBOX_TOKEN } from './constants.js?v=12';
 
 let _map = null;
 
@@ -7,9 +7,9 @@ export function initMap() {
 
   _map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/dark-v11',
+    style:  'mapbox://styles/mapbox/dark-v11',
     center: [10, 20],
-    zoom: 1.5
+    zoom:   1.5
   });
 
   _map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');

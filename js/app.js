@@ -1,20 +1,22 @@
-import { onAuthChange, signOutUser } from './auth.js?v=4';
+import { onAuthChange, signOutUser } from './auth.js?v=12';
 import {
   loadUserData,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
-} from './db.js?v=4';
-import { initMap } from './map.js?v=4';
-import { renderAllMarkers } from './markers.js?v=4';
+} from './db.js?v=12';
+import { initMap } from './map.js?v=12';
+import { renderAllMarkers } from './markers.js?v=12';
 import {
   updateStats, setupCitySearch,
   showCityPopup, hideCityPopup, showToast
-} from './ui.js?v=4';
+} from './ui.js?v=12';
+import { initTheme } from './theme.js?v=12';
 
-let _uid        = null;
-let _userData   = null;
-let _map        = null;
-let _refreshing = false;
+let _uid           = null;
+let _userData      = null;
+let _map           = null;
+let _refreshing    = false;
+let _currentFilter = 'all';
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -22,7 +24,7 @@ onAuthChange(async user => {
     window.location.href = 'index.html';
     return;
   }
-  if (_uid === user.uid) return; // Already initialized for this user
+  if (_uid === user.uid) return;
   _uid = user.uid;
   await _init(user);
 });
@@ -33,8 +35,11 @@ async function _init(user) {
     _userData = await loadUserData(_uid);
 
     _showUserProfile(user);
+    initTheme(_map);
+    _initMobileSidebar();
+    _setupFilterNav();
 
-    renderAllMarkers(_map, _userData, _onCityRemoveRequest);
+    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
     setupCitySearch(_onAddCity);
 
@@ -44,14 +49,14 @@ async function _init(user) {
     });
 
     document.getElementById('btn-add-location')?.addEventListener('click', () => {
+      _closeMobileSidebar();
       document.getElementById('city-search')?.focus();
     });
 
-    // Close city popup on map background click
     _map.on('click', () => hideCityPopup());
 
   } catch (err) {
-    showToast('Fehler beim Laden. Seite neu laden.');
+    showToast('Error loading. Please reload.');
     console.error(err);
   }
 }
@@ -63,7 +68,6 @@ function _showUserProfile(user) {
   if (avatarEl && user.photoURL) {
     avatarEl.src = user.photoURL;
   } else if (avatarEl) {
-    // Fallback: first letter of display name as text avatar
     avatarEl.style.display = 'none';
   }
   if (nameEl) {
@@ -76,22 +80,18 @@ async function _onAddCity(cityData, type, lived) {
   try {
     if (type === 'visited') {
       await addVisitedCity(_uid, { ...cityData, lived });
-
-      // Auto-track country: add once, regardless of how many cities in that country
       const iso = cityData.country;
       if (iso && iso !== 'XX') {
         const alreadyTracked = (_userData.visited_countries ?? []).includes(iso);
-        if (!alreadyTracked) {
-          await addVisitedCountry(_uid, iso);
-        }
+        if (!alreadyTracked) await addVisitedCountry(_uid, iso);
       }
     } else {
       await addWishlistCity(_uid, cityData);
     }
     await _refresh();
-    showToast(`${cityData.name} hinzugefügt ✓`);
+    showToast(`${cityData.name} added ✓`);
   } catch {
-    showToast('Fehler beim Hinzufügen');
+    showToast('Failed to add location');
   }
 }
 
@@ -104,10 +104,36 @@ async function _onRemoveCity(city, type) {
     if (type === 'visited')  await removeVisitedCity(_uid, city.name);
     if (type === 'wishlist') await removeWishlistCity(_uid, city.name);
     await _refresh();
-    showToast(`${city.name} entfernt`);
+    showToast(`${city.name} removed`);
   } catch {
-    showToast('Fehler beim Entfernen');
+    showToast('Failed to remove location');
   }
+}
+
+// ===== Collection Filter =====
+function _getFilteredUserData() {
+  if (!_userData) return {};
+  if (_currentFilter === 'all')      return _userData;
+  if (_currentFilter === 'visited')  return { ..._userData, wishlist_cities: [] };
+  if (_currentFilter === 'lived')    return {
+    ..._userData,
+    visited_cities: (_userData.visited_cities ?? []).filter(c => c.lived),
+    wishlist_cities: []
+  };
+  if (_currentFilter === 'wishlist') return { ..._userData, visited_cities: [] };
+  return _userData;
+}
+
+function _setupFilterNav() {
+  document.querySelectorAll('.nav-item[data-filter]').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      _currentFilter = item.dataset.filter;
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+    });
+  });
 }
 
 // ===== Refresh =====
@@ -116,9 +142,28 @@ async function _refresh() {
   _refreshing = true;
   try {
     _userData = await loadUserData(_uid);
-    renderAllMarkers(_map, _userData, _onCityRemoveRequest);
+    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
   } finally {
     _refreshing = false;
   }
+}
+
+// ===== Mobile Sidebar =====
+function _closeMobileSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-backdrop')?.classList.remove('open');
+}
+
+function _initMobileSidebar() {
+  const btn      = document.getElementById('btn-menu');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    document.getElementById('sidebar')?.classList.toggle('open');
+    backdrop?.classList.toggle('open');
+  });
+  backdrop?.addEventListener('click', _closeMobileSidebar);
+  document.getElementById('btn-signout')?.addEventListener('click', _closeMobileSidebar);
 }

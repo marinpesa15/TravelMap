@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelMap</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=12">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 </head>
@@ -24,6 +24,7 @@
           </svg>
         </div>
         <h1 class="brand-name">TravelMap</h1>
+        <button class="btn-theme" id="btn-theme" title="Toggle theme">☀️</button>
       </div>
 
       <!-- Snapshot stats grid -->
@@ -45,7 +46,16 @@
       <div class="sidebar-section">
         <p class="section-label">Collection</p>
         <nav class="collection-nav">
-          <a href="#" class="nav-item active" data-filter="visited" id="nav-visited">
+          <a href="#" class="nav-item active" data-filter="all" id="nav-all">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <span class="nav-label">All</span>
+            <span class="nav-badge" id="nav-all-count">0</span>
+          </a>
+          <a href="#" class="nav-item" data-filter="visited" id="nav-visited">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
@@ -95,6 +105,13 @@
     <main class="map-area">
       <div id="map"></div>
 
+      <!-- Mobile hamburger (hidden on desktop) -->
+      <button class="btn-menu" id="btn-menu" aria-label="Open menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
       <!-- Top-right: search + user pill -->
       <div class="top-right-bar">
         <div class="search-wrap">
@@ -120,24 +137,27 @@
 
   </div><!-- .app-shell -->
 
+  <!-- Mobile sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
   <!-- ═══ OVERLAYS ═══ -->
 
   <!-- City Add Dialog -->
   <div id="city-dialog">
     <div class="dialog-card">
       <h3 id="dialog-city-name">München</h3>
-      <div class="dialog-label">Typ</div>
+      <div class="dialog-label">Type</div>
       <div class="radio-group">
-        <div class="radio-opt selected" data-type="visited">✓ Besucht</div>
-        <div class="radio-opt"          data-type="wishlist">⭐ Wunschliste</div>
+        <div class="radio-opt selected" data-type="visited">✓ Visited</div>
+        <div class="radio-opt"          data-type="wishlist">⭐ Wishlist</div>
       </div>
       <label class="checkbox-row" id="lived-row">
         <input type="checkbox" id="lived-checkbox">
-        🏠 Dort gewohnt
+        🏠 Lived there
       </label>
       <div class="dialog-actions">
-        <button class="btn-cancel" id="dialog-cancel">Abbrechen</button>
-        <button class="btn-add"    id="dialog-add">Hinzufügen</button>
+        <button class="btn-cancel" id="dialog-cancel">Cancel</button>
+        <button class="btn-add"    id="dialog-add">Add</button>
       </div>
     </div>
   </div>
@@ -146,12 +166,12 @@
   <div id="city-popup">
     <button id="city-popup-close">✕</button>
     <p id="city-popup-name">München</p>
-    <button class="btn-remove-city" id="btn-remove-city">🗑️ Entfernen</button>
+    <button class="btn-remove-city" id="btn-remove-city">🗑️ Remove</button>
   </div>
 
   <!-- Toast -->
   <div id="toast"></div>
 
-  <script type="module" src="js/app.js?v=4"></script>
+  <script type="module" src="js/app.js?v=12"></script>
 </body>
 </html>
