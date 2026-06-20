@@ -1,15 +1,15 @@
-import { onAuthChange, signOutUser } from './auth.js';
+import { onAuthChange, signOutUser } from './auth.js?v=4';
 import {
   loadUserData,
-  addVisitedCountry, addWishlistCountry, removeCountry,
+  addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
-} from './db.js';
-import { initMap, setupCountryLayers, updateCountryLayers } from './map.js';
-import { renderAllMarkers } from './markers.js';
+} from './db.js?v=4';
+import { initMap } from './map.js?v=4';
+import { renderAllMarkers } from './markers.js?v=4';
 import {
-  updateStats, setupCountryTooltip, setupCitySearch,
+  updateStats, setupCitySearch,
   showCityPopup, hideCityPopup, showToast
-} from './ui.js';
+} from './ui.js?v=4';
 
 let _uid        = null;
 let _userData   = null;
@@ -32,32 +32,23 @@ async function _init(user) {
     _map      = await initMap();
     _userData = await loadUserData(_uid);
 
-    // Show user profile in top-right pill
     _showUserProfile(user);
 
-    setupCountryLayers(_userData.visited_countries, _userData.wishlist_countries);
     renderAllMarkers(_map, _userData, _onCityRemoveRequest);
     updateStats(_userData);
-    setupCountryTooltip(_map, _onCountryAction);
     setupCitySearch(_onAddCity);
 
-    // Sign out
     document.getElementById('btn-signout').addEventListener('click', async () => {
-      try { await signOutUser(); } catch { /* ignore — redirect anyway */ }
+      try { await signOutUser(); } catch { /* ignore */ }
       window.location.href = 'index.html';
     });
 
-    // "Add New Location" button → focus search input
     document.getElementById('btn-add-location')?.addEventListener('click', () => {
       document.getElementById('city-search')?.focus();
     });
 
-    // Close tooltip / city popup on map background click
-    _map.on('click', (e) => {
-      if (e.originalEvent._handled) return;
-      document.getElementById('country-tooltip').style.display = 'none';
-      hideCityPopup();
-    });
+    // Close city popup on map background click
+    _map.on('click', () => hideCityPopup());
 
   } catch (err) {
     showToast('Fehler beim Laden. Seite neu laden.');
@@ -80,23 +71,20 @@ function _showUserProfile(user) {
   }
 }
 
-// ===== Country Actions =====
-async function _onCountryAction(action, isoCode) {
-  try {
-    if (action === 'visited')  await addVisitedCountry(_uid, isoCode);
-    if (action === 'wishlist') await addWishlistCountry(_uid, isoCode);
-    if (action === 'remove')   await removeCountry(_uid, isoCode);
-    await _refresh();
-  } catch {
-    showToast('Fehler beim Speichern');
-  }
-}
-
 // ===== City Actions =====
 async function _onAddCity(cityData, type, color, lived) {
   try {
     if (type === 'visited') {
       await addVisitedCity(_uid, { ...cityData, color, lived });
+
+      // Auto-track country: add once, regardless of how many cities in that country
+      const iso = cityData.country;
+      if (iso && iso !== 'XX') {
+        const alreadyTracked = (_userData.visited_countries ?? []).includes(iso);
+        if (!alreadyTracked) {
+          await addVisitedCountry(_uid, iso);
+        }
+      }
     } else {
       await addWishlistCity(_uid, cityData);
     }
@@ -128,7 +116,6 @@ async function _refresh() {
   _refreshing = true;
   try {
     _userData = await loadUserData(_uid);
-    updateCountryLayers(_userData.visited_countries, _userData.wishlist_countries);
     renderAllMarkers(_map, _userData, _onCityRemoveRequest);
     updateStats(_userData);
   } finally {

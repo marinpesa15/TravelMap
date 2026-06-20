@@ -1,4 +1,4 @@
-import { MAPBOX_TOKEN } from './constants.js';
+import { MAPBOX_TOKEN } from './constants.js?v=4';
 
 // ===== Stats & Sidebar =====
 

@@ -7,6 +7,16 @@
       "**/.*",
       "README.md"
     ],
-    "rewrites": []
+    "rewrites": [],
+    "headers": [
+      {
+        "source": "**/*.js",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+      },
+      {
+        "source": "**/*.css",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+      }
+    ]
   }
 }
