@@ -404,33 +404,22 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 .dialog-card h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 16px; }
-.dialog-label   { font-size: 0.79rem; font-weight: 600; color: #4b5563; margin-bottom: 6px; }
-.radio-group    { display: flex; gap: 8px; margin-bottom: 14px; }
+.dialog-label   { font-size: 0.79rem; font-weight: 600; color: #9ca3af; margin-bottom: 8px; }
+.radio-group    { display: flex; gap: 8px; margin-bottom: 16px; }
 .radio-opt {
-  flex: 1; padding: 8px;
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 8px; text-align: center;
-  font-size: 0.79rem; cursor: pointer; color: #4b5563;
+  flex: 1; padding: 9px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 10px; text-align: center;
+  font-size: 0.82rem; font-weight: 500; cursor: pointer; color: #9ca3af;
   transition: all 0.15s; user-select: none;
 }
-.radio-opt.selected { border-color: #6366f1; color: #a5b4fc; background: rgba(99,102,241,0.1); }
-.color-group { display: flex; gap: 8px; margin-bottom: 14px; }
-.color-opt {
-  flex: 1; padding: 8px;
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 8px; text-align: center;
-  font-size: 0.79rem; cursor: pointer;
-  transition: all 0.15s; user-select: none;
-}
-.color-opt.red    { color: #f87171; }
-.color-opt.yellow { color: #fbbf24; }
-.color-opt.selected { border-color: currentColor; background: rgba(255,255,255,0.04); }
+.radio-opt:hover { color: #e5e7eb; border-color: rgba(255,255,255,0.18); }
+.radio-opt.selected { border-color: #6366f1; color: #c7d2fe; background: rgba(99,102,241,0.12); }
 .checkbox-row {
   display: flex; align-items: center; gap: 8px;
-  margin-bottom: 16px; font-size: 0.84rem; color: #d1d5db; cursor: pointer;
+  margin-bottom: 18px; font-size: 0.84rem; color: #e5e7eb; cursor: pointer;
 }
-#lived-checkbox  { width: 16px; height: 16px; accent-color: #6366f1; cursor: pointer; }
-.color-section   { margin-bottom: 14px; }
+#lived-checkbox { width: 16px; height: 16px; accent-color: #6366f1; cursor: pointer; }
 .dialog-actions  { display: flex; gap: 8px; }
 .btn-cancel {
   flex: 1; padding: 9px;

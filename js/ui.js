@@ -142,12 +142,10 @@ export function setupCitySearch(onAddCity) {
   });
 
   // Dialog elements
-  const dialog       = document.getElementById('city-dialog');
-  const radioOpts    = dialog.querySelectorAll('.radio-opt');
-  const colorOpts    = dialog.querySelectorAll('.color-opt');
-  const colorSection = document.getElementById('color-section');
-  const livedRow     = document.getElementById('lived-row');
-  const livedCb      = document.getElementById('lived-checkbox');
+  const dialog    = document.getElementById('city-dialog');
+  const radioOpts = dialog.querySelectorAll('.radio-opt');
+  const livedRow  = document.getElementById('lived-row');
+  const livedCb   = document.getElementById('lived-checkbox');
 
   // Radio: visited / wishlist
   radioOpts.forEach(opt => {
@@ -155,16 +153,7 @@ export function setupCitySearch(onAddCity) {
       radioOpts.forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
       const isVisited = opt.dataset.type === 'visited';
-      colorSection.style.display = isVisited ? 'block' : 'none';
-      livedRow.style.display     = isVisited ? 'flex'  : 'none';
-    });
-  });
-
-  // Color: red / yellow
-  colorOpts.forEach(opt => {
-    opt.addEventListener('click', () => {
-      colorOpts.forEach(o => o.classList.remove('selected'));
-      opt.classList.add('selected');
+      livedRow.style.display = isVisited ? 'flex' : 'none';
     });
   });
 
@@ -176,9 +165,8 @@ export function setupCitySearch(onAddCity) {
   document.getElementById('dialog-add').addEventListener('click', () => {
     if (!_selectedCity) return;
     const type  = dialog.querySelector('.radio-opt.selected').dataset.type;
-    const color = dialog.querySelector('.color-opt.selected')?.dataset.color || 'red';
     const lived = livedCb.checked;
-    onAddCity(_selectedCity, type, color, lived);
+    onAddCity(_selectedCity, type, lived);
     _closeDialog();
     input.value = '';
     results.innerHTML = '';
@@ -230,10 +218,8 @@ async function _searchCities(query, resultsEl) {
 function _openDialog(cityName) {
   document.getElementById('dialog-city-name').textContent = cityName;
   document.querySelectorAll('.radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
-  document.querySelectorAll('.color-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
-  document.getElementById('lived-checkbox').checked       = false;
-  document.getElementById('color-section').style.display = 'block';
-  document.getElementById('lived-row').style.display     = 'flex';
+  document.getElementById('lived-checkbox').checked   = false;
+  document.getElementById('lived-row').style.display  = 'flex';
   document.getElementById('city-dialog').classList.add('open');
 }
 

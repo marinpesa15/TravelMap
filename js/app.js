@@ -72,10 +72,10 @@ function _showUserProfile(user) {
 }
 
 // ===== City Actions =====
-async function _onAddCity(cityData, type, color, lived) {
+async function _onAddCity(cityData, type, lived) {
   try {
     if (type === 'visited') {
-      await addVisitedCity(_uid, { ...cityData, color, lived });
+      await addVisitedCity(_uid, { ...cityData, lived });
 
       // Auto-track country: add once, regardless of how many cities in that country
       const iso = cityData.country;
