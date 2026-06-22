@@ -1,9 +1,10 @@
 import { onAuthChange, signOutUser } from './auth.js?v=12';
 import {
-  loadUserData, initUserProfile,
+  loadUserData, initUserProfile, getUserByToken, regenerateInviteToken,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=12';
+import { loadFriends, addFriendship, isFriend } from './friends.js?v=12';
 import { initMap } from './map.js?v=12';
 import { renderAllMarkers } from './markers.js?v=12';
 import {
@@ -34,6 +35,8 @@ async function _init(user) {
     await initUserProfile(_uid, user);   // ← add this line
     _map      = await initMap();
     _userData = await loadUserData(_uid);
+
+    await _handleInviteToken(_userData);   // ← add this line
 
     _showUserProfile(user);
     initTheme(_map);
@@ -73,6 +76,37 @@ function _showUserProfile(user) {
   }
   if (nameEl) {
     nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
+  }
+}
+
+/**
+ * Checks URL for ?token= and processes friend join if present.
+ * myData: the current user's Firestore doc (has display_name, avatar_url).
+ */
+async function _handleInviteToken(myData) {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('token');
+  if (!token) return;
+
+  // Clean the token from URL immediately
+  history.replaceState({}, '', window.location.pathname);
+
+  try {
+    const them = await getUserByToken(token);
+    if (!them) { showToast('Invite link not found.'); return; }
+    if (them.uid === _uid) { showToast("That's your own invite link!"); return; }
+
+    const alreadyFriends = await isFriend(_uid, them.uid);
+    if (alreadyFriends) {
+      showToast(`Already friends with ${them.display_name || 'this user'}!`);
+      return;
+    }
+
+    await addFriendship(_uid, them.uid, them, myData);
+    showToast(`You're now friends with ${them.display_name || 'your friend'}! 🎉`);
+  } catch (err) {
+    console.error('Friend join error:', err);
+    showToast('Could not process invite link.');
   }
 }
 
