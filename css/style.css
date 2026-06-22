@@ -484,3 +484,68 @@ body {
   /* Toast: above browser chrome */
   #toast { bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 }
+
+/* ===== Social Sidebar (Friends + Groups) ===== */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.section-header .section-label { margin-bottom: 0; }
+
+.btn-section-action {
+  font-size: 0.75rem; font-weight: 600;
+  padding: 3px 8px; border-radius: 6px;
+  background: var(--bg-card); border: 1px solid var(--bd-card);
+  color: var(--tx-secondary); cursor: pointer; font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-section-action:hover { background: var(--bg-card-hov); }
+
+.social-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+
+.social-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 9px;
+  cursor: pointer; transition: background 0.15s;
+  border: 1px solid transparent;
+}
+.social-item:hover { background: var(--bg-nav-hov); }
+.social-item.active {
+  background: var(--bg-nav-act); border-color: var(--bd-nav-act);
+}
+.social-avatar {
+  width: 26px; height: 26px; border-radius: 7px;
+  object-fit: cover; background: rgba(99,102,241,0.15); flex-shrink: 0;
+}
+.social-avatar-placeholder {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  background: rgba(99,102,241,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.social-name {
+  flex: 1; font-size: 0.82rem; font-weight: 500; color: var(--tx-log-city);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.social-empty {
+  font-size: 0.78rem; color: var(--tx-muted); padding: 4px 2px;
+}
+
+/* ===== View Mode Banner ===== */
+.view-banner {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 15;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--bd-header);
+  backdrop-filter: blur(12px);
+}
+.view-banner-back {
+  background: var(--bg-card); border: 1px solid var(--bd-card);
+  border-radius: 8px; padding: 5px 10px;
+  font-size: 0.85rem; cursor: pointer; color: var(--tx-primary);
+  font-family: inherit; transition: background 0.15s;
+}
+.view-banner-back:hover { background: var(--bg-card-hov); }
+.view-banner-title {
+  font-size: 0.9rem; font-weight: 600; color: var(--tx-primary);
+}

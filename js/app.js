@@ -9,7 +9,8 @@ import { initMap } from './map.js?v=12';
 import { renderAllMarkers } from './markers.js?v=12';
 import {
   updateStats, setupCitySearch,
-  showCityPopup, hideCityPopup, showToast
+  showCityPopup, hideCityPopup, showToast,
+  setupFriendsSidebar, renderFriendsList
 } from './ui.js?v=12';
 import { initTheme } from './theme.js?v=12';
 
@@ -45,6 +46,10 @@ async function _init(user) {
 
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
+
+    const friends = await loadFriends(_uid);
+    setupFriendsSidebar(_uid, _userData.invite_token, friends, _switchToFriendView, () => regenerateInviteToken(_uid));
+
     setupCitySearch(_onAddCity);
 
     document.getElementById('btn-signout').addEventListener('click', async () => {
@@ -143,6 +148,12 @@ async function _onRemoveCity(city, type) {
   } catch {
     showToast('Failed to remove location');
   }
+}
+
+// ===== Friend View (placeholder — implemented in Task 8) =====
+function _switchToFriendView(friend) {
+  // implemented in Task 8
+  showToast(`Coming soon: ${friend.display_name}'s map`);
 }
 
 // ===== Collection Filter =====

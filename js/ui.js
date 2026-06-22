@@ -238,3 +238,63 @@ export function showToast(message) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+// ===== Friends Sidebar =====
+
+/**
+ * Renders the friends list and wires the copy-invite + reset-link buttons.
+ * friends: Array<{ uid, display_name, avatar_url }>
+ * onViewFriend(friend): called when user clicks a friend row
+ * onResetToken(): called when user clicks Reset (returns new token promise)
+ */
+export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onResetToken) {
+  let _currentToken = inviteToken;
+
+  // Wire copy-invite button
+  document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
+    const link = `${window.location.origin}/map.html?token=${_currentToken}`;
+    navigator.clipboard.writeText(link).then(() => {
+      showToast('Invite link copied! 🔗');
+    }).catch(() => {
+      showToast('Could not copy link.');
+    });
+  });
+
+  // Wire reset-token button (long description shown as tooltip)
+  document.getElementById('btn-reset-invite')?.addEventListener('click', async () => {
+    if (!confirm('Reset invite link? Your old link will stop working.')) return;
+    try {
+      _currentToken = await onResetToken();
+      showToast('Invite link reset ✓');
+    } catch {
+      showToast('Could not reset link.');
+    }
+  });
+
+  renderFriendsList(friends, onViewFriend);
+}
+
+export function renderFriendsList(friends, onViewFriend) {
+  const el = document.getElementById('friends-list');
+  if (!el) return;
+
+  if (!friends.length) {
+    el.innerHTML = '<p class="social-empty">No friends yet. Share your invite link!</p>';
+    return;
+  }
+
+  el.innerHTML = '';
+  friends.forEach(friend => {
+    const item = document.createElement('div');
+    item.className = 'social-item';
+    item.dataset.uid = friend.uid;
+
+    const avatar = friend.avatar_url
+      ? `<img class="social-avatar" src="${friend.avatar_url}" alt="" loading="lazy">`
+      : `<div class="social-avatar-placeholder">👤</div>`;
+
+    item.innerHTML = `${avatar}<span class="social-name">${friend.display_name || 'Friend'}</span>`;
+    item.addEventListener('click', () => onViewFriend(friend));
+    el.appendChild(item);
+  });
+}
