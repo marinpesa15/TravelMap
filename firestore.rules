@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: readable by self OR by friends of the user
+    match /users/{uid} {
+      allow read: if request.auth != null && (
+        request.auth.uid == uid ||
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid))
+      );
+      allow write: if request.auth != null && request.auth.uid == uid;
+
+      // Friends subcollection: readable/writable by either party
+      match /friends/{friendUid} {
+        allow read, write: if request.auth != null && (
+          request.auth.uid == uid ||
+          request.auth.uid == friendUid
+        );
+      }
+    }
+
+    // Groups: readable/writable by members only
+    match /groups/{groupId} {
+      allow read, write: if request.auth != null &&
+        request.auth.uid in resource.data.members;
+      allow create: if request.auth != null;
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import {
-  doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove
+  doc, collection, getDoc, getDocs, setDoc, updateDoc,
+  arrayUnion, arrayRemove, query, where, writeBatch, serverTimestamp, deleteDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
 
@@ -22,6 +23,52 @@ export async function loadUserData(uid) {
 async function ensureDoc(uid) {
   const snap = await getDoc(userRef(uid));
   if (!snap.exists()) await setDoc(userRef(uid), EMPTY_DATA());
+}
+
+/**
+ * Writes display_name, avatar_url to the user doc.
+ * Generates invite_token once if not already set.
+ * user: { displayName, photoURL } from Firebase Auth
+ */
+export async function initUserProfile(uid, user) {
+  const ref  = userRef(uid);
+  const snap = await getDoc(ref);
+  const profileFields = {
+    display_name: user.displayName || '',
+    avatar_url:   user.photoURL   || ''
+  };
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      ...EMPTY_DATA(),
+      ...profileFields,
+      invite_token: crypto.randomUUID()
+    });
+  } else if (!snap.data().invite_token) {
+    await updateDoc(ref, { ...profileFields, invite_token: crypto.randomUUID() });
+  } else {
+    await updateDoc(ref, profileFields);
+  }
+}
+
+/**
+ * Looks up a user by their invite_token.
+ * Returns { uid, display_name, avatar_url, invite_token } or null.
+ */
+export async function getUserByToken(token) {
+  const q    = query(collection(db, 'users'), where('invite_token', '==', token));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { uid: d.id, ...d.data() };
+}
+
+/**
+ * Regenerates the user's invite token.
+ */
+export async function regenerateInviteToken(uid) {
+  const newToken = crypto.randomUUID();
+  await updateDoc(userRef(uid), { invite_token: newToken });
+  return newToken;
 }
 
 export async function addVisitedCountry(uid, isoCode) {

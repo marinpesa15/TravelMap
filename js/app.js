@@ -1,6 +1,6 @@
 import { onAuthChange, signOutUser } from './auth.js?v=12';
 import {
-  loadUserData,
+  loadUserData, initUserProfile,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=12';
@@ -31,6 +31,7 @@ onAuthChange(async user => {
 
 async function _init(user) {
   try {
+    await initUserProfile(_uid, user);   // ← add this line
     _map      = await initMap();
     _userData = await loadUserData(_uid);
 
