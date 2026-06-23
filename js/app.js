@@ -1,6 +1,7 @@
 import { onAuthChange, signOutUser } from './auth.js?v=13';
 import {
   loadUserData, initUserProfile, getUserByToken,
+  loadGroupData, addCityToGroup, removeCityFromGroup,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=13';
@@ -26,6 +27,7 @@ let _friends       = [];
 let _unsubGroups   = null;
 let _groupsSetup   = false;
 let _viewMode      = 'own'; // 'own' | 'friend' | 'group'
+let _currentGroupId = null;
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -135,6 +137,18 @@ async function _handleInviteToken(myData) {
 
 // ===== City Actions =====
 async function _onAddCity(cityData, type, lived) {
+  if (_viewMode === 'group' && _currentGroupId) {
+    // Add to group map
+    try {
+      await addCityToGroup(_currentGroupId, { ...cityData, lived: type === 'visited' ? lived : false }, type);
+      await _refreshGroupView();
+      showToast(`${cityData.name} added to group ✓`);
+    } catch {
+      showToast('Failed to add location to group.');
+    }
+    return;
+  }
+  // Add to personal map
   try {
     if (type === 'visited') {
       await addVisitedCity(_uid, { ...cityData, lived });
@@ -154,7 +168,21 @@ async function _onAddCity(cityData, type, lived) {
 }
 
 function _onCityRemoveRequest(city, type, clientX, clientY) {
+  if (_viewMode === 'group' && _currentGroupId) {
+    showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup);
+    return;
+  }
   showCityPopup(city, type, clientX, clientY, _onRemoveCity);
+}
+
+async function _onRemoveCityFromGroup(city, type) {
+  try {
+    await removeCityFromGroup(_currentGroupId, city.name, type);
+    await _refreshGroupView();
+    showToast(`${city.name} removed`);
+  } catch {
+    showToast('Failed to remove location.');
+  }
 }
 
 async function _onRemoveCity(city, type) {
@@ -194,6 +222,7 @@ async function _switchToFriendView(friend) {
 
 function _returnToOwnView() {
   _viewMode = 'own';
+  _currentGroupId = null;
   document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
   hideViewBanner();
   renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
@@ -219,58 +248,32 @@ async function _onLeaveGroup(groupId, createdBy) {
   }
 }
 
-/**
- * Computes the combined map data for a group.
- * Visited = intersection: only cities ALL members have visited (matched by exact name).
- * Wishlist = union: all wishlist cities from any member, deduplicated by name.
- * Lived is excluded.
- */
-function _computeGroupData(membersData) {
-  if (!membersData.length) return { visited_cities: [], wishlist_cities: [] };
-
-  // Visited intersection
-  const visitedSets = membersData.map(
-    d => new Set((d.visited_cities ?? []).map(c => c.name))
-  );
-  const visitedIntersection = (membersData[0].visited_cities ?? []).filter(city =>
-    visitedSets.every(s => s.has(city.name))
-  );
-
-  // Wishlist union (deduplicated by name)
-  const seen = new Set();
-  const wishlistUnion = membersData
-    .flatMap(d => d.wishlist_cities ?? [])
-    .filter(city => {
-      if (seen.has(city.name)) return false;
-      seen.add(city.name);
-      return true;
-    });
-
-  return {
-    visited_cities:  visitedIntersection,
-    wishlist_cities: wishlistUnion
-  };
-}
-
 async function _switchToGroupView(group) {
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'group';
+  _currentGroupId = group.id;
 
   document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
   document.querySelector(`.social-item[data-id="${group.id}"]`)?.classList.add('active');
-  document.getElementById('btn-add-location').style.display = 'none';
+  // Add button stays visible — members can add to the group map
 
   try {
-    const membersData = await Promise.all(group.members.map(uid => loadUserData(uid)));
-    const groupData   = _computeGroupData(membersData);
+    const groupData = await loadGroupData(group.id);
     clearAllMarkers();
-    renderReadOnlyMarkers(_map, groupData);
+    renderAllMarkers(_map, groupData, _onCityRemoveRequest);
     showViewBanner(group.name, _returnToOwnView);
   } catch (err) {
     console.error(err);
     showToast('Could not load group map.');
     _returnToOwnView();
   }
+}
+
+async function _refreshGroupView() {
+  if (!_currentGroupId) return;
+  const groupData = await loadGroupData(_currentGroupId);
+  clearAllMarkers();
+  renderAllMarkers(_map, groupData, _onCityRemoveRequest);
 }
 
 // ===== Collection Filter =====

@@ -121,3 +121,32 @@ export async function removeWishlistCity(uid, cityName) {
   const updated = data.wishlist_cities.filter(c => c.name !== cityName);
   await updateDoc(userRef(uid), { wishlist_cities: updated });
 }
+
+// ===== Group City Data =====
+
+function groupRef(groupId) {
+  return doc(db, 'groups', groupId);
+}
+
+export async function loadGroupData(groupId) {
+  const snap = await getDoc(groupRef(groupId));
+  if (!snap.exists()) return { visited_cities: [], wishlist_cities: [] };
+  const d = snap.data();
+  return {
+    visited_cities:  d.visited_cities  ?? [],
+    wishlist_cities: d.wishlist_cities ?? []
+  };
+}
+
+export async function addCityToGroup(groupId, cityData, type) {
+  const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
+  await updateDoc(groupRef(groupId), { [field]: arrayUnion(cityData) });
+}
+
+export async function removeCityFromGroup(groupId, cityName, type) {
+  const snap = await getDoc(groupRef(groupId));
+  const data = snap.data() ?? {};
+  const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
+  const updated = (data[field] ?? []).filter(c => c.name !== cityName);
+  await updateDoc(groupRef(groupId), { [field]: updated });
+}
