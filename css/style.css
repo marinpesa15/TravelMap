@@ -463,6 +463,9 @@ body {
 
   /* Shift search bar right to avoid hamburger overlap */
   .top-right-bar { left: 64px; right: 12px; top: 14px; }
+
+  /* On mobile, banner below the top bar row */
+  .view-banner { top: 70px; left: 12px; }
   .search-wrap { flex: 1; min-width: 0; }
   #city-search { min-width: 0; width: 100%; }
 
@@ -572,11 +575,13 @@ body {
 
 /* ===== View Mode Banner ===== */
 .view-banner {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 15;
-  display: none; align-items: center; gap: 10px;
-  padding: 10px 16px;
-  background: var(--bg-sidebar); border-bottom: 1px solid var(--bd-header);
-  backdrop-filter: blur(12px);
+  position: absolute; top: 16px; left: 16px; z-index: 25;
+  display: none; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 8px;
+  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
+  border-radius: 12px; backdrop-filter: blur(14px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  max-width: 260px;
 }
 .view-banner-back {
   background: var(--bg-card); border: 1px solid var(--bd-card);
