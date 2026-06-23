@@ -1,5 +1,5 @@
 import {
-  doc, collection, getDoc, getDocs, setDoc, updateDoc,
+  doc, collection, getDoc, getDocs, setDoc, updateDoc, onSnapshot,
   arrayUnion, arrayRemove, query, where, writeBatch, serverTimestamp, deleteDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
@@ -149,4 +149,29 @@ export async function removeCityFromGroup(groupId, cityName, type) {
   const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
   const updated = (data[field] ?? []).filter(c => c.name !== cityName);
   await updateDoc(groupRef(groupId), { [field]: updated });
+}
+
+// ===== Real-time Subscriptions =====
+
+/**
+ * Real-time listener for own user data.
+ * Fires immediately with current data, then on every change.
+ */
+export function subscribeUserData(uid, callback) {
+  return onSnapshot(userRef(uid), snap => {
+    callback(snap.exists() ? snap.data() : EMPTY_DATA());
+  });
+}
+
+/**
+ * Real-time listener for group city data.
+ */
+export function subscribeGroupData(groupId, callback) {
+  return onSnapshot(groupRef(groupId), snap => {
+    const d = snap.data() ?? {};
+    callback({
+      visited_cities:  d.visited_cities  ?? [],
+      wishlist_cities: d.wishlist_cities ?? []
+    });
+  });
 }

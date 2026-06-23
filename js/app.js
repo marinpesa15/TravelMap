@@ -1,7 +1,8 @@
 import { onAuthChange, signOutUser } from './auth.js?v=13';
 import {
   loadUserData, initUserProfile, getUserByToken,
-  loadGroupData, addCityToGroup, removeCityFromGroup,
+  subscribeUserData, subscribeGroupData,
+  addCityToGroup, removeCityFromGroup,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=13';
@@ -18,16 +19,23 @@ import {
 } from './ui.js?v=13';
 import { initTheme } from './theme.js?v=13';
 
-let _uid           = null;
-let _userData      = null;
-let _map           = null;
-let _refreshing    = false;
-let _currentFilter = 'all';
-let _friends       = [];
-let _unsubGroups   = null;
-let _groupsSetup   = false;
-let _viewMode      = 'own'; // 'own' | 'friend' | 'group'
+let _uid            = null;
+let _userData       = null;
+let _map            = null;
+let _currentFilter  = 'all';
+let _friends        = [];
+let _viewMode       = 'own'; // 'own' | 'friend' | 'group'
 let _currentGroupId = null;
+
+// Real-time listener handles
+let _unsubUserData  = null;
+let _unsubFriends   = null;
+let _unsubGroups    = null;
+let _unsubGroupView = null;
+
+// First-run flags (prevent double setup of listeners)
+let _friendsSetup   = false;
+let _groupsSetup    = false;
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -44,7 +52,7 @@ async function _init(user) {
   try {
     await initUserProfile(_uid, user);
     _map      = await initMap();
-    _userData = await loadUserData(_uid);
+    _userData = await loadUserData(_uid);   // one-shot for initial render
 
     await _handleInviteToken(_userData);
 
@@ -56,9 +64,30 @@ async function _init(user) {
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
 
-    _friends = await loadFriends(_uid);
-    setupFriendsSidebar(_uid, _userData.invite_token, _friends, _switchToFriendView);
+    // ── Real-time: own user data ──────────────────────────────────────────
+    if (_unsubUserData) _unsubUserData();
+    _unsubUserData = subscribeUserData(_uid, data => {
+      _userData = data;
+      if (_viewMode === 'own') {
+        renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+        updateStats(_userData);
+      }
+    });
 
+    // ── Real-time: friends list ───────────────────────────────────────────
+    if (_unsubFriends) _unsubFriends();
+    _friendsSetup = false;
+    _unsubFriends = loadFriends(_uid, friends => {
+      _friends = friends;
+      if (!_friendsSetup) {
+        setupFriendsSidebar(_uid, _userData.invite_token, friends, _switchToFriendView);
+        _friendsSetup = true;
+      } else {
+        renderFriendsList(friends, _switchToFriendView);
+      }
+    });
+
+    // ── Real-time: groups list ────────────────────────────────────────────
     if (_unsubGroups) _unsubGroups();
     _groupsSetup = false;
     _unsubGroups = loadGroups(_uid, groups => {
@@ -106,14 +135,12 @@ function _showUserProfile(user) {
 
 /**
  * Checks URL for ?token= and processes friend join if present.
- * myData: the current user's Firestore doc (has display_name, avatar_url).
  */
 async function _handleInviteToken(myData) {
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('token');
   if (!token) return;
 
-  // Clean the token from URL immediately
   history.replaceState({}, '', window.location.pathname);
 
   try {
@@ -138,17 +165,15 @@ async function _handleInviteToken(myData) {
 // ===== City Actions =====
 async function _onAddCity(cityData, type, lived) {
   if (_viewMode === 'group' && _currentGroupId) {
-    // Add to group map
     try {
       await addCityToGroup(_currentGroupId, { ...cityData, lived: type === 'visited' ? lived : false }, type);
-      await _refreshGroupView();
       showToast(`${cityData.name} added to group ✓`);
+      // Map updates via subscribeGroupData listener automatically
     } catch {
       showToast('Failed to add location to group.');
     }
     return;
   }
-  // Add to personal map
   try {
     if (type === 'visited') {
       await addVisitedCity(_uid, { ...cityData, lived });
@@ -160,8 +185,8 @@ async function _onAddCity(cityData, type, lived) {
     } else {
       await addWishlistCity(_uid, cityData);
     }
-    await _refresh();
     showToast(`${cityData.name} added ✓`);
+    // Map + stats update via subscribeUserData listener automatically
   } catch {
     showToast('Failed to add location');
   }
@@ -178,8 +203,8 @@ function _onCityRemoveRequest(city, type, clientX, clientY) {
 async function _onRemoveCityFromGroup(city, type) {
   try {
     await removeCityFromGroup(_currentGroupId, city.name, type);
-    await _refreshGroupView();
     showToast(`${city.name} removed`);
+    // Map updates via subscribeGroupData listener automatically
   } catch {
     showToast('Failed to remove location.');
   }
@@ -189,8 +214,8 @@ async function _onRemoveCity(city, type) {
   try {
     if (type === 'visited')  await removeVisitedCity(_uid, city.name);
     if (type === 'wishlist') await removeWishlistCity(_uid, city.name);
-    await _refresh();
     showToast(`${city.name} removed`);
+    // Map + stats update via subscribeUserData listener automatically
   } catch {
     showToast('Failed to remove location');
   }
@@ -201,11 +226,8 @@ async function _switchToFriendView(friend) {
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'friend';
 
-  // Mark active item in sidebar
   document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
   document.querySelector(`.social-item[data-uid="${friend.uid}"]`)?.classList.add('active');
-
-  // Hide add-location button
   document.getElementById('btn-add-location').style.display = 'none';
 
   try {
@@ -221,6 +243,9 @@ async function _switchToFriendView(friend) {
 }
 
 function _returnToOwnView() {
+  // Unsubscribe group view listener if active
+  if (_unsubGroupView) { _unsubGroupView(); _unsubGroupView = null; }
+
   _viewMode = 'own';
   _currentGroupId = null;
   document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
@@ -248,7 +273,8 @@ async function _onLeaveGroup(groupId, createdBy) {
   }
 }
 
-async function _switchToGroupView(group) {
+// ===== Group View Mode =====
+function _switchToGroupView(group) {
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'group';
   _currentGroupId = group.id;
@@ -257,23 +283,16 @@ async function _switchToGroupView(group) {
   document.querySelector(`.social-item[data-id="${group.id}"]`)?.classList.add('active');
   // Add button stays visible — members can add to the group map
 
-  try {
-    const groupData = await loadGroupData(group.id);
-    clearAllMarkers();
-    renderAllMarkers(_map, groupData, _onCityRemoveRequest);
-    showViewBanner(group.name, _returnToOwnView);
-  } catch (err) {
-    console.error(err);
-    showToast('Could not load group map.');
-    _returnToOwnView();
-  }
-}
+  showViewBanner(group.name, _returnToOwnView);
 
-async function _refreshGroupView() {
-  if (!_currentGroupId) return;
-  const groupData = await loadGroupData(_currentGroupId);
-  clearAllMarkers();
-  renderAllMarkers(_map, groupData, _onCityRemoveRequest);
+  // Real-time group city data
+  if (_unsubGroupView) _unsubGroupView();
+  _unsubGroupView = subscribeGroupData(group.id, groupData => {
+    if (_viewMode === 'group' && _currentGroupId === group.id) {
+      clearAllMarkers();
+      renderAllMarkers(_map, groupData, _onCityRemoveRequest);
+    }
+  });
 }
 
 // ===== Collection Filter =====
@@ -297,22 +316,11 @@ function _setupFilterNav() {
       _currentFilter = item.dataset.filter;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
-      renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+      if (_viewMode === 'own') {
+        renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+      }
     });
   });
-}
-
-// ===== Refresh =====
-async function _refresh() {
-  if (_refreshing) return;
-  _refreshing = true;
-  try {
-    _userData = await loadUserData(_uid);
-    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
-    updateStats(_userData);
-  } finally {
-    _refreshing = false;
-  }
 }
 
 // ===== Mobile Sidebar =====

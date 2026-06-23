@@ -1,5 +1,5 @@
 import {
-  doc, collection, getDoc, getDocs, writeBatch, serverTimestamp, deleteDoc
+  doc, collection, getDoc, onSnapshot, writeBatch, serverTimestamp, deleteDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
 
@@ -12,12 +12,14 @@ function _friendsCol(uid) {
 }
 
 /**
- * Returns all friends of uid.
- * Each item: { uid, display_name, avatar_url, since }
+ * Real-time listener for friend list.
+ * Calls callback([{ uid, display_name, avatar_url, since }]) on every change.
+ * Returns Firestore unsubscribe function.
  */
-export async function loadFriends(uid) {
-  const snap = await getDocs(_friendsCol(uid));
-  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+export function loadFriends(uid, callback) {
+  return onSnapshot(_friendsCol(uid), snap => {
+    callback(snap.docs.map(d => ({ uid: d.id, ...d.data() })));
+  });
 }
 
 /**

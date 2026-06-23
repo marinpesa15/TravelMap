@@ -170,7 +170,7 @@ body {
 }
 .btn-theme:hover { background: var(--bg-card-hov); }
 
-.sidebar-section { padding: 16px 16px 0; }
+.sidebar-section { padding: 16px 16px 0; flex-shrink: 0; }
 .section-label {
   font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
   letter-spacing: 0.1em; color: var(--tx-muted); margin-bottom: 10px;
@@ -447,6 +447,8 @@ body {
     box-shadow: 6px 0 40px rgba(0,0,0,0.5);
     background: var(--bg-sidebar);
     backdrop-filter: blur(20px);
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
   }
   #sidebar.open { transform: translateX(0); }
 
