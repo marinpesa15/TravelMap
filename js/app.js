@@ -219,9 +219,58 @@ async function _onLeaveGroup(groupId, createdBy) {
   }
 }
 
-function _switchToGroupView(group) {
-  // implemented in Task 9
-  showToast(`Coming soon: ${group.name}`);
+/**
+ * Computes the combined map data for a group.
+ * Visited = intersection: only cities ALL members have visited (matched by exact name).
+ * Wishlist = union: all wishlist cities from any member, deduplicated by name.
+ * Lived is excluded.
+ */
+function _computeGroupData(membersData) {
+  if (!membersData.length) return { visited_cities: [], wishlist_cities: [] };
+
+  // Visited intersection
+  const visitedSets = membersData.map(
+    d => new Set((d.visited_cities ?? []).map(c => c.name))
+  );
+  const visitedIntersection = (membersData[0].visited_cities ?? []).filter(city =>
+    visitedSets.every(s => s.has(city.name))
+  );
+
+  // Wishlist union (deduplicated by name)
+  const seen = new Set();
+  const wishlistUnion = membersData
+    .flatMap(d => d.wishlist_cities ?? [])
+    .filter(city => {
+      if (seen.has(city.name)) return false;
+      seen.add(city.name);
+      return true;
+    });
+
+  return {
+    visited_cities:  visitedIntersection,
+    wishlist_cities: wishlistUnion
+  };
+}
+
+async function _switchToGroupView(group) {
+  if (_viewMode !== 'own') _returnToOwnView();
+  _viewMode = 'group';
+
+  document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.social-item[data-id="${group.id}"]`)?.classList.add('active');
+  document.getElementById('btn-add-location').style.display = 'none';
+
+  try {
+    const membersData = await Promise.all(group.members.map(uid => loadUserData(uid)));
+    const groupData   = _computeGroupData(membersData);
+    clearAllMarkers();
+    renderReadOnlyMarkers(_map, groupData);
+    showViewBanner(group.name, _returnToOwnView);
+  } catch (err) {
+    console.error(err);
+    showToast('Could not load group map.');
+    _returnToOwnView();
+  }
 }
 
 // ===== Collection Filter =====
