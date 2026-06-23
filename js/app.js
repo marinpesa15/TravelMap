@@ -7,7 +7,7 @@ import {
 import { loadFriends, addFriendship, isFriend } from './friends.js?v=12';
 import { loadGroups, createGroup, leaveGroup } from './groups.js?v=12';
 import { initMap } from './map.js?v=12';
-import { renderAllMarkers, renderReadOnlyMarkers } from './markers.js?v=12';
+import { renderAllMarkers, renderReadOnlyMarkers, clearAllMarkers } from './markers.js?v=12';
 import {
   updateStats, setupCitySearch,
   showCityPopup, hideCityPopup, showToast,
@@ -25,6 +25,7 @@ let _currentFilter = 'all';
 let _friends       = [];
 let _unsubGroups   = null;
 let _groupsSetup   = false;
+let _viewMode      = 'own'; // 'own' | 'friend' | 'group'
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -167,10 +168,36 @@ async function _onRemoveCity(city, type) {
   }
 }
 
-// ===== Friend View (placeholder — implemented in Task 8) =====
-function _switchToFriendView(friend) {
-  // implemented in Task 8
-  showToast(`Coming soon: ${friend.display_name}'s map`);
+// ===== Friend View Mode =====
+async function _switchToFriendView(friend) {
+  if (_viewMode !== 'own') _returnToOwnView();
+  _viewMode = 'friend';
+
+  // Mark active item in sidebar
+  document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.social-item[data-uid="${friend.uid}"]`)?.classList.add('active');
+
+  // Hide add-location button
+  document.getElementById('btn-add-location').style.display = 'none';
+
+  try {
+    const friendData = await loadUserData(friend.uid);
+    clearAllMarkers();
+    renderReadOnlyMarkers(_map, friendData);
+    showViewBanner(`${friend.display_name || 'Friend'}'s Map`, _returnToOwnView);
+  } catch (err) {
+    console.error(err);
+    showToast('Could not load friend\'s map.');
+    _returnToOwnView();
+  }
+}
+
+function _returnToOwnView() {
+  _viewMode = 'own';
+  document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
+  hideViewBanner();
+  renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+  document.getElementById('btn-add-location').style.display = '';
 }
 
 // ===== Group Actions =====
