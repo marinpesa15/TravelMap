@@ -20,6 +20,16 @@ export function clearAllMarkers() {
   _activeMarkers.length = 0;
 }
 
+/**
+ * Renders markers without click handlers (read-only view mode).
+ * Used when viewing a friend's or group's map.
+ */
+export function renderReadOnlyMarkers(map, userData) {
+  clearAllMarkers();
+  (userData.visited_cities  ?? []).forEach(city => _addMarker(map, city, 'visited',  null));
+  (userData.wishlist_cities ?? []).forEach(city => _addMarker(map, city, 'wishlist', null));
+}
+
 function _addMarker(map, city, type, onRemove) {
   if (!city || typeof city.lng !== 'number' || typeof city.lat !== 'number'
       || isNaN(city.lng) || isNaN(city.lat)) {
@@ -51,10 +61,12 @@ function _createMarkerEl(city, type, onRemove) {
   el.style.background = color;
   el.style.color      = color; // drives the ::after pulse ring via currentColor
 
-  el.addEventListener('click', (e) => {
-    e.stopPropagation();
-    onRemove(city, type, e.clientX, e.clientY);
-  });
+  if (onRemove) {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onRemove(city, type, e.clientX, e.clientY);
+    });
+  }
 
   return el;
 }

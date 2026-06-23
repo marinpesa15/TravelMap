@@ -5,14 +5,15 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=12';
 import { loadFriends, addFriendship, isFriend } from './friends.js?v=12';
-import { loadGroups, createGroup } from './groups.js?v=12';
+import { loadGroups, createGroup, leaveGroup } from './groups.js?v=12';
 import { initMap } from './map.js?v=12';
-import { renderAllMarkers } from './markers.js?v=12';
+import { renderAllMarkers, renderReadOnlyMarkers } from './markers.js?v=12';
 import {
   updateStats, setupCitySearch,
   showCityPopup, hideCityPopup, showToast,
   setupFriendsSidebar, renderFriendsList,
-  setupGroupsSidebar, renderGroupsList
+  setupGroupsSidebar, renderGroupsList,
+  showViewBanner, hideViewBanner
 } from './ui.js?v=12';
 import { initTheme } from './theme.js?v=12';
 
@@ -23,6 +24,7 @@ let _refreshing    = false;
 let _currentFilter = 'all';
 let _friends       = [];
 let _unsubGroups   = null;
+let _groupsSetup   = false;
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -55,13 +57,13 @@ async function _init(user) {
     setupFriendsSidebar(_uid, _userData.invite_token, _friends, _switchToFriendView, () => regenerateInviteToken(_uid));
 
     if (_unsubGroups) _unsubGroups();
-    let _groupsSetup = false;
+    _groupsSetup = false;
     _unsubGroups = loadGroups(_uid, groups => {
       if (!_groupsSetup) {
-        setupGroupsSidebar(groups, _friends, _onCreateGroup, _switchToGroupView);
+        setupGroupsSidebar(groups, _friends, _uid, _onCreateGroup, _switchToGroupView, _onLeaveGroup);
         _groupsSetup = true;
       } else {
-        renderGroupsList(groups, _switchToGroupView);
+        renderGroupsList(groups, _uid, _switchToGroupView, _onLeaveGroup);
       }
     });
 
@@ -175,10 +177,18 @@ function _switchToFriendView(friend) {
 async function _onCreateGroup(name, friendUids) {
   try {
     await createGroup(name, friendUids, _uid);
-    showToast(`Group "${name}" created!`);
+    showToast(`Group "${name}" created! 🌍`);
   } catch (err) {
     console.error(err);
     showToast('Failed to create group.');
+  }
+}
+
+async function _onLeaveGroup(groupId, createdBy) {
+  try {
+    await leaveGroup(groupId, _uid, createdBy);
+  } catch {
+    showToast('Failed to leave group.');
   }
 }
 

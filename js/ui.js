@@ -310,7 +310,7 @@ let _groupModalCreateCb = null;
  * onCreateGroup(name, memberUids): called when group is created
  * onViewGroup(group): called when user clicks a group row
  */
-export function setupGroupsSidebar(groups, friends, onCreateGroup, onViewGroup) {
+export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, onViewGroup, onLeaveGroup) {
   _groupModalCreateCb = onCreateGroup;
 
   document.getElementById('btn-create-group')?.addEventListener('click', () => {
@@ -334,30 +334,7 @@ export function setupGroupsSidebar(groups, friends, onCreateGroup, onViewGroup) 
     _closeGroupModal();
   });
 
-  renderGroupsList(groups, onViewGroup);
-}
-
-export function renderGroupsList(groups, onViewGroup) {
-  const el = document.getElementById('groups-list');
-  if (!el) return;
-
-  if (!groups.length) {
-    el.innerHTML = '<p class="social-empty">No groups yet.</p>';
-    return;
-  }
-
-  el.innerHTML = '';
-  groups.forEach(group => {
-    const item = document.createElement('div');
-    item.className = 'social-item';
-    item.dataset.id = group.id;
-    item.innerHTML = `
-      <div class="social-avatar-placeholder">🌍</div>
-      <span class="social-name">${group.name}</span>
-    `;
-    item.addEventListener('click', () => onViewGroup(group));
-    el.appendChild(item);
-  });
+  renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup);
 }
 
 function _openGroupModal(friends) {
@@ -381,4 +358,71 @@ function _openGroupModal(friends) {
 
 function _closeGroupModal() {
   document.getElementById('group-modal').classList.remove('open');
+}
+
+// ===== Groups List (with leave/delete) =====
+
+export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup) {
+  const el = document.getElementById('groups-list');
+  if (!el) return;
+
+  if (!groups.length) {
+    el.innerHTML = '<p class="social-empty">No groups yet.</p>';
+    return;
+  }
+
+  el.innerHTML = '';
+  groups.forEach(group => {
+    const item = document.createElement('div');
+    item.className = 'social-item';
+    item.dataset.id = group.id;
+
+    const isCreator = group.created_by === currentUid;
+    const leaveLabel = isCreator ? '🗑️' : '✕';
+    const leaveTitle = isCreator ? 'Delete group' : 'Leave group';
+
+    item.innerHTML = `
+      <div class="social-avatar-placeholder">🌍</div>
+      <span class="social-name">${group.name}</span>
+      <button class="btn-leave-group" title="${leaveTitle}">${leaveLabel}</button>
+    `;
+
+    // Row click → view group
+    item.addEventListener('click', e => {
+      if (e.target.closest('.btn-leave-group')) return;
+      onViewGroup(group);
+    });
+
+    // Leave/delete button
+    item.querySelector('.btn-leave-group').addEventListener('click', e => {
+      e.stopPropagation();
+      const confirmMsg = isCreator
+        ? `Delete group "${group.name}"? This cannot be undone.`
+        : `Leave group "${group.name}"?`;
+      if (confirm(confirmMsg)) onLeaveGroup(group.id, group.created_by);
+    });
+
+    el.appendChild(item);
+  });
+}
+
+// ===== View Mode Banner =====
+
+export function showViewBanner(title, onBack) {
+  const banner  = document.getElementById('view-banner');
+  const titleEl = document.getElementById('view-banner-title');
+  const backBtn = document.getElementById('view-banner-back');
+  if (!banner) return;
+
+  titleEl.textContent = title;
+  // Replace old listener by cloning the button
+  const newBack = backBtn.cloneNode(true);
+  backBtn.parentNode.replaceChild(newBack, backBtn);
+  newBack.addEventListener('click', onBack);
+  banner.style.display = 'flex';
+}
+
+export function hideViewBanner() {
+  const banner = document.getElementById('view-banner');
+  if (banner) banner.style.display = 'none';
 }
