@@ -191,6 +191,20 @@
   <!-- Toast -->
   <div id="toast"></div>
 
+  <!-- Group Create Modal -->
+  <div id="group-modal" style="display:none">
+    <div class="group-modal-card">
+      <h3>New Group</h3>
+      <input type="text" id="group-name-input" placeholder="Group name…" maxlength="40" autocomplete="off">
+      <p class="dialog-label" style="margin-top:14px">Add friends</p>
+      <div id="group-friends-checklist" class="group-friends-checklist"></div>
+      <div class="dialog-actions" style="margin-top:16px">
+        <button class="btn-cancel" id="group-modal-cancel">Cancel</button>
+        <button class="btn-add"    id="group-modal-create">Create</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="js/app.js?v=12"></script>
 </body>
 </html>

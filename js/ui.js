@@ -298,3 +298,87 @@ export function renderFriendsList(friends, onViewFriend) {
     el.appendChild(item);
   });
 }
+
+// ===== Groups Sidebar =====
+
+let _groupModalCreateCb = null;
+
+/**
+ * Renders groups list and wires the "+ New" button.
+ * groups: Array<{ id, name, members }>
+ * friends: Array<{ uid, display_name }>
+ * onCreateGroup(name, memberUids): called when group is created
+ * onViewGroup(group): called when user clicks a group row
+ */
+export function setupGroupsSidebar(groups, friends, onCreateGroup, onViewGroup) {
+  _groupModalCreateCb = onCreateGroup;
+
+  document.getElementById('btn-create-group')?.addEventListener('click', () => {
+    _openGroupModal(friends);
+  });
+
+  document.getElementById('group-modal-cancel')?.addEventListener('click', _closeGroupModal);
+  document.getElementById('group-modal')?.addEventListener('click', e => {
+    if (e.target.id === 'group-modal') _closeGroupModal();
+  });
+
+  document.getElementById('group-modal-create')?.addEventListener('click', () => {
+    const name = document.getElementById('group-name-input')?.value.trim();
+    if (!name) { showToast('Please enter a group name.'); return; }
+
+    const checked = [...document.querySelectorAll('#group-friends-checklist input:checked')];
+    if (!checked.length) { showToast('Select at least one friend.'); return; }
+
+    const memberUids = checked.map(cb => cb.value);
+    _groupModalCreateCb?.(name, memberUids);
+    _closeGroupModal();
+  });
+
+  renderGroupsList(groups, onViewGroup);
+}
+
+export function renderGroupsList(groups, onViewGroup) {
+  const el = document.getElementById('groups-list');
+  if (!el) return;
+
+  if (!groups.length) {
+    el.innerHTML = '<p class="social-empty">No groups yet.</p>';
+    return;
+  }
+
+  el.innerHTML = '';
+  groups.forEach(group => {
+    const item = document.createElement('div');
+    item.className = 'social-item';
+    item.dataset.id = group.id;
+    item.innerHTML = `
+      <div class="social-avatar-placeholder">🌍</div>
+      <span class="social-name">${group.name}</span>
+    `;
+    item.addEventListener('click', () => onViewGroup(group));
+    el.appendChild(item);
+  });
+}
+
+function _openGroupModal(friends) {
+  const checklist = document.getElementById('group-friends-checklist');
+  if (!checklist) return;
+  document.getElementById('group-name-input').value = '';
+
+  if (!friends.length) {
+    checklist.innerHTML = '<p class="social-empty">Add friends first to create a group.</p>';
+  } else {
+    checklist.innerHTML = friends.map(f => `
+      <label class="group-check-item">
+        <input type="checkbox" value="${f.uid}">
+        <span class="group-check-name">${f.display_name || 'Friend'}</span>
+      </label>
+    `).join('');
+  }
+
+  document.getElementById('group-modal').classList.add('open');
+}
+
+function _closeGroupModal() {
+  document.getElementById('group-modal').classList.remove('open');
+}

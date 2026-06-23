@@ -5,12 +5,14 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=12';
 import { loadFriends, addFriendship, isFriend } from './friends.js?v=12';
+import { loadGroups, createGroup } from './groups.js?v=12';
 import { initMap } from './map.js?v=12';
 import { renderAllMarkers } from './markers.js?v=12';
 import {
   updateStats, setupCitySearch,
   showCityPopup, hideCityPopup, showToast,
-  setupFriendsSidebar, renderFriendsList
+  setupFriendsSidebar, renderFriendsList,
+  setupGroupsSidebar, renderGroupsList
 } from './ui.js?v=12';
 import { initTheme } from './theme.js?v=12';
 
@@ -19,6 +21,8 @@ let _userData      = null;
 let _map           = null;
 let _refreshing    = false;
 let _currentFilter = 'all';
+let _friends       = [];
+let _unsubGroups   = null;
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -47,8 +51,19 @@ async function _init(user) {
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
 
-    const friends = await loadFriends(_uid);
-    setupFriendsSidebar(_uid, _userData.invite_token, friends, _switchToFriendView, () => regenerateInviteToken(_uid));
+    _friends = await loadFriends(_uid);
+    setupFriendsSidebar(_uid, _userData.invite_token, _friends, _switchToFriendView, () => regenerateInviteToken(_uid));
+
+    if (_unsubGroups) _unsubGroups();
+    let _groupsSetup = false;
+    _unsubGroups = loadGroups(_uid, groups => {
+      if (!_groupsSetup) {
+        setupGroupsSidebar(groups, _friends, _onCreateGroup, _switchToGroupView);
+        _groupsSetup = true;
+      } else {
+        renderGroupsList(groups, _switchToGroupView);
+      }
+    });
 
     setupCitySearch(_onAddCity);
 
@@ -154,6 +169,22 @@ async function _onRemoveCity(city, type) {
 function _switchToFriendView(friend) {
   // implemented in Task 8
   showToast(`Coming soon: ${friend.display_name}'s map`);
+}
+
+// ===== Group Actions =====
+async function _onCreateGroup(name, friendUids) {
+  try {
+    await createGroup(name, friendUids, _uid);
+    showToast(`Group "${name}" created!`);
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to create group.');
+  }
+}
+
+function _switchToGroupView(group) {
+  // implemented in Task 9
+  showToast(`Coming soon: ${group.name}`);
 }
 
 // ===== Collection Filter =====

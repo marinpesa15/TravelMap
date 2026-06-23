@@ -531,6 +531,45 @@ body {
   font-size: 0.78rem; color: var(--tx-muted); padding: 4px 2px;
 }
 
+/* ===== Group Create Modal ===== */
+#group-modal {
+  position: fixed; inset: 0; z-index: 40;
+  display: none; align-items: center; justify-content: center;
+  background: var(--bg-overlay); backdrop-filter: blur(6px);
+}
+#group-modal.open { display: flex; }
+.group-modal-card {
+  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
+  border-radius: 16px; padding: 24px;
+  width: 90%; max-width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.group-modal-card h3 {
+  font-size: 1rem; font-weight: 700;
+  color: var(--tx-primary); margin-bottom: 14px;
+}
+#group-name-input {
+  width: 100%; padding: 9px 12px;
+  background: var(--bg-input); border: 1px solid var(--bd-input);
+  border-radius: 10px; color: var(--tx-input);
+  font-size: 0.84rem; font-family: inherit; outline: none;
+}
+#group-name-input:focus { border-color: rgba(99,102,241,0.45); }
+.group-friends-checklist {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 180px; overflow-y: auto; margin-top: 6px;
+}
+.group-check-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 8px; border-radius: 8px; cursor: pointer;
+  transition: background 0.12s;
+}
+.group-check-item:hover { background: var(--bg-card-hov); }
+.group-check-item input[type="checkbox"] {
+  width: 15px; height: 15px; accent-color: #6366f1; cursor: pointer;
+}
+.group-check-name { font-size: 0.83rem; color: var(--tx-primary); }
+
 /* ===== View Mode Banner ===== */
 .view-banner {
   position: absolute; top: 0; left: 0; right: 0; z-index: 15;
