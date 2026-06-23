@@ -1,6 +1,6 @@
 import { onAuthChange, signOutUser } from './auth.js?v=13';
 import {
-  loadUserData, initUserProfile, getUserByToken, regenerateInviteToken,
+  loadUserData, initUserProfile, getUserByToken,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=13';
@@ -55,7 +55,7 @@ async function _init(user) {
     updateStats(_userData);
 
     _friends = await loadFriends(_uid);
-    setupFriendsSidebar(_uid, _userData.invite_token, _friends, _switchToFriendView, () => regenerateInviteToken(_uid));
+    setupFriendsSidebar(_uid, _userData.invite_token, _friends, _switchToFriendView);
 
     if (_unsubGroups) _unsubGroups();
     _groupsSetup = false;

@@ -247,28 +247,15 @@ export function showToast(message) {
  * onViewFriend(friend): called when user clicks a friend row
  * onResetToken(): called when user clicks Reset (returns new token promise)
  */
-export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onResetToken) {
-  let _currentToken = inviteToken;
-
+export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend) {
   // Wire copy-invite button
   document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
-    const link = `${window.location.origin}/map.html?token=${_currentToken}`;
+    const link = `${window.location.origin}/map.html?token=${inviteToken}`;
     navigator.clipboard.writeText(link).then(() => {
       showToast('Invite link copied! 🔗');
     }).catch(() => {
       showToast('Could not copy link.');
     });
-  });
-
-  // Wire reset-token button (long description shown as tooltip)
-  document.getElementById('btn-reset-invite')?.addEventListener('click', async () => {
-    if (!confirm('Reset invite link? Your old link will stop working.')) return;
-    try {
-      _currentToken = await onResetToken();
-      showToast('Invite link reset ✓');
-    } catch {
-      showToast('Could not reset link.');
-    }
   });
 
   renderFriendsList(friends, onViewFriend);

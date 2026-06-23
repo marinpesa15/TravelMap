@@ -573,7 +573,7 @@ body {
 /* ===== View Mode Banner ===== */
 .view-banner {
   position: absolute; top: 0; left: 0; right: 0; z-index: 15;
-  display: flex; align-items: center; gap: 10px;
+  display: none; align-items: center; gap: 10px;
   padding: 10px 16px;
   background: var(--bg-sidebar); border-bottom: 1px solid var(--bd-header);
   backdrop-filter: blur(12px);
