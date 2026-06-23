@@ -1,21 +1,21 @@
-import { onAuthChange, signOutUser } from './auth.js?v=12';
+import { onAuthChange, signOutUser } from './auth.js?v=13';
 import {
   loadUserData, initUserProfile, getUserByToken, regenerateInviteToken,
   addVisitedCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
-} from './db.js?v=12';
-import { loadFriends, addFriendship, isFriend } from './friends.js?v=12';
-import { loadGroups, createGroup, leaveGroup } from './groups.js?v=12';
-import { initMap } from './map.js?v=12';
-import { renderAllMarkers, renderReadOnlyMarkers, clearAllMarkers } from './markers.js?v=12';
+} from './db.js?v=13';
+import { loadFriends, addFriendship, isFriend } from './friends.js?v=13';
+import { loadGroups, createGroup, leaveGroup } from './groups.js?v=13';
+import { initMap } from './map.js?v=13';
+import { renderAllMarkers, renderReadOnlyMarkers, clearAllMarkers } from './markers.js?v=13';
 import {
   updateStats, setupCitySearch,
   showCityPopup, hideCityPopup, showToast,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner
-} from './ui.js?v=12';
-import { initTheme } from './theme.js?v=12';
+} from './ui.js?v=13';
+import { initTheme } from './theme.js?v=13';
 
 let _uid           = null;
 let _userData      = null;
@@ -40,11 +40,11 @@ onAuthChange(async user => {
 
 async function _init(user) {
   try {
-    await initUserProfile(_uid, user);   // ← add this line
+    await initUserProfile(_uid, user);
     _map      = await initMap();
     _userData = await loadUserData(_uid);
 
-    await _handleInviteToken(_userData);   // ← add this line
+    await _handleInviteToken(_userData);
 
     _showUserProfile(user);
     initTheme(_map);
