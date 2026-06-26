@@ -2,7 +2,7 @@ import { onAuthChange, signOutUser } from './auth.js?v=18';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
-  addCityToGroup, removeCityFromGroup,
+  addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=18';
@@ -14,20 +14,21 @@ import {
   setupCountryMapClick
 } from './countries.js?v=20';
 import { initMap } from './map.js?v=18';
-import { renderAllMarkers, renderReadOnlyMarkers, clearAllMarkers } from './markers.js?v=18';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers } from './markers.js?v=21';
 import {
   updateStats, updateCountriesView, setupSearch,
-  showCityPopup, hideCityPopup, showToast,
+  showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=19';
+} from './ui.js?v=23';
 import { initTheme } from './theme.js?v=18';
 
 let _uid            = null;
 let _userData       = null;
+let _currentUser    = null; // Firebase Auth user (for photoURL / displayName)
 let _map            = null;
 let _currentFilter  = 'all';
 let _friends        = [];
@@ -55,7 +56,8 @@ onAuthChange(async user => {
     return;
   }
   if (_uid === user.uid) return;
-  _uid = user.uid;
+  _uid         = user.uid;
+  _currentUser = user;
   await _init(user);
 });
 
@@ -203,14 +205,37 @@ async function _handleInviteToken(myData) {
 // ===== City Actions =====
 async function _onAddCity(cityData, type, lived) {
   if (_viewMode === 'group' && _currentGroupId) {
-    try {
-      await addCityToGroup(_currentGroupId, { ...cityData, lived: type === 'visited' ? lived : false }, type);
-      showToast(`${cityData.name} added to group ✓`);
-      _closeMobileSearchOverlay(); // close overlay after adding
-      // Map updates via subscribeGroupData listener automatically
-    } catch {
-      showToast('Failed to add location to group.');
+    const defaultPhoto  = _currentUser?.photoURL    || '';
+    const displayName   = _currentUser?.displayName || _userData?.display_name || '';
+
+    // Only show photo dialog for visited cities (wishlist stays as-is)
+    if (type === 'visited') {
+      showGroupPhotoDialog(cityData.name, defaultPhoto, async (chosenPhoto) => {
+        try {
+          await addCityToGroup(_currentGroupId, {
+            ...cityData,
+            lived: false,
+            addedBy: { uid: _uid, photoURL: chosenPhoto, displayName }
+          }, 'visited');
+          showToast(`${cityData.name} added to group ✓`);
+        } catch {
+          showToast('Failed to add location to group.');
+        }
+      });
+    } else {
+      // Wishlist: add directly, no photo dialog
+      try {
+        await addCityToGroup(_currentGroupId, {
+          ...cityData,
+          lived: false,
+          addedBy: { uid: _uid, photoURL: defaultPhoto, displayName }
+        }, 'wishlist');
+        showToast(`${cityData.name} added to group ✓`);
+      } catch {
+        showToast('Failed to add location to group.');
+      }
     }
+    _closeMobileSearchOverlay();
     return;
   }
   try {
@@ -233,10 +258,22 @@ async function _onAddCity(cityData, type, lived) {
 
 function _onCityRemoveRequest(city, type, clientX, clientY) {
   if (_viewMode === 'group' && _currentGroupId) {
-    showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup);
+    showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto);
     return;
   }
   showCityPopup(city, type, clientX, clientY, _onRemoveCity);
+}
+
+function _onChangeGroupCityPhoto(city, type) {
+  const defaultPhoto = city.addedBy?.photoURL || _currentUser?.photoURL || '';
+  showGroupPhotoDialog(city.name, defaultPhoto, async (chosenPhoto) => {
+    try {
+      await updateGroupCityPhoto(_currentGroupId, city.name, type, chosenPhoto);
+      showToast('Photo updated ✓');
+    } catch {
+      showToast('Failed to update photo.');
+    }
+  });
 }
 
 async function _onRemoveCityFromGroup(city, type) {
@@ -370,7 +407,7 @@ function _switchToGroupView(group) {
     if (_viewMode === 'group' && _currentGroupId === group.id) {
       clearAllMarkers();
       hideCountryLayers(_map); // groups show cities only, no country fills
-      renderAllMarkers(_map, groupData, _onCityRemoveRequest);
+      renderGroupMarkers(_map, groupData, _onCityRemoveRequest);
     }
   });
 }

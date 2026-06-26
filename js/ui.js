@@ -56,23 +56,6 @@ function _updateRecentLogs(visitedCities) {
 
 let _cityPopupData = null; // { city, type }
 
-export function showCityPopup(city, type, clientX, clientY, onRemove) {
-  _cityPopupData = { city, type };
-  const popup = document.getElementById('city-popup');
-  document.getElementById('city-popup-name').textContent = city.name;
-
-  const x = Math.min(clientX + 10, window.innerWidth  - 160);
-  const y = Math.min(clientY - 10, window.innerHeight - 80);
-  popup.style.left    = x + 'px';
-  popup.style.top     = y + 'px';
-  popup.style.display = 'block';
-
-  document.getElementById('btn-remove-city').onclick = () => {
-    if (_cityPopupData) onRemove(_cityPopupData.city, _cityPopupData.type);
-    hideCityPopup();
-  };
-}
-
 export function hideCityPopup() {
   document.getElementById('city-popup').style.display = 'none';
   _cityPopupData = null;
@@ -601,4 +584,132 @@ export function showViewBanner(title, onBack) {
 export function hideViewBanner() {
   const banner = document.getElementById('view-banner');
   if (banner) banner.style.display = 'none';
+}
+
+// ===== Group Photo Dialog =====
+
+/**
+ * Compresses an image file to a square JPEG thumbnail (Base64).
+ * @param {File} file
+ * @param {number} size — output px (default 120)
+ * @returns {Promise<string>} Base64 data URL
+ */
+async function _compressImage(file, size = 240) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        // Centre-crop to square
+        const min = Math.min(img.width, img.height);
+        const sx  = (img.width  - min) / 2;
+        const sy  = (img.height - min) / 2;
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Shows the group photo picker dialog.
+ * @param {string} cityName
+ * @param {string} defaultPhotoURL — profile photo shown as starting preview
+ * @param {function} onConfirm(photoURL: string) — called with chosen/default URL
+ */
+export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
+  const dialog  = document.getElementById('group-photo-dialog');
+  const preview = document.getElementById('group-photo-preview');
+  const input   = document.getElementById('group-photo-input');
+  const cityEl  = document.getElementById('group-photo-city');
+  if (!dialog) return;
+
+  cityEl.textContent  = cityName;
+  preview.src         = defaultPhotoURL || '';
+  input.value         = ''; // reset file picker
+
+  let _chosenURL = defaultPhotoURL || '';
+
+  // File chosen → compress and preview
+  const _onFileChange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      _chosenURL  = await _compressImage(file);
+      preview.src = _chosenURL;
+    } catch {
+      showToast('Could not load image.');
+    }
+  };
+  input.removeEventListener('change', input._photoHandler);
+  input._photoHandler = _onFileChange;
+  input.addEventListener('change', _onFileChange);
+
+  // Skip → use default
+  const skipBtn    = document.getElementById('group-photo-skip');
+  const confirmBtn = document.getElementById('group-photo-confirm');
+
+  const _cleanup = () => {
+    dialog.style.display = 'none';
+    skipBtn.onclick    = null;
+    confirmBtn.onclick = null;
+  };
+
+  skipBtn.onclick    = () => { _cleanup(); onConfirm(defaultPhotoURL || ''); };
+  confirmBtn.onclick = () => { _cleanup(); onConfirm(_chosenURL); };
+
+  dialog.style.display = 'flex';
+}
+
+/**
+ * Shows city popup, optionally with a "Change photo" button (group view).
+ * @param {object}   city
+ * @param {string}   type — 'visited' | 'wishlist'
+ * @param {number}   clientX
+ * @param {number}   clientY
+ * @param {function} onRemove(city, type)
+ * @param {function} [onChangePhoto(city, type)] — if provided, shows change-photo button
+ */
+export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null) {
+  _cityPopupData = { city, type };
+  const popup = document.getElementById('city-popup');
+  document.getElementById('city-popup-name').textContent = city.name;
+
+  const x = Math.min(clientX + 10, window.innerWidth  - 180);
+  const y = Math.min(clientY - 10, window.innerHeight - 120);
+  popup.style.left    = x + 'px';
+  popup.style.top     = y + 'px';
+  popup.style.display = 'block';
+
+  document.getElementById('btn-remove-city').onclick = () => {
+    if (_cityPopupData) onRemove(_cityPopupData.city, _cityPopupData.type);
+    hideCityPopup();
+  };
+
+  // Change-photo button — only in group visited view
+  let photoBtn = document.getElementById('btn-change-photo');
+  if (onChangePhoto && type === 'visited') {
+    if (!photoBtn) {
+      photoBtn = document.createElement('button');
+      photoBtn.id        = 'btn-change-photo';
+      photoBtn.className = 'btn-change-photo';
+      photoBtn.textContent = '📷 Photo';
+      document.getElementById('city-popup').appendChild(photoBtn);
+    }
+    photoBtn.style.display = 'block';
+    photoBtn.onclick = () => {
+      const snapshot = _cityPopupData; // save before hideCityPopup nulls _cityPopupData
+      hideCityPopup();
+      if (snapshot) onChangePhoto(snapshot.city, snapshot.type);
+    };
+  } else if (photoBtn) {
+    photoBtn.style.display = 'none';
+  }
 }

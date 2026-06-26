@@ -151,6 +151,18 @@ export async function removeCityFromGroup(groupId, cityName, type) {
   await updateDoc(groupRef(groupId), { [field]: updated });
 }
 
+export async function updateGroupCityPhoto(groupId, cityName, type, newPhotoURL) {
+  const snap = await getDoc(groupRef(groupId));
+  const data = snap.data() ?? {};
+  const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
+  const updated = (data[field] ?? []).map(c =>
+    c.name === cityName
+      ? { ...c, addedBy: { ...(c.addedBy ?? {}), photoURL: newPhotoURL } }
+      : c
+  );
+  await updateDoc(groupRef(groupId), { [field]: updated });
+}
+
 // ===== Real-time Subscriptions =====
 
 /**

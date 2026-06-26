@@ -186,6 +186,16 @@ body {
 .stat-label { font-size: 0.71rem; color: var(--tx-stat); margin-bottom: 4px; }
 .stat-num   { font-size: 1.65rem; font-weight: 700; color: var(--tx-primary); line-height: 1; }
 
+/* Stat tabs (clickable view toggle) */
+.stat-tab { cursor: pointer; user-select: none; border: 2px solid transparent; }
+.stat-tab:hover { background: var(--bg-card-hov); }
+.stat-tab.active {
+  border-color: rgba(99,102,241,0.35);
+  background: rgba(99,102,241,0.08);
+}
+.stat-tab.active .stat-label { color: #a5b4fc; }
+.stat-tab.active .stat-num   { color: var(--tx-primary); }
+
 /* ===== Collection nav ===== */
 .collection-nav { display: flex; flex-direction: column; gap: 3px; margin-bottom: 18px; }
 .nav-item {
@@ -318,6 +328,52 @@ body {
   100% { transform: scale(3.2); opacity: 0; }
 }
 
+/* ===== Group Avatar Pin ===== */
+.group-pin-visited {
+  position: relative;
+  width: 40px;
+  height: 48px; /* 40px image + 8px tail */
+  cursor: pointer;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5));
+  transition: transform 0.15s ease;
+}
+.group-pin-visited:hover {
+  transform: scale(1.1) translateY(-2px);
+}
+/* Circle image */
+.group-pin-img,
+.group-pin-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid #6366f1;
+  display: block;
+  object-fit: cover;
+}
+/* Fallback: initials */
+.group-pin-fallback {
+  background: #6366f1;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Tail pointer */
+.group-pin-visited::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left:  7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top:   9px solid #6366f1;
+}
+
 /* ===== Country Tooltip ===== */
 #country-tooltip {
   position: absolute; z-index: 20;
@@ -384,6 +440,42 @@ body {
 }
 .btn-add:hover { background: #4f46e5; }
 
+/* ===== Country Tooltip ===== */
+#country-tooltip {
+  position: absolute; z-index: 20;
+  background: var(--bg-popup); border: 1px solid var(--bd-popup);
+  border-radius: 12px; padding: 12px 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  min-width: 170px; display: none; backdrop-filter: blur(14px);
+}
+#country-tooltip-name {
+  font-size: 0.88rem; font-weight: 600; color: var(--tx-primary);
+  margin-bottom: 10px; padding-right: 18px;
+}
+#country-tooltip-close {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none;
+  font-size: 0.9rem; color: var(--tx-muted); cursor: pointer;
+}
+#country-tooltip .tooltip-btn { display: block; width: 100%; padding: 7px 10px; margin-bottom: 4px; }
+#country-tooltip .tooltip-btn:last-child { margin-bottom: 0; }
+
+/* ===== Country Search Results ===== */
+.search-country-item {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 14px;
+}
+.search-country-name { flex: 1; font-size: 0.82rem; color: var(--tx-results); }
+.search-country-iso  { font-size: 0.68rem; color: var(--tx-muted); flex-shrink: 0; }
+.country-add-btn {
+  font-size: 0.72rem; font-weight: 600; padding: 3px 9px;
+  border: none; border-radius: 5px; cursor: pointer; font-family: inherit;
+  transition: filter 0.12s; flex-shrink: 0;
+}
+.country-add-btn.visited  { background: rgba(99,102,241,0.18); color: #a5b4fc; }
+.country-add-btn.wishlist { background: rgba(16,185,129,0.18); color: #6ee7b7; }
+.country-add-btn:hover    { filter: brightness(1.25); }
+
 /* ===== City Remove Popup ===== */
 #city-popup {
   position: absolute; z-index: 20;
@@ -398,11 +490,52 @@ body {
   border: none; border-radius: 5px;
   color: #f87171; font-size: 0.77rem; font-weight: 600; cursor: pointer; font-family: inherit;
 }
+.btn-change-photo {
+  width: 100%; padding: 6px; margin-top: 5px;
+  background: rgba(99,102,241,0.1); border: none; border-radius: 5px;
+  color: #818cf8; font-size: 0.77rem; font-weight: 600; cursor: pointer; font-family: inherit;
+}
 #city-popup-close {
   position: absolute; top: 6px; right: 8px;
   background: none; border: none;
   font-size: 0.9rem; color: var(--tx-muted); cursor: pointer;
 }
+
+/* ===== Group Photo Dialog ===== */
+#group-photo-dialog {
+  position: fixed; inset: 0; z-index: 60;
+  background: var(--bg-overlay);
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.group-photo-card {
+  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
+  border-radius: 16px; padding: 24px 20px;
+  width: min(340px, 92vw); text-align: center;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+.group-photo-card h3 {
+  font-size: 0.9rem; font-weight: 600; color: var(--tx-secondary);
+  margin-bottom: 16px;
+}
+.group-photo-card h3 span { color: var(--tx-primary); }
+.group-photo-preview-wrap {
+  width: 100px; height: 100px; margin: 0 auto 16px;
+  border-radius: 50%; overflow: hidden;
+  border: 3px solid #6366f1;
+  background: rgba(99,102,241,0.1);
+}
+#group-photo-preview {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.btn-upload-photo {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25);
+  color: #818cf8; font-size: 0.83rem; font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-upload-photo:hover { background: rgba(99,102,241,0.2); }
 
 /* ===== Toast ===== */
 #toast {
@@ -466,10 +599,18 @@ body {
   /* Shift search bar right to avoid hamburger overlap */
   .top-right-bar { left: 64px; right: 12px; top: 14px; }
 
-  /* On mobile, banner below the top bar row */
-  .view-banner { top: 70px; left: 12px; }
+  /* Banner slots into top bar area — search is hidden when banner is active */
+  .view-banner { top: 14px; left: 64px; right: 130px; max-width: none; overflow: hidden; }
+  .view-banner-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .search-wrap { flex: 1; min-width: 0; }
   #city-search { min-width: 0; width: 100%; }
+
+  /* When banner is visible: hide search bar, push user-pill right */
+  .banner-active .search-wrap { display: none; }
+  .banner-active .top-right-bar { justify-content: flex-end; }
+
+  /* Show search button inside banner in group mode */
+  .map-area.group-active .btn-search-banner { display: flex; }
 
   /* Legend: push up above browser chrome + safe area */
   .map-legend {
@@ -536,9 +677,34 @@ body {
   font-size: 0.78rem; color: var(--tx-muted); padding: 4px 2px;
 }
 
+/* ===== Custom Confirm Dialog ===== */
+#confirm-dialog {
+  position: fixed; inset: 0; z-index: 62;
+  display: none; align-items: center; justify-content: center;
+  background: var(--bg-overlay); backdrop-filter: blur(6px);
+}
+#confirm-dialog.open { display: flex; }
+.confirm-card {
+  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
+  border-radius: 16px; padding: 22px 24px;
+  min-width: 260px; max-width: 320px; width: 88%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.confirm-card p {
+  font-size: 0.88rem; color: var(--tx-primary);
+  margin-bottom: 18px; line-height: 1.5;
+}
+.btn-danger {
+  flex: 2; padding: 9px; border: none;
+  border-radius: 8px; background: rgba(239,68,68,0.85); color: white;
+  font-size: 0.84rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-danger:hover { background: rgba(220,38,38,0.9); }
+
 /* ===== Group Create Modal ===== */
 #group-modal {
-  position: fixed; inset: 0; z-index: 40;
+  position: fixed; inset: 0; z-index: 60;
   display: none; align-items: center; justify-content: center;
   background: var(--bg-overlay); backdrop-filter: blur(6px);
 }
@@ -578,22 +744,91 @@ body {
 /* ===== View Mode Banner ===== */
 .view-banner {
   position: absolute; top: 16px; left: 16px; z-index: 25;
-  display: none; align-items: center; gap: 8px;
-  padding: 6px 12px 6px 8px;
-  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
-  border-radius: 12px; backdrop-filter: blur(14px);
+  display: none; align-items: center; gap: 0;
+  padding: 0;
+  background: var(--bg-input); border: 1px solid var(--bd-input);
+  border-radius: 14px; backdrop-filter: blur(16px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  max-width: 260px;
+  max-width: 260px; overflow: hidden;
 }
 .view-banner-back {
-  background: var(--bg-card); border: 1px solid var(--bd-card);
-  border-radius: 8px; padding: 5px 10px;
-  font-size: 0.85rem; cursor: pointer; color: var(--tx-primary);
+  background: transparent; border: none;
+  border-right: 1px solid var(--bd-input);
+  border-radius: 0;
+  padding: 7px 12px;
+  font-size: 0.83rem; font-weight: 600;
+  cursor: pointer; color: var(--tx-input);
   font-family: inherit; transition: background 0.15s;
+  align-self: stretch; flex-shrink: 0;
+  display: flex; align-items: center;
 }
 .view-banner-back:hover { background: var(--bg-card-hov); }
 .view-banner-title {
-  font-size: 0.9rem; font-weight: 600; color: var(--tx-primary);
+  flex: 1;
+  font-size: 0.83rem; font-weight: 600; color: var(--tx-input);
+  padding: 7px 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Search button embedded in banner (group mode only) */
+.btn-search-banner {
+  display: none;
+  align-items: center; justify-content: center;
+  flex-shrink: 0; align-self: stretch;
+  padding: 0 11px;
+  background: transparent; border: none;
+  border-left: 1px solid var(--bd-input);
+  color: var(--tx-input); cursor: pointer;
+  border-radius: 0 14px 14px 0;
+  transition: background 0.15s;
+}
+.btn-search-banner:hover { background: var(--bg-card-hov); }
+
+/* ===== Friend Remove Button ===== */
+.btn-remove-friend {
+  margin-left: auto; background: none; border: none;
+  color: var(--tx-secondary); font-size: 0.8rem; cursor: pointer;
+  padding: 2px 6px; border-radius: 6px; opacity: 0.5;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.btn-remove-friend:hover { opacity: 1; background: rgba(239,68,68,0.1); color: #f87171; }
+
+/* ===== Group Add-Member Button ===== */
+.btn-add-member {
+  background: none; border: none;
+  color: var(--tx-secondary); font-size: 0.75rem; cursor: pointer;
+  padding: 2px 5px; border-radius: 6px; opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.btn-add-member:hover { opacity: 1; background: rgba(99,102,241,0.12); color: #a5b4fc; }
+
+/* ===== Mobile Search Overlay ===== */
+.mobile-search-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  flex-direction: column; gap: 16px; padding: 20px 16px;
+  background: var(--bg-sidebar); backdrop-filter: blur(20px);
+}
+.mobile-search-overlay.open { display: flex; }
+.mobile-search-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 12px; border-bottom: 1px solid var(--bd-card);
+}
+.mobile-search-title {
+  font-size: 1rem; font-weight: 600; color: var(--tx-primary);
+}
+.btn-close-search {
+  background: var(--bg-card); border: 1px solid var(--bd-card);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  color: var(--tx-primary); font-size: 0.82rem; font-family: inherit;
+}
+#mobile-search-body { display: flex; flex-direction: column; }
+#mobile-search-body .search-wrap { position: static; width: 100%; }
+#mobile-search-body #city-search { width: 100%; }
+#mobile-search-body #search-results {
+  position: static; margin-top: 8px;
+  max-height: 55vh; overflow-y: auto;
 }
 
 /* ===== Leave group button ===== */
