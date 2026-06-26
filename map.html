@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>TravelMap</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=18">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 </head>
@@ -27,17 +30,17 @@
         <button class="btn-theme" id="btn-theme" title="Toggle theme">☀️</button>
       </div>
 
-      <!-- Snapshot stats grid -->
+      <!-- Snapshot stats grid (clickable tabs) -->
       <div class="sidebar-section">
-        <p class="section-label">Snapshot</p>
+        <p class="section-label">View</p>
         <div class="stats-grid">
-          <div class="stat-card">
-            <p class="stat-label">Countries</p>
-            <p class="stat-num" id="stat-countries-num">0</p>
-          </div>
-          <div class="stat-card">
+          <div class="stat-card stat-tab active" data-mode="cities" id="tab-cities">
             <p class="stat-label">Cities</p>
             <p class="stat-num" id="stat-cities-num">0</p>
+          </div>
+          <div class="stat-card stat-tab" data-mode="countries" id="tab-countries">
+            <p class="stat-label">Countries</p>
+            <p class="stat-num" id="stat-countries-num">0</p>
           </div>
         </div>
       </div>
@@ -125,6 +128,11 @@
       <div id="view-banner" class="view-banner">
         <button id="view-banner-back" class="view-banner-back">← Back</button>
         <span  id="view-banner-title" class="view-banner-title"></span>
+        <button id="btn-search-mobile" class="btn-search-banner" aria-label="Search cities">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </button>
       </div>
 
       <div id="map"></div>
@@ -151,11 +159,15 @@
         </div>
       </div>
 
-      <!-- Bottom-left: legend -->
-      <div class="map-legend">
+      <!-- Bottom-left: legend (cities / countries) -->
+      <div class="map-legend" id="legend-cities">
         <div class="legend-item"><span class="legend-dot indigo"></span><span>Visited</span></div>
         <div class="legend-item"><span class="legend-dot amber"></span><span>Lived</span></div>
         <div class="legend-item"><span class="legend-dot emerald"></span><span>Wishlist</span></div>
+      </div>
+      <div class="map-legend" id="legend-countries" style="display:none">
+        <div class="legend-item"><span class="legend-dot indigo" style="border-radius:3px;width:14px;height:10px"></span><span>Visited</span></div>
+        <div class="legend-item"><span class="legend-dot emerald" style="border-radius:3px;width:14px;height:10px"></span><span>Wishlist</span></div>
       </div>
     </main>
 
@@ -186,6 +198,15 @@
     </div>
   </div>
 
+  <!-- Country Tooltip (Countries mode) -->
+  <div id="country-tooltip">
+    <button id="country-tooltip-close">✕</button>
+    <p id="country-tooltip-name">Germany</p>
+    <button class="tooltip-btn visited"  id="country-tooltip-visited">✓ Visited</button>
+    <button class="tooltip-btn wishlist" id="country-tooltip-wishlist">⭐ Wishlist</button>
+    <button class="tooltip-btn remove"   id="country-tooltip-remove" style="display:none">🗑️ Remove</button>
+  </div>
+
   <!-- City Remove Popup -->
   <div id="city-popup">
     <button id="city-popup-close">✕</button>
@@ -196,12 +217,25 @@
   <!-- Toast -->
   <div id="toast"></div>
 
-  <!-- Group Create Modal -->
+  <!-- Custom Confirm Dialog -->
+  <div id="confirm-dialog">
+    <div class="confirm-card">
+      <p id="confirm-message">Are you sure?</p>
+      <div class="dialog-actions">
+        <button class="btn-cancel" id="confirm-cancel">Cancel</button>
+        <button class="btn-danger" id="confirm-ok">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group Create / Add Member Modal -->
   <div id="group-modal">
     <div class="group-modal-card">
-      <h3>New Group</h3>
-      <input type="text" id="group-name-input" placeholder="Group name…" maxlength="40" autocomplete="off">
-      <p class="dialog-label" style="margin-top:14px">Add friends</p>
+      <h3 id="group-modal-title">New Group</h3>
+      <div id="group-name-row">
+        <input type="text" id="group-name-input" placeholder="Group name…" maxlength="40" autocomplete="off">
+      </div>
+      <p class="dialog-label" style="margin-top:14px" id="group-friends-label">Add friends</p>
       <div id="group-friends-checklist" class="group-friends-checklist"></div>
       <div class="dialog-actions" style="margin-top:16px">
         <button class="btn-cancel" id="group-modal-cancel">Cancel</button>
@@ -210,6 +244,15 @@
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=13"></script>
+  <!-- Mobile Search Overlay (group view) -->
+  <div id="mobile-search-overlay" class="mobile-search-overlay">
+    <div class="mobile-search-header">
+      <span class="mobile-search-title">Add city to group</span>
+      <button id="btn-close-search" class="btn-close-search">✕ Close</button>
+    </div>
+    <div id="mobile-search-body"></div>
+  </div>
+
+  <script type="module" src="js/app.js?v=22"></script>
 </body>
 </html>
