@@ -1,4 +1,5 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
+import { searchCountries } from './countries.js?v=18';
 
 // ===== Stats & Sidebar =====
 
@@ -51,55 +52,6 @@ function _updateRecentLogs(visitedCities) {
   `).join('');
 }
 
-// ===== Country Tooltip =====
-
-let _tooltipData = null; // { isoCode, countryName }
-
-/**
- * Wires up the country tooltip. Call once after map loads.
- * onAction(action, isoCode) where action = 'visited' | 'wishlist' | 'remove'
- */
-export function setupCountryTooltip(map, onAction) {
-  const tooltip = document.getElementById('country-tooltip');
-
-  map.on('click', 'country-click', (e) => {
-    // Mark the native event so the generic map click handler in app.js
-    // knows a layer feature was clicked and should NOT close the tooltip.
-    e.originalEvent._handled = true;
-
-    const props = e.features[0]?.properties;
-    if (!props) return;
-
-    _tooltipData = {
-      isoCode:     props.iso_3166_1,
-      countryName: props.name_en || props.iso_3166_1
-    };
-
-    document.getElementById('tooltip-country-name').textContent = _tooltipData.countryName;
-
-    // Position near click, keep inside viewport
-    const x = Math.min(e.point.x + 10, window.innerWidth  - 180);
-    const y = Math.min(e.point.y - 10, window.innerHeight - 160);
-    tooltip.style.left    = x + 'px';
-    tooltip.style.top     = y + 'px';
-    tooltip.style.display = 'block';
-  });
-
-  document.getElementById('tooltip-close').addEventListener('click', hideCountryTooltip);
-
-  ['visited', 'wishlist', 'remove'].forEach(action => {
-    document.getElementById(`tooltip-${action}`).addEventListener('click', () => {
-      if (_tooltipData) onAction(action, _tooltipData.isoCode);
-      hideCountryTooltip();
-    });
-  });
-}
-
-export function hideCountryTooltip() {
-  document.getElementById('country-tooltip').style.display = 'none';
-  _tooltipData = null;
-}
-
 // ===== City Remove Popup =====
 
 let _cityPopupData = null; // { city, type }
@@ -126,12 +78,18 @@ export function hideCityPopup() {
   _cityPopupData = null;
 }
 
-// ===== City Search + Dialog =====
+// ===== City + Country Search =====
 
 let _selectedCity = null; // { name, lat, lng, country }
 let _searchAbort  = null; // AbortController for in-flight geocoding requests
 
-export function setupCitySearch(onAddCity) {
+/**
+ * Sets up the unified search bar.
+ * getMode(): returns 'cities' | 'countries'
+ * onAddCity(cityData, type, lived): called when a city is added
+ * onAddCountry({ name, isoCode }, type): called when a country is added from search
+ */
+export function setupSearch(onAddCity, onAddCountry, getMode) {
   const input   = document.getElementById('city-search');
   const results = document.getElementById('search-results');
   let _debounce = null;
@@ -140,7 +98,13 @@ export function setupCitySearch(onAddCity) {
     clearTimeout(_debounce);
     const q = input.value.trim();
     if (q.length < 2) { results.innerHTML = ''; return; }
-    _debounce = setTimeout(() => _searchCities(q, results), 300);
+    _debounce = setTimeout(() => {
+      if (getMode() === 'countries') {
+        _searchAndRenderCountries(q, results, onAddCountry);
+      } else {
+        _searchCities(q, results);
+      }
+    }, 300);
   });
 
   // Dialog elements
@@ -175,6 +139,44 @@ export function setupCitySearch(onAddCity) {
   });
 
   document.getElementById('city-popup-close').addEventListener('click', hideCityPopup);
+}
+
+async function _searchAndRenderCountries(query, resultsEl, onAddCountry) {
+  resultsEl.innerHTML = '<div class="search-result-item">Searching…</div>';
+  try {
+    const countries = await searchCountries(query);
+    if (!countries.length) {
+      resultsEl.innerHTML = '<div class="search-result-item">No countries found</div>';
+      return;
+    }
+    resultsEl.innerHTML = '';
+    countries.forEach(country => {
+      const item = document.createElement('div');
+      item.className = 'search-result-item search-country-item';
+      item.innerHTML = `
+        <span class="search-country-name">${country.name}</span>
+        <span class="search-country-iso">${country.isoCode}</span>
+        <button class="country-add-btn visited" data-type="visited">✓ Visited</button>
+        <button class="country-add-btn wishlist" data-type="wishlist">⭐ Wishlist</button>
+      `;
+      item.querySelector('[data-type="visited"]').addEventListener('click', e => {
+        e.stopPropagation();
+        onAddCountry(country, 'visited');
+        resultsEl.innerHTML = '';
+        document.getElementById('city-search').value = '';
+      });
+      item.querySelector('[data-type="wishlist"]').addEventListener('click', e => {
+        e.stopPropagation();
+        onAddCountry(country, 'wishlist');
+        resultsEl.innerHTML = '';
+        document.getElementById('city-search').value = '';
+      });
+      resultsEl.appendChild(item);
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+    resultsEl.innerHTML = '<div class="search-result-item">Search error</div>';
+  }
 }
 
 async function _searchCities(query, resultsEl) {
@@ -230,6 +232,34 @@ function _closeDialog() {
   _selectedCity = null;
 }
 
+// ===== Custom Confirm Dialog =====
+
+let _confirmCb = null;
+
+export function setupConfirmDialog() {
+  document.getElementById('confirm-cancel')?.addEventListener('click', _closeConfirm);
+  document.getElementById('confirm-dialog')?.addEventListener('click', e => {
+    if (e.target.id === 'confirm-dialog') _closeConfirm();
+  });
+  document.getElementById('confirm-ok')?.addEventListener('click', () => {
+    const cb = _confirmCb;
+    _closeConfirm();
+    cb?.();
+  });
+}
+
+export function showConfirm(message, actionLabel, onConfirm) {
+  _confirmCb = onConfirm;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-ok').textContent = actionLabel || 'Confirm';
+  document.getElementById('confirm-dialog').classList.add('open');
+}
+
+function _closeConfirm() {
+  document.getElementById('confirm-dialog').classList.remove('open');
+  _confirmCb = null;
+}
+
 // ===== Toast =====
 
 export function showToast(message) {
@@ -247,7 +277,7 @@ export function showToast(message) {
  * onViewFriend(friend): called when user clicks a friend row
  * onResetToken(): called when user clicks Reset (returns new token promise)
  */
-export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend) {
+export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onDeleteFriend) {
   // Wire copy-invite button
   document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
     const link = `${window.location.origin}/map.html?token=${inviteToken}`;
@@ -258,10 +288,10 @@ export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend) {
     });
   });
 
-  renderFriendsList(friends, onViewFriend);
+  renderFriendsList(friends, onViewFriend, onDeleteFriend);
 }
 
-export function renderFriendsList(friends, onViewFriend) {
+export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
   const el = document.getElementById('friends-list');
   if (!el) return;
 
@@ -280,15 +310,30 @@ export function renderFriendsList(friends, onViewFriend) {
       ? `<img class="social-avatar" src="${friend.avatar_url}" alt="" loading="lazy">`
       : `<div class="social-avatar-placeholder">👤</div>`;
 
-    item.innerHTML = `${avatar}<span class="social-name">${friend.display_name || 'Friend'}</span>`;
-    item.addEventListener('click', () => onViewFriend(friend));
+    item.innerHTML = `
+      ${avatar}
+      <span class="social-name">${friend.display_name || 'Friend'}</span>
+      <button class="btn-remove-friend" title="Remove friend">✕</button>
+    `;
+    item.addEventListener('click', e => {
+      if (e.target.closest('.btn-remove-friend')) return;
+      onViewFriend(friend);
+    });
+    item.querySelector('.btn-remove-friend').addEventListener('click', e => {
+      e.stopPropagation();
+      const name = friend.display_name || 'this friend';
+      showConfirm(`Remove ${name} from your friends?`, 'Remove', () => onDeleteFriend?.(friend.uid));
+    });
     el.appendChild(item);
   });
 }
 
 // ===== Groups Sidebar =====
 
-let _groupModalCreateCb = null;
+let _groupModalCreateCb   = null;
+let _groupModalAddMemberCb = null;
+let _groupModalMode        = 'create'; // 'create' | 'add-member'
+let _groupModalTargetGroup = null;
 
 /**
  * Renders groups list and wires the "+ New" button.
@@ -296,12 +341,14 @@ let _groupModalCreateCb = null;
  * friends: Array<{ uid, display_name }>
  * onCreateGroup(name, memberUids): called when group is created
  * onViewGroup(group): called when user clicks a group row
+ * onAddMembers(groupId, friendUids): called when adding members to existing group
  */
-export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, onViewGroup, onLeaveGroup) {
-  _groupModalCreateCb = onCreateGroup;
+export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, onViewGroup, onLeaveGroup, onAddMembers) {
+  _groupModalCreateCb    = onCreateGroup;
+  _groupModalAddMemberCb = onAddMembers;
 
   document.getElementById('btn-create-group')?.addEventListener('click', () => {
-    _openGroupModal(friends);
+    _openGroupModal(friends, 'create');
   });
 
   document.getElementById('group-modal-cancel')?.addEventListener('click', _closeGroupModal);
@@ -310,34 +357,69 @@ export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, o
   });
 
   document.getElementById('group-modal-create')?.addEventListener('click', () => {
-    const name = document.getElementById('group-name-input')?.value.trim();
-    if (!name) { showToast('Please enter a group name.'); return; }
-
     const checked = [...document.querySelectorAll('#group-friends-checklist input:checked')];
-    if (!checked.length) { showToast('Select at least one friend.'); return; }
-
+    if (!checked.length) { showToast('Select at least one person.'); return; }
     const memberUids = checked.map(cb => cb.value);
-    _groupModalCreateCb?.(name, memberUids);
+
+    if (_groupModalMode === 'create') {
+      const name = document.getElementById('group-name-input')?.value.trim();
+      if (!name) { showToast('Please enter a group name.'); return; }
+      _groupModalCreateCb?.(name, memberUids);
+    } else {
+      _groupModalAddMemberCb?.(_groupModalTargetGroup.id, memberUids);
+    }
     _closeGroupModal();
   });
 
-  renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup);
+  renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, onAddMembers, friends);
 }
 
-function _openGroupModal(friends) {
-  const checklist = document.getElementById('group-friends-checklist');
-  if (!checklist) return;
-  document.getElementById('group-name-input').value = '';
+function _openGroupModal(friends, mode = 'create', group = null, allMembers = []) {
+  _groupModalMode        = mode;
+  _groupModalTargetGroup = group;
 
-  if (!friends.length) {
-    checklist.innerHTML = '<p class="social-empty">Add friends first to create a group.</p>';
+  const titleEl     = document.getElementById('group-modal-title');
+  const nameRow     = document.getElementById('group-name-row');
+  const friendLabel = document.getElementById('group-friends-label');
+  const createBtn   = document.getElementById('group-modal-create');
+  const checklist   = document.getElementById('group-friends-checklist');
+  if (!checklist) return;
+
+  if (mode === 'create') {
+    titleEl.textContent       = 'New Group';
+    nameRow.style.display     = '';
+    friendLabel.textContent   = 'Add friends';
+    createBtn.textContent     = 'Create';
+    document.getElementById('group-name-input').value = '';
+
+    if (!friends.length) {
+      checklist.innerHTML = '<p class="social-empty">Add friends first to create a group.</p>';
+    } else {
+      checklist.innerHTML = friends.map(f => `
+        <label class="group-check-item">
+          <input type="checkbox" value="${f.uid}">
+          <span class="group-check-name">${f.display_name || 'Friend'}</span>
+        </label>
+      `).join('');
+    }
   } else {
-    checklist.innerHTML = friends.map(f => `
-      <label class="group-check-item">
-        <input type="checkbox" value="${f.uid}">
-        <span class="group-check-name">${f.display_name || 'Friend'}</span>
-      </label>
-    `).join('');
+    // add-member mode: only show friends NOT already in the group
+    titleEl.textContent     = `Add to "${group.name}"`;
+    nameRow.style.display   = 'none';
+    friendLabel.textContent = 'Select friends to add';
+    createBtn.textContent   = 'Add';
+
+    const available = friends.filter(f => !allMembers.includes(f.uid));
+    if (!available.length) {
+      checklist.innerHTML = '<p class="social-empty">All your friends are already in this group.</p>';
+    } else {
+      checklist.innerHTML = available.map(f => `
+        <label class="group-check-item">
+          <input type="checkbox" value="${f.uid}">
+          <span class="group-check-name">${f.display_name || 'Friend'}</span>
+        </label>
+      `).join('');
+    }
   }
 
   document.getElementById('group-modal').classList.add('open');
@@ -347,9 +429,14 @@ function _closeGroupModal() {
   document.getElementById('group-modal').classList.remove('open');
 }
 
-// ===== Groups List (with leave/delete) =====
+// Public helper so app.js can open the add-member modal
+export function openAddMemberModal(group, friends) {
+  _openGroupModal(friends, 'add-member', group, group.members ?? []);
+}
 
-export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup) {
+// ===== Groups List (with leave/delete + add member) =====
+
+export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, onAddMembers, friends = []) {
   const el = document.getElementById('groups-list');
   if (!el) return;
 
@@ -364,33 +451,135 @@ export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup) 
     item.className = 'social-item';
     item.dataset.id = group.id;
 
-    const isCreator = group.created_by === currentUid;
-    const leaveLabel = isCreator ? '🗑️' : '✕';
-    const leaveTitle = isCreator ? 'Delete group' : 'Leave group';
+    const isCreator   = group.created_by === currentUid;
+    const leaveLabel  = isCreator ? '🗑️' : '✕';
+    const leaveTitle  = isCreator ? 'Delete group' : 'Leave group';
+    const memberCount = (group.members ?? []).length;
 
     item.innerHTML = `
       <div class="social-avatar-placeholder">🌍</div>
       <span class="social-name">${group.name}</span>
+      <button class="btn-add-member" title="Add member">👤+</button>
       <button class="btn-leave-group" title="${leaveTitle}">${leaveLabel}</button>
     `;
 
     // Row click → view group
     item.addEventListener('click', e => {
-      if (e.target.closest('.btn-leave-group')) return;
+      if (e.target.closest('.btn-leave-group') || e.target.closest('.btn-add-member')) return;
       onViewGroup(group);
+    });
+
+    // Add member button
+    item.querySelector('.btn-add-member').addEventListener('click', e => {
+      e.stopPropagation();
+      openAddMemberModal(group, friends);
     });
 
     // Leave/delete button
     item.querySelector('.btn-leave-group').addEventListener('click', e => {
       e.stopPropagation();
-      const confirmMsg = isCreator
+      const msg   = isCreator
         ? `Delete group "${group.name}"? This cannot be undone.`
         : `Leave group "${group.name}"?`;
-      if (confirm(confirmMsg)) onLeaveGroup(group.id, group.created_by);
+      const label = isCreator ? 'Delete' : 'Leave';
+      showConfirm(msg, label, () => onLeaveGroup(group.id, group.created_by));
     });
 
     el.appendChild(item);
   });
+}
+
+// ===== Country Tooltip (Countries map mode) =====
+
+let _countryTooltipCb = null;
+
+export function setupCountryTooltip() {
+  document.getElementById('country-tooltip-close')?.addEventListener('click', hideCountryTooltip);
+  ['visited', 'wishlist', 'remove'].forEach(action => {
+    document.getElementById(`country-tooltip-${action}`)?.addEventListener('click', () => {
+      _countryTooltipCb?.(action);
+      hideCountryTooltip();
+    });
+  });
+}
+
+export function showCountryTooltip(isoCode, name, isVisited, isWishlist, point, onAction) {
+  _countryTooltipCb = action => onAction(action, isoCode, name);
+
+  const el        = document.getElementById('country-tooltip');
+  const removeBtn = document.getElementById('country-tooltip-remove');
+  document.getElementById('country-tooltip-name').textContent = name;
+
+  // Show "Remove" only if already tracked
+  const tracked = isVisited || isWishlist;
+  removeBtn.style.display = tracked ? 'block' : 'none';
+
+  // Position near click, keep inside viewport
+  const x = Math.min(point.x + 10, window.innerWidth  - 200);
+  const y = Math.min(point.y - 10, window.innerHeight - 160);
+  el.style.left    = x + 'px';
+  el.style.top     = y + 'px';
+  el.style.display = 'block';
+}
+
+export function hideCountryTooltip() {
+  const el = document.getElementById('country-tooltip');
+  if (el) el.style.display = 'none';
+  _countryTooltipCb = null;
+}
+
+// ===== Countries View =====
+
+export function updateCountriesView(userData) {
+  const visited  = (userData.visited_countries  ?? []).length;
+  const wishlist = (userData.wishlist_countries ?? []).length;
+
+  // Stat grid (same totals as always)
+  _setText('stat-countries-num', visited);
+  _setText('stat-cities-num',    (userData.visited_cities ?? []).length);
+
+  // Collection nav badges — country-aware
+  _setText('nav-all-count',      visited + wishlist);
+  _setText('nav-visited-count',  visited);
+  _setText('nav-wishlist-count', wishlist);
+  _setText('nav-lived-count',    0);
+
+  // Recent logs — countries
+  _updateCountryLogs(userData.visited_countries ?? [], userData.wishlist_countries ?? []);
+}
+
+function _updateCountryLogs(visitedCodes, wishlistCodes) {
+  const el = document.getElementById('recent-logs');
+  if (!el) return;
+
+  // Show last 3 visited countries, fill remainder with wishlist if needed
+  const recent = [
+    ...[...visitedCodes].reverse().slice(0, 3).map(code => ({ code, type: 'visited' })),
+    ...[...wishlistCodes].reverse().map(code => ({ code, type: 'wishlist' }))
+  ].slice(0, 3);
+
+  if (recent.length === 0) {
+    el.innerHTML = '<p class="recent-log-meta" style="color:#374151">No countries tracked yet.</p>';
+    return;
+  }
+
+  let countryNames;
+  try { countryNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch { countryNames = null; }
+
+  el.innerHTML = recent.map(({ code, type }) => {
+    let name = code;
+    try { name = countryNames?.of(code) || code; } catch { name = code; }
+    const icon = type === 'visited' ? '🌍' : '⭐';
+    return `
+      <div class="recent-log-item">
+        <div class="recent-log-icon">${icon}</div>
+        <div>
+          <p class="recent-log-city">${name}</p>
+          <p class="recent-log-meta">${type === 'visited' ? 'Visited' : 'Wishlist'}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ===== View Mode Banner =====
