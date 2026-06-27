@@ -400,7 +400,7 @@ body {
 
 /* ===== City Add Dialog ===== */
 #city-dialog {
-  position: fixed; inset: 0; z-index: 30;
+  position: fixed; inset: 0; z-index: 210;
   display: none; align-items: center; justify-content: center;
   background: var(--bg-overlay); backdrop-filter: blur(6px);
 }
@@ -605,9 +605,13 @@ body {
   .search-wrap { flex: 1; min-width: 0; }
   #city-search { min-width: 0; width: 100%; }
 
-  /* When banner is visible: hide search bar, push user-pill right */
+  /* When banner is visible: hide hamburger + search, push user-pill right */
+  .banner-active .btn-menu { display: none; }
   .banner-active .search-wrap { display: none; }
   .banner-active .top-right-bar { justify-content: flex-end; }
+
+  /* Banner can use full width when hamburger is gone */
+  .banner-active #view-banner { left: 12px; right: 150px; }
 
   /* Show search button inside banner in group mode */
   .map-area.group-active .btn-search-banner { display: flex; }
