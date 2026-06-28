@@ -137,7 +137,7 @@ async function _init(user) {
     });
 
     setupConfirmDialog();
-    setupSearch(_onAddCity, _onAddCountry, () => _mapMode);
+    setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode);
 
     document.getElementById('btn-signout').addEventListener('click', async () => {
       try { await signOutUser(); } catch { /* ignore */ }
@@ -348,6 +348,10 @@ function _returnToOwnView() {
   }
 
   document.getElementById('btn-add-location').style.display = '';
+
+  // Restore placeholder to match current map mode
+  const _ownSearchInput = document.getElementById('city-search');
+  if (_ownSearchInput) _ownSearchInput.placeholder = _mapMode === 'countries' ? 'Search countries...' : 'Search cities...';
 }
 
 // ===== Friend Actions =====
@@ -400,6 +404,9 @@ function _switchToGroupView(group) {
 
   showViewBanner(group.name, _returnToOwnView);
   _enterBannerMode(true); // group view: hide search bar, show search icon
+  // Groups only support cities — override placeholder regardless of _mapMode
+  const _groupSearchInput = document.getElementById('city-search');
+  if (_groupSearchInput) _groupSearchInput.placeholder = 'Search cities...';
 
   // Real-time group city data
   if (_unsubGroupView) _unsubGroupView();
