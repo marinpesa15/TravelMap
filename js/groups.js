@@ -1,6 +1,6 @@
 import {
   doc, collection, addDoc, onSnapshot, updateDoc, deleteDoc,
-  query, where, serverTimestamp, arrayRemove
+  query, where, serverTimestamp, arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
 
@@ -32,6 +32,17 @@ export function loadGroups(uid, callback) {
   return onSnapshot(q, snap => {
     const groups = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(groups);
+  });
+}
+
+/**
+ * Adds one or more friends to an existing group.
+ * @param {string} groupId
+ * @param {string[]} friendUids - UIDs to add
+ */
+export async function addMembersToGroup(groupId, friendUids) {
+  await updateDoc(doc(db, 'groups', groupId), {
+    members: arrayUnion(...friendUids)
   });
 }
 

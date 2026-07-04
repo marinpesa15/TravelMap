@@ -1,11 +1,18 @@
 import {
-  doc, collection, getDoc, getDocs, setDoc, updateDoc, onSnapshot,
-  arrayUnion, arrayRemove, query, where, writeBatch, serverTimestamp, deleteDoc
+  doc, getDoc, setDoc, updateDoc, onSnapshot,
+  arrayUnion, arrayRemove, writeBatch
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
 
 function userRef(uid) {
   return doc(db, 'users', uid);
+}
+
+// Public invite-lookup doc: invites/{token} → { uid, display_name, avatar_url }.
+// Keeps invite tokens out of the user docs' read path — user docs are only
+// readable by the owner and confirmed friends (see firestore.rules).
+function inviteRef(token) {
+  return doc(db, 'invites', token);
 }
 
 const EMPTY_DATA = () => ({
@@ -37,37 +44,52 @@ export async function initUserProfile(uid, user) {
     display_name: user.displayName || '',
     avatar_url:   user.photoURL   || ''
   };
+  let token = snap.exists() ? snap.data().invite_token : null;
   if (!snap.exists()) {
+    token = crypto.randomUUID();
     await setDoc(ref, {
       ...EMPTY_DATA(),
       ...profileFields,
-      invite_token: crypto.randomUUID()
+      invite_token: token
     });
-  } else if (!snap.data().invite_token) {
-    await updateDoc(ref, { ...profileFields, invite_token: crypto.randomUUID() });
+  } else if (!token) {
+    token = crypto.randomUUID();
+    await updateDoc(ref, { ...profileFields, invite_token: token });
   } else {
     await updateDoc(ref, profileFields);
   }
+  // Keep the invite-lookup doc in sync — also lazily migrates existing users
+  // whose token so far only lives in their user doc.
+  await setDoc(inviteRef(token), { uid, ...profileFields });
 }
 
 /**
- * Looks up a user by their invite_token.
- * Returns { uid, display_name, avatar_url, invite_token } or null.
+ * Looks up a user by their invite token via the invites collection.
+ * Returns { uid, display_name, avatar_url } or null.
  */
 export async function getUserByToken(token) {
-  const q    = query(collection(db, 'users'), where('invite_token', '==', token));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  return { uid: d.id, ...d.data() };
+  const snap = await getDoc(inviteRef(token));
+  return snap.exists() ? snap.data() : null;
 }
 
 /**
- * Regenerates the user's invite token.
+ * Regenerates the user's invite token and swaps the invite-lookup doc.
  */
 export async function regenerateInviteToken(uid) {
+  const snap = await getDoc(userRef(uid));
+  const data = snap.exists() ? snap.data() : {};
   const newToken = crypto.randomUUID();
-  await updateDoc(userRef(uid), { invite_token: newToken });
+
+  const batch = writeBatch(db);
+  if (data.invite_token) batch.delete(inviteRef(data.invite_token));
+  batch.set(inviteRef(newToken), {
+    uid,
+    display_name: data.display_name || '',
+    avatar_url:   data.avatar_url   || ''
+  });
+  batch.update(userRef(uid), { invite_token: newToken });
+  await batch.commit();
+
   return newToken;
 }
 

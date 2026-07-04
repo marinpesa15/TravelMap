@@ -1,6 +1,20 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
 import { searchCountries } from './countries.js?v=18';
 
+// Escapes user-controlled strings before interpolation into innerHTML.
+// Friend names, group names and city names come from Firestore and can be
+// written by other users — never trust them.
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+// Avatar URLs are written by other users — only allow http(s).
+function safeUrl(url) {
+  return /^https?:\/\//i.test(url ?? '') ? url : '';
+}
+
 // ===== Stats & Sidebar =====
 
 export function updateStats(userData) {
@@ -45,8 +59,8 @@ function _updateRecentLogs(visitedCities) {
     <div class="recent-log-item">
       <div class="recent-log-icon">📍</div>
       <div>
-        <p class="recent-log-city">${city.name}</p>
-        <p class="recent-log-meta">${city.country || '—'}</p>
+        <p class="recent-log-city">${esc(city.name)}</p>
+        <p class="recent-log-meta">${esc(city.country) || '—'}</p>
       </div>
     </div>
   `).join('');
@@ -137,8 +151,8 @@ async function _searchAndRenderCountries(query, resultsEl, onAddCountry) {
       const item = document.createElement('div');
       item.className = 'search-result-item search-country-item';
       item.innerHTML = `
-        <span class="search-country-name">${country.name}</span>
-        <span class="search-country-iso">${country.isoCode}</span>
+        <span class="search-country-name">${esc(country.name)}</span>
+        <span class="search-country-iso">${esc(country.isoCode)}</span>
         <button class="country-add-btn visited" data-type="visited">✓ Visited</button>
         <button class="country-add-btn wishlist" data-type="wishlist">⭐ Wishlist</button>
       `;
@@ -289,13 +303,14 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
     item.className = 'social-item';
     item.dataset.uid = friend.uid;
 
-    const avatar = friend.avatar_url
-      ? `<img class="social-avatar" src="${friend.avatar_url}" alt="" loading="lazy">`
+    const avatarUrl = safeUrl(friend.avatar_url);
+    const avatar = avatarUrl
+      ? `<img class="social-avatar" src="${esc(avatarUrl)}" alt="" loading="lazy">`
       : `<div class="social-avatar-placeholder">👤</div>`;
 
     item.innerHTML = `
       ${avatar}
-      <span class="social-name">${friend.display_name || 'Friend'}</span>
+      <span class="social-name">${esc(friend.display_name) || 'Friend'}</span>
       <button class="btn-remove-friend" title="Remove friend">✕</button>
     `;
     item.addEventListener('click', e => {
@@ -380,8 +395,8 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
     } else {
       checklist.innerHTML = friends.map(f => `
         <label class="group-check-item">
-          <input type="checkbox" value="${f.uid}">
-          <span class="group-check-name">${f.display_name || 'Friend'}</span>
+          <input type="checkbox" value="${esc(f.uid)}">
+          <span class="group-check-name">${esc(f.display_name) || 'Friend'}</span>
         </label>
       `).join('');
     }
@@ -398,8 +413,8 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
     } else {
       checklist.innerHTML = available.map(f => `
         <label class="group-check-item">
-          <input type="checkbox" value="${f.uid}">
-          <span class="group-check-name">${f.display_name || 'Friend'}</span>
+          <input type="checkbox" value="${esc(f.uid)}">
+          <span class="group-check-name">${esc(f.display_name) || 'Friend'}</span>
         </label>
       `).join('');
     }
@@ -441,7 +456,7 @@ export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, 
 
     item.innerHTML = `
       <div class="social-avatar-placeholder">🌍</div>
-      <span class="social-name">${group.name}</span>
+      <span class="social-name">${esc(group.name)}</span>
       <button class="btn-add-member" title="Add member">👤+</button>
       <button class="btn-leave-group" title="${leaveTitle}">${leaveLabel}</button>
     `;
@@ -557,7 +572,7 @@ function _updateCountryLogs(visitedCodes, wishlistCodes) {
       <div class="recent-log-item">
         <div class="recent-log-icon">${icon}</div>
         <div>
-          <p class="recent-log-city">${name}</p>
+          <p class="recent-log-city">${esc(name)}</p>
           <p class="recent-log-meta">${type === 'visited' ? 'Visited' : 'Wishlist'}</p>
         </div>
       </div>

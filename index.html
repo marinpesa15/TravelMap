@@ -28,9 +28,13 @@
   <script type="module">
     import { signInWithGoogle, onAuthChange } from './js/auth.js';
 
-    // Schon eingeloggt? → direkt weiterleiten
+    // Schon eingeloggt? → direkt weiterleiten (Token erhalten falls vorhanden)
     onAuthChange(user => {
-      if (user) window.location.href = 'map.html';
+      if (user) {
+        const params = new URLSearchParams(window.location.search);
+        const token  = params.get('token');
+        window.location.href = token ? `map.html?token=${encodeURIComponent(token)}` : 'map.html';
+      }
     });
 
     document.getElementById('btn-signin').addEventListener('click', async () => {
