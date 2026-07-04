@@ -5,7 +5,7 @@ import {
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
-} from './db.js?v=18';
+} from './db.js?v=19';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup } from './groups.js?v=18';
 import {
@@ -23,7 +23,7 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=23';
+} from './ui.js?v=24';
 import { initTheme } from './theme.js?v=18';
 
 let _uid            = null;
@@ -52,7 +52,7 @@ onAuthChange(async user => {
     // Preserve invite token across the login redirect
     const params = new URLSearchParams(window.location.search);
     const token  = params.get('token');
-    window.location.href = token ? `index.html?token=${token}` : 'index.html';
+    window.location.href = token ? `index.html?token=${encodeURIComponent(token)}` : 'index.html';
     return;
   }
   if (_uid === user.uid) return;
@@ -64,10 +64,13 @@ onAuthChange(async user => {
 async function _init(user) {
   try {
     await initUserProfile(_uid, user);
-    _map      = await initMap();
     _userData = await loadUserData(_uid);   // one-shot for initial render
 
+    // Process invite links before the map: friend-adding must not depend on
+    // Mapbox/WebGL, which can fail inside in-app browsers (WhatsApp etc.).
     await _handleInviteToken(_userData);
+
+    _map = await initMap();
 
     _showUserProfile(user);
     // Re-init country layers after style reloads (theme toggle wipes all custom sources + layers)
@@ -181,22 +184,27 @@ async function _handleInviteToken(myData) {
   const token  = params.get('token');
   if (!token) return;
 
-  history.replaceState({}, '', window.location.pathname);
+  // Strip the token only once the outcome is final — if the session dies
+  // mid-processing (mobile tab kill, reload), the link stays retryable.
+  const clearToken = () => history.replaceState({}, '', window.location.pathname);
 
   try {
     const them = await getUserByToken(token);
-    if (!them) { showToast('Invite link not found.'); return; }
-    if (them.uid === _uid) { showToast("That's your own invite link!"); return; }
+    if (!them) { clearToken(); showToast('Invite link not found.'); return; }
+    if (them.uid === _uid) { clearToken(); showToast("That's your own invite link!"); return; }
 
     const alreadyFriends = await isFriend(_uid, them.uid);
     if (alreadyFriends) {
+      clearToken();
       showToast(`Already friends with ${them.display_name || 'this user'}!`);
       return;
     }
 
     await addFriendship(_uid, them.uid, them, myData);
+    clearToken();
     showToast(`You're now friends with ${them.display_name || 'your friend'}! 🎉`);
   } catch (err) {
+    // Token stays in the URL so a reload retries the join.
     console.error('Friend join error:', err);
     showToast('Could not process invite link.');
   }
