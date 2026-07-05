@@ -7,7 +7,7 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
 } from './db.js?v=19';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup } from './groups.js?v=18';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=19';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
@@ -23,7 +23,7 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=24';
+} from './ui.js?v=25';
 import { initTheme } from './theme.js?v=18';
 
 let _uid            = null;
@@ -132,7 +132,7 @@ async function _init(user) {
     _groupsSetup = false;
     _unsubGroups = loadGroups(_uid, groups => {
       if (!_groupsSetup) {
-        setupGroupsSidebar(groups, _friends, _uid, _onCreateGroup, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup);
+        setupGroupsSidebar(groups, _friends, _uid, _onCreateGroup, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _onRemoveMember);
         _groupsSetup = true;
       } else {
         renderGroupsList(groups, _uid, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _friends);
@@ -388,6 +388,16 @@ async function _onLeaveGroup(groupId, createdBy) {
     await leaveGroup(groupId, _uid, createdBy);
   } catch {
     showToast('Failed to leave group.');
+  }
+}
+
+async function _onRemoveMember(groupId, memberUid) {
+  try {
+    await removeMemberFromGroup(groupId, memberUid);
+    showToast('Member removed from group.');
+  } catch (err) {
+    console.error(err);
+    showToast('Could not remove member.');
   }
 }
 

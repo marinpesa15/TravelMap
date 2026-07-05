@@ -744,6 +744,19 @@ body {
   width: 15px; height: 15px; accent-color: #6366f1; cursor: pointer;
 }
 .group-check-name { font-size: 0.83rem; color: var(--tx-primary); }
+.group-members-list {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 150px; overflow-y: auto; margin-top: 6px;
+}
+.group-member-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 8px; border-radius: 8px;
+}
+.group-member-name {
+  flex: 1; font-size: 0.83rem; color: var(--tx-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.group-member-badge { font-size: 0.72rem; flex-shrink: 0; }
 
 /* ===== View Mode Banner ===== */
 .view-banner {

@@ -328,10 +328,12 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
 
 // ===== Groups Sidebar =====
 
-let _groupModalCreateCb   = null;
-let _groupModalAddMemberCb = null;
-let _groupModalMode        = 'create'; // 'create' | 'add-member'
-let _groupModalTargetGroup = null;
+let _groupModalCreateCb      = null;
+let _groupModalAddMemberCb   = null;
+let _groupModalRemoveMemberCb = null;
+let _groupModalUid           = null;
+let _groupModalMode          = 'create'; // 'create' | 'add-member'
+let _groupModalTargetGroup   = null;
 
 /**
  * Renders groups list and wires the "+ New" button.
@@ -341,9 +343,11 @@ let _groupModalTargetGroup = null;
  * onViewGroup(group): called when user clicks a group row
  * onAddMembers(groupId, friendUids): called when adding members to existing group
  */
-export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, onViewGroup, onLeaveGroup, onAddMembers) {
-  _groupModalCreateCb    = onCreateGroup;
-  _groupModalAddMemberCb = onAddMembers;
+export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, onViewGroup, onLeaveGroup, onAddMembers, onRemoveMember) {
+  _groupModalCreateCb       = onCreateGroup;
+  _groupModalAddMemberCb    = onAddMembers;
+  _groupModalRemoveMemberCb = onRemoveMember;
+  _groupModalUid            = currentUid;
 
   document.getElementById('btn-create-group')?.addEventListener('click', () => {
     _openGroupModal(friends, 'create');
@@ -376,18 +380,22 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
   _groupModalMode        = mode;
   _groupModalTargetGroup = group;
 
-  const titleEl     = document.getElementById('group-modal-title');
-  const nameRow     = document.getElementById('group-name-row');
-  const friendLabel = document.getElementById('group-friends-label');
-  const createBtn   = document.getElementById('group-modal-create');
-  const checklist   = document.getElementById('group-friends-checklist');
+  const titleEl        = document.getElementById('group-modal-title');
+  const nameRow        = document.getElementById('group-name-row');
+  const friendLabel    = document.getElementById('group-friends-label');
+  const createBtn      = document.getElementById('group-modal-create');
+  const cancelBtn      = document.getElementById('group-modal-cancel');
+  const checklist      = document.getElementById('group-friends-checklist');
+  const membersSection = document.getElementById('group-members-section');
   if (!checklist) return;
 
   if (mode === 'create') {
-    titleEl.textContent       = 'New Group';
-    nameRow.style.display     = '';
-    friendLabel.textContent   = 'Add friends';
-    createBtn.textContent     = 'Create';
+    titleEl.textContent            = 'New Group';
+    nameRow.style.display          = '';
+    membersSection.style.display   = 'none';
+    friendLabel.textContent        = 'Add friends';
+    createBtn.textContent          = 'Create';
+    cancelBtn.textContent          = 'Cancel';
     document.getElementById('group-name-input').value = '';
 
     if (!friends.length) {
@@ -401,11 +409,15 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
       `).join('');
     }
   } else {
-    // add-member mode: only show friends NOT already in the group
-    titleEl.textContent     = `Add to "${group.name}"`;
-    nameRow.style.display   = 'none';
-    friendLabel.textContent = 'Select friends to add';
-    createBtn.textContent   = 'Add';
+    // manage mode: current members (removable by the creator) + add friends
+    titleEl.textContent          = `Manage "${group.name}"`;
+    nameRow.style.display        = 'none';
+    membersSection.style.display = '';
+    friendLabel.textContent      = 'Select friends to add';
+    createBtn.textContent        = 'Add';
+    cancelBtn.textContent        = 'Close';
+
+    _renderGroupMembers(group, friends);
 
     const available = friends.filter(f => !allMembers.includes(f.uid));
     if (!available.length) {
@@ -425,6 +437,52 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
 
 function _closeGroupModal() {
   document.getElementById('group-modal').classList.remove('open');
+}
+
+// Renders the current member list inside the manage modal.
+// Names resolve from the viewer's friends list; members who aren't the
+// viewer's friends can't be looked up (rules) and show as "Member".
+function _renderGroupMembers(group, friends) {
+  const listEl = document.getElementById('group-members-list');
+  if (!listEl) return;
+
+  const isCreator = group.created_by === _groupModalUid;
+  listEl.innerHTML = '';
+
+  (group.members ?? []).forEach(uid => {
+    const friend = friends.find(f => f.uid === uid);
+    const name   = uid === _groupModalUid ? 'You'
+                 : (friend?.display_name || 'Member');
+
+    const avatarUrl = safeUrl(friend?.avatar_url);
+    const avatar = avatarUrl
+      ? `<img class="social-avatar" src="${esc(avatarUrl)}" alt="" loading="lazy">`
+      : `<div class="social-avatar-placeholder">👤</div>`;
+
+    const badge     = uid === group.created_by ? '<span class="group-member-badge" title="Group creator">👑</span>' : '';
+    const removable = isCreator && uid !== group.created_by;
+
+    const item = document.createElement('div');
+    item.className = 'group-member-item';
+    item.innerHTML = `
+      ${avatar}
+      <span class="group-member-name">${esc(name)}</span>
+      ${badge}
+      ${removable ? '<button class="btn-remove-friend" title="Remove from group">✕</button>' : ''}
+    `;
+
+    item.querySelector('.btn-remove-friend')?.addEventListener('click', () => {
+      showConfirm(`Remove ${name} from "${group.name}"?`, 'Remove', () => {
+        _groupModalRemoveMemberCb?.(group.id, uid);
+        // Optimistic update: re-render the whole modal so the member list
+        // and the "add friends" checklist both reflect the change
+        group.members = (group.members ?? []).filter(m => m !== uid);
+        openAddMemberModal(group, friends);
+      });
+    });
+
+    listEl.appendChild(item);
+  });
 }
 
 // Public helper so app.js can open the add-member modal
@@ -457,7 +515,7 @@ export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, 
     item.innerHTML = `
       <div class="social-avatar-placeholder">🌍</div>
       <span class="social-name">${esc(group.name)}</span>
-      <button class="btn-add-member" title="Add member">👤+</button>
+      <button class="btn-add-member" title="Manage members">👤+</button>
       <button class="btn-leave-group" title="${leaveTitle}">${leaveLabel}</button>
     `;
 

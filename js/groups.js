@@ -47,6 +47,18 @@ export async function addMembersToGroup(groupId, friendUids) {
 }
 
 /**
+ * Removes a single member from a group.
+ * Rules only allow this for the group creator (or the member themselves).
+ * @param {string} groupId
+ * @param {string} memberUid
+ */
+export async function removeMemberFromGroup(groupId, memberUid) {
+  await updateDoc(doc(db, 'groups', groupId), {
+    members: arrayRemove(memberUid)
+  });
+}
+
+/**
  * Leaves a group. If uid is the creator, deletes the group entirely.
  * Otherwise removes uid from the members array.
  * @param {string} groupId

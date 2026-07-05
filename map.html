@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <title>TravelMap</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=24">
+  <link rel="stylesheet" href="css/style.css?v=25">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 </head>
@@ -254,6 +254,10 @@
       <div id="group-name-row">
         <input type="text" id="group-name-input" placeholder="Group name…" maxlength="40" autocomplete="off">
       </div>
+      <div id="group-members-section" style="display:none">
+        <p class="dialog-label" style="margin-top:14px">Members</p>
+        <div id="group-members-list" class="group-members-list"></div>
+      </div>
       <p class="dialog-label" style="margin-top:14px" id="group-friends-label">Add friends</p>
       <div id="group-friends-checklist" class="group-friends-checklist"></div>
       <div class="dialog-actions" style="margin-top:16px">
@@ -272,6 +276,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=26"></script>
+  <script type="module" src="js/app.js?v=27"></script>
 </body>
 </html>

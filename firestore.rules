@@ -93,7 +93,14 @@ service cloud.firestore {
         && request.resource.data.members.size() <= 50
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1
-        && request.resource.data.name.size() <= 100;
+        && request.resource.data.name.size() <= 100
+        // Membership: the creator may remove anyone; other members may only
+        // add people or remove themselves (all prior members minus the
+        // requester must still be present).
+        && (
+          request.auth.uid == resource.data.created_by ||
+          request.resource.data.members.hasAll(resource.data.members.removeAll([request.auth.uid]))
+        );
 
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.created_by;
