@@ -392,7 +392,9 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
   if (mode === 'create') {
     titleEl.textContent            = 'New Group';
     nameRow.style.display          = '';
-    membersSection.style.display   = 'none';
+    // Guard: browsers may hold a cached map.html (max-age) that predates
+    // the members section — the modal must still work without it.
+    if (membersSection) membersSection.style.display = 'none';
     friendLabel.textContent        = 'Add friends';
     createBtn.textContent          = 'Create';
     cancelBtn.textContent          = 'Cancel';
@@ -412,7 +414,7 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
     // manage mode: current members (removable by the creator) + add friends
     titleEl.textContent          = `Manage "${group.name}"`;
     nameRow.style.display        = 'none';
-    membersSection.style.display = '';
+    if (membersSection) membersSection.style.display = '';
     friendLabel.textContent      = 'Select friends to add';
     createBtn.textContent        = 'Add';
     cancelBtn.textContent        = 'Close';

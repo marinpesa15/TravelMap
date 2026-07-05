@@ -23,7 +23,7 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=25';
+} from './ui.js?v=26';
 import { initTheme } from './theme.js?v=18';
 
 let _uid            = null;
