@@ -126,6 +126,13 @@ body {
 }
 .btn-google:hover { background: #f1f5f9; }
 .auth-error { margin-top: 12px; font-size: 0.8rem; color: #f87171; min-height: 20px; }
+.auth-loading {
+  width: 24px; height: 24px; margin: 14px auto;
+  border: 3px solid rgba(255,255,255,0.15); border-top-color: #818cf8;
+  border-radius: 50%; animation: auth-spin 0.8s linear infinite;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+.auth-hidden { display: none !important; }
 .auth-privacy { margin-top: 16px; font-size: 0.72rem; color: #64748b; }
 .auth-privacy a { color: #818cf8; text-decoration: none; }
 .auth-privacy a:hover { text-decoration: underline; }
