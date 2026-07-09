@@ -1,5 +1,5 @@
 import { t } from './i18n.js?v=1';
-import { showToast } from './ui.js?v=27';
+import { showToast } from './ui.js?v=28';
 
 // Bump this when the privacy policy changes materially —
 // every user will then see the consent banner again.

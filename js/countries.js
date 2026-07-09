@@ -7,7 +7,8 @@ const LAYER_CLICK    = 'tm-click';
 
 // Natural Earth 110m countries GeoJSON — lightweight, no Mapbox tileset dependency.
 // Property ISO_A2 = 2-letter ISO code (e.g. "DE", "HR")
-const GEOJSON_URL = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_admin_0_countries.geojson';
+// Self-hosted: Firebase serves it compressed and with immutable caching (?v=).
+const GEOJSON_URL = 'data/countries.geojson?v=1';
 
 let _geojsonData = null;
 

@@ -40,34 +40,41 @@ async function ensureDoc(uid) {
 }
 
 /**
- * Writes display_name, avatar_url to the user doc.
+ * Writes display_name, avatar_url to the user doc (only when changed).
  * Generates invite_token once if not already set.
  * user: { displayName, photoURL } from Firebase Auth
+ * Returns the resulting user-doc data — callers can use it directly
+ * instead of re-reading the doc.
  */
 export async function initUserProfile(uid, user) {
-  const ref  = userRef(uid);
-  const snap = await getDoc(ref);
+  const ref      = userRef(uid);
+  const snap     = await getDoc(ref);
+  const existing = snap.exists() ? snap.data() : null;
   const profileFields = {
     display_name: user.displayName || '',
     avatar_url:   user.photoURL   || ''
   };
-  let token = snap.exists() ? snap.data().invite_token : null;
-  if (!snap.exists()) {
+
+  let token = existing?.invite_token ?? null;
+  let data;
+  if (!existing) {
     token = crypto.randomUUID();
-    await setDoc(ref, {
-      ...EMPTY_DATA(),
-      ...profileFields,
-      invite_token: token
-    });
+    data  = { ...EMPTY_DATA(), ...profileFields, invite_token: token };
+    await setDoc(ref, data);
   } else if (!token) {
     token = crypto.randomUUID();
     await updateDoc(ref, { ...profileFields, invite_token: token });
+    data = { ...existing, ...profileFields, invite_token: token };
   } else {
-    await updateDoc(ref, profileFields);
+    const changed = existing.display_name !== profileFields.display_name
+                 || existing.avatar_url   !== profileFields.avatar_url;
+    if (changed) await updateDoc(ref, profileFields);
+    data = { ...existing, ...profileFields };
   }
   // Keep the invite-lookup doc in sync — also lazily migrates existing users
   // whose token so far only lives in their user doc.
   await setDoc(inviteRef(token), { uid, ...profileFields });
+  return data;
 }
 
 /**
