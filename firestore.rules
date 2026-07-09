@@ -49,7 +49,9 @@ service cloud.firestore {
         && request.resource.data.get('visited_cities', [])     is list
         && request.resource.data.get('visited_cities', []).size() <= 5000
         && request.resource.data.get('wishlist_cities', [])    is list
-        && request.resource.data.get('wishlist_cities', []).size() <= 5000;
+        && request.resource.data.get('wishlist_cities', []).size() <= 5000
+        && request.resource.data.get('consent', {'version': 0}) is map
+        && request.resource.data.get('consent', {'version': 0}).get('version', 0) is int;
 
       // Friends subcollection: readable/deletable by either party.
       // Writes are limited to the expected profile fields so neither party

@@ -4,8 +4,10 @@ import {
   subscribeUserData, subscribeGroupData,
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
-  addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
+  addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
+  acceptConsent
 } from './db.js?v=19';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=1';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=19';
 import {
@@ -69,6 +71,17 @@ onAuthChange(async user => {
 
 async function _init(user) {
   try {
+    // ── Consent gate: nothing is written to Firestore before acceptance ──
+    const preData = await loadUserData(_uid);   // read-only check
+    if (!hasConsent(preData)) {
+      const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
+      if (!accepted) {
+        try { await signOutUser(); } catch { /* ignore */ }
+        window.location.href = 'index.html';
+        return;
+      }
+    }
+
     await initUserProfile(_uid, user);
     _userData = await loadUserData(_uid);   // one-shot for initial render
 

@@ -754,6 +754,23 @@ body {
   font-size: 0.7rem; color: var(--tx-muted);
 }
 
+/* ===== Consent Banner ===== */
+#consent-banner {
+  position: fixed; inset: 0; z-index: 300;
+  display: none; align-items: center; justify-content: center;
+  background: var(--bg-overlay); backdrop-filter: blur(6px);
+}
+#consent-banner.open { display: flex; }
+.consent-card {
+  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
+  border-radius: 16px; padding: 24px;
+  width: 90%; max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.consent-card h3 { font-size: 1rem; font-weight: 700; color: var(--tx-primary); margin-bottom: 12px; }
+.consent-body { font-size: 0.86rem; color: var(--tx-secondary); line-height: 1.55; margin-bottom: 18px; }
+.consent-body a { color: #818cf8; }
+
 #group-name-input {
   width: 100%; padding: 9px 12px;
   background: var(--bg-input); border: 1px solid var(--bd-input);

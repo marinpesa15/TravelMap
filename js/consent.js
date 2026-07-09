@@ -1,0 +1,46 @@
+import { t } from './i18n.js?v=1';
+// ?v=26 matches app.js's current ui.js reference; Task 7 bumps both to ?v=27.
+import { showToast } from './ui.js?v=26';
+
+// Bump this when the privacy policy changes materially —
+// every user will then see the consent banner again.
+export const CONSENT_VERSION = 1;
+
+/** True if the loaded user doc contains an up-to-date consent. */
+export function hasConsent(userData) {
+  return (userData?.consent?.version ?? 0) >= CONSENT_VERSION;
+}
+
+/**
+ * Shows the blocking consent banner.
+ * onAccept: async fn that persists the consent (throws on failure).
+ * Resolves true once onAccept succeeded, false if the user declined.
+ * The banner cannot be dismissed any other way.
+ */
+export function requestConsent(onAccept) {
+  return new Promise(resolve => {
+    const banner  = document.getElementById('consent-banner');
+    const accept  = document.getElementById('consent-accept');
+    const decline = document.getElementById('consent-decline');
+
+    banner.classList.add('open');
+
+    accept.onclick = async () => {
+      accept.disabled = true;
+      try {
+        await onAccept();
+        banner.classList.remove('open');
+        resolve(true);
+      } catch (err) {
+        console.error('Consent write failed:', err);
+        showToast(t('toast.consentFailed'));
+        accept.disabled = false;
+      }
+    };
+
+    decline.onclick = () => {
+      banner.classList.remove('open');
+      resolve(false);
+    };
+  });
+}
