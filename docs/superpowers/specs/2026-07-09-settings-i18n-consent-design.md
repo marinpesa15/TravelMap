@@ -30,6 +30,7 @@ Vier zusammenhängende Features für TravelMap:
   - **Language**: English/Deutsch, gleiche Zwei-Knopf-Optik. Wirkt sofort, ohne Reload.
   - Trennlinie, darunter Links **Privacy Policy** und **Impressum** → `privacy.html` (neuer Tab).
   - **Sign out**-Button (Danger-Optik). Der bisherige Sign-out-Button im Sidebar-Footer entfällt; im Footer bleibt nur „Add New Location".
+  - **Versionsanzeige**: ganz unten im Modal, klein und gedimmt (`TravelMap v1.0.0`). Quelle ist eine Konstante `APP_VERSION` in neuem `js/version.js` (Start: `1.0.0`, wird pro Release manuell hochgezählt — einzige Stelle, an der die Version gepflegt wird).
 
 ## 2. i18n-Modul (`js/i18n.js`)
 
