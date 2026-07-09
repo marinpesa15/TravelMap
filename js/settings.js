@@ -1,5 +1,5 @@
 import { getLang, setLang } from './i18n.js?v=1';
-import { getTheme, setTheme } from './theme.js?v=18';
+import { getTheme, setTheme } from './theme.js?v=19';
 import { signOutUser } from './auth.js?v=18';
 import { APP_VERSION } from './version.js?v=1';
 // Note: theme.js is referenced as ?v=18 to match app.js until Task 7 bumps

@@ -6,7 +6,7 @@ import {
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   acceptConsent
-} from './db.js?v=19';
+} from './db.js?v=20';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=1';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=19';
@@ -25,8 +25,8 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=26';
-import { initTheme } from './theme.js?v=18';
+} from './ui.js?v=27';
+import { initTheme } from './theme.js?v=19';
 import { setupSettings } from './settings.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=1';
 
