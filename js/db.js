@@ -2,7 +2,7 @@ import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
   arrayUnion, arrayRemove, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { db } from './config.js';
+import { db } from './config.js?v=1';
 
 function userRef(uid) {
   return doc(db, 'users', uid);

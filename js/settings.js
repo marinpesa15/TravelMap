@@ -1,6 +1,6 @@
 import { getLang, setLang } from './i18n.js?v=1';
 import { getTheme, setTheme } from './theme.js?v=19';
-import { signOutUser } from './auth.js?v=18';
+import { signOutUser } from './auth.js?v=19';
 import { APP_VERSION } from './version.js?v=1';
 
 /** Wires the gear button, settings modal, theme/language switches,

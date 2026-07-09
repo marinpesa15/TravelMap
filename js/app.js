@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=18';
+import { onAuthChange, signOutUser } from './auth.js?v=19';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -8,8 +8,8 @@ import {
   acceptConsent
 } from './db.js?v=21';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=2';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=19';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
@@ -54,17 +54,23 @@ let _groupsSetup    = false;
 
 // Country layers are heavy (GeoJSON fetch) — loaded lazily on first
 // countries-mode use instead of blocking every app start.
-let _countryLayersReady = false;
-let _countryClickSetup  = false;
+// Stored as a promise so concurrent callers share one init.
+let _countryLayersPromise = null;
+let _countryClickSetup    = false;
 
-async function _ensureCountryLayers() {
-  if (_countryLayersReady) return;
-  await initCountryLayers(_map);
-  if (!_countryClickSetup) {
-    setupCountryMapClick(_map, _onCountryMapClick);
-    _countryClickSetup = true;
-  }
-  _countryLayersReady = true;
+function _ensureCountryLayers() {
+  if (_countryLayersPromise) return _countryLayersPromise;
+  _countryLayersPromise = (async () => {
+    await initCountryLayers(_map);
+    if (!_countryClickSetup) {
+      setupCountryMapClick(_map, _onCountryMapClick);
+      _countryClickSetup = true;
+    }
+  })().catch(err => {
+    _countryLayersPromise = null; // allow retry after a failed fetch
+    throw err;
+  });
+  return _countryLayersPromise;
 }
 
 // Translate static HTML as early as possible (before auth resolves)
@@ -111,9 +117,10 @@ async function _init(user) {
     // Style reloads (theme toggle) wipe all custom sources + layers — re-init
     // lazily, and only when the countries view actually needs them.
     _map.on('style.load', () => {
-      _countryLayersReady = false;
+      _countryLayersPromise = null; // style reload wiped sources + layers
       if (_mapMode !== 'countries') return;
       _ensureCountryLayers().then(() => {
+        if (_mapMode !== 'countries') return; // user switched back meanwhile
         if (_userData) {
           const { visited, wishlist } = _getFilteredCountryData();
           updateCountryFills(_map, visited, wishlist);
@@ -406,10 +413,13 @@ function _returnToOwnView() {
 
   if (_mapMode === 'countries') {
     clearAllMarkers(); // remove any friend/group city markers
-    const { visited, wishlist } = _getFilteredCountryData();
-    updateCountryFills(_map, visited, wishlist);
-    showCountryLayers(_map);
     if (_userData) updateCountriesView(_userData);
+    _ensureCountryLayers().then(() => {
+      if (_mapMode !== 'countries' || _viewMode !== 'own') return;
+      const { visited, wishlist } = _getFilteredCountryData();
+      updateCountryFills(_map, visited, wishlist);
+      showCountryLayers(_map);
+    }).catch(err => console.error('[TM] country layers failed:', err));
   } else {
     hideCountryLayers(_map); // remove any friend/group country fills
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
@@ -600,6 +610,7 @@ function _setMapMode(mode) {
     if (_userData) updateCountriesView(_userData);
     // Lazy: first switch fetches the GeoJSON and builds the layers
     _ensureCountryLayers().then(() => {
+      if (_mapMode !== 'countries') return; // user switched back meanwhile
       const { visited, wishlist } = _getFilteredCountryData();
       updateCountryFills(_map, visited, wishlist);
       showCountryLayers(_map);
