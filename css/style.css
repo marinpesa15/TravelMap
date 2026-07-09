@@ -159,8 +159,8 @@ body {
   font-size: 1rem; font-weight: 700;
   color: var(--tx-primary); letter-spacing: -0.02em;
 }
-/* Theme toggle button */
-.btn-theme {
+/* Settings gear button */
+.btn-settings {
   width: 30px; height: 30px; flex-shrink: 0; margin-left: auto;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-card); border: 1px solid var(--bd-card);
@@ -168,7 +168,7 @@ body {
   color: var(--tx-secondary); font-size: 14px;
   transition: all 0.2s;
 }
-.btn-theme:hover { background: var(--bg-card-hov); }
+.btn-settings:hover { background: var(--bg-card-hov); }
 
 .sidebar-section { padding: 16px 16px 0; flex-shrink: 0; }
 .section-label {
@@ -245,14 +245,6 @@ body {
   transition: background 0.15s; font-family: inherit;
 }
 .btn-add-location:hover { background: #4f46e5; }
-.btn-signout {
-  width: 100%; padding: 8px; font-size: 0.74rem;
-  color: var(--tx-signout); background: none;
-  border: 1px solid var(--bd-signout);
-  border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.15s;
-}
-.btn-signout:hover { color: var(--tx-secondary); }
-
 /* ===== Top-right overlay ===== */
 .top-right-bar {
   position: absolute; top: 16px; right: 16px;
@@ -723,6 +715,42 @@ body {
   font-size: 1rem; font-weight: 700;
   color: var(--tx-primary); margin-bottom: 14px;
 }
+
+/* ===== Settings Modal ===== */
+#settings-modal {
+  position: fixed; inset: 0; z-index: 220;
+  display: none; align-items: center; justify-content: center;
+  background: var(--bg-overlay); backdrop-filter: blur(6px);
+}
+#settings-modal.open { display: flex; }
+.settings-card {
+  background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
+  border-radius: 16px; padding: 24px;
+  width: 90%; max-width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.settings-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.settings-header h3 { font-size: 1rem; font-weight: 700; color: var(--tx-primary); }
+.settings-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--tx-muted); font-size: 14px; padding: 4px;
+}
+.settings-close:hover { color: var(--tx-primary); }
+.settings-divider { border-top: 1px solid var(--bd-dialog); margin: 16px 0; }
+.settings-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.settings-links a {
+  font-size: 0.84rem; color: var(--tx-secondary); text-decoration: none;
+}
+.settings-links a:hover { color: var(--tx-primary); text-decoration: underline; }
+.settings-signout { width: 100%; }
+.settings-version {
+  margin-top: 14px; text-align: center;
+  font-size: 0.7rem; color: var(--tx-muted);
+}
+
 #group-name-input {
   width: 100%; padding: 9px 12px;
   background: var(--bg-input); border: 1px solid var(--bd-input);

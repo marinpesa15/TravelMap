@@ -25,6 +25,7 @@ import {
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
 } from './ui.js?v=26';
 import { initTheme } from './theme.js?v=18';
+import { setupSettings } from './settings.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=1';
 
 let _uid            = null;
@@ -90,6 +91,7 @@ async function _init(user) {
     });
 
     initTheme(_map);
+    setupSettings(_map);
     _initMobileSidebar();
     _setupFilterNav();
     _initMapModeTabs();
@@ -147,11 +149,6 @@ async function _init(user) {
 
     setupConfirmDialog();
     setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode);
-
-    document.getElementById('btn-signout').addEventListener('click', async () => {
-      try { await signOutUser(); } catch { /* ignore */ }
-      window.location.href = 'index.html';
-    });
 
     document.getElementById('btn-add-location')?.addEventListener('click', () => {
       _closeMobileSidebar();
@@ -657,5 +654,4 @@ function _initMobileSidebar() {
     backdrop?.classList.toggle('open');
   });
   backdrop?.addEventListener('click', _closeMobileSidebar);
-  document.getElementById('btn-signout')?.addEventListener('click', _closeMobileSidebar);
 }
