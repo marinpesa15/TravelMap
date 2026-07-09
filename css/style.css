@@ -126,6 +126,9 @@ body {
 }
 .btn-google:hover { background: #f1f5f9; }
 .auth-error { margin-top: 12px; font-size: 0.8rem; color: #f87171; min-height: 20px; }
+.auth-privacy { margin-top: 16px; font-size: 0.72rem; color: #64748b; }
+.auth-privacy a { color: #818cf8; text-decoration: none; }
+.auth-privacy a:hover { text-decoration: underline; }
 
 /* ===== App Shell ===== */
 .app-shell { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }

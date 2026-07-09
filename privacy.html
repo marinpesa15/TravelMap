@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelMap — Privacy</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/style.css?v=26">
+  <style>
+    .privacy-page {
+      max-width: 720px; margin: 0 auto; padding: 40px 24px 80px;
+      color: var(--tx-primary); background: transparent;
+      font-size: 0.92rem; line-height: 1.65;
+    }
+    body { background: var(--bg-sidebar); min-height: 100vh; }
+    .privacy-page h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+    .privacy-page h2 { font-size: 1.15rem; font-weight: 700; margin: 32px 0 10px; }
+    .privacy-page h3 { font-size: 0.98rem; font-weight: 600; margin: 20px 0 8px; }
+    .privacy-page p, .privacy-page li { color: var(--tx-secondary); margin-bottom: 10px; }
+    .privacy-page ul { padding-left: 22px; margin-bottom: 12px; }
+    .privacy-page a { color: #818cf8; }
+    .privacy-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .privacy-back { font-size: 0.85rem; text-decoration: none; }
+    .privacy-langswitch { display: flex; gap: 6px; }
+    .privacy-langswitch button {
+      padding: 5px 12px; border-radius: 8px; cursor: pointer;
+      border: 1px solid var(--bd-card); background: var(--bg-card);
+      color: var(--tx-secondary); font-size: 0.8rem; font-family: inherit;
+    }
+    .privacy-langswitch button.active {
+      border-color: #6366f1; color: #c7d2fe; background: rgba(99,102,241,0.1);
+    }
+    .privacy-updated { font-size: 0.78rem; color: var(--tx-muted); margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+  <div class="privacy-page">
+    <div class="privacy-topbar">
+      <a class="privacy-back" href="index.html">← TravelMap</a>
+      <div class="privacy-langswitch">
+        <button id="lang-de" type="button">Deutsch</button>
+        <button id="lang-en" type="button">English</button>
+      </div>
+    </div>
+
+    <!-- ═══ DEUTSCH ═══ -->
+    <div id="content-de">
+      <h1 id="privacy">Datenschutzerklärung</h1>
+      <p class="privacy-updated">Stand: 9. Juli 2026</p>
+
+      <h2>1. Verantwortlicher</h2>
+      <p>[DEIN NAME]<br>[DEINE ADRESSE]<br>E-Mail: [DEINE E-MAIL-ADRESSE]</p>
+      <p>TravelMap ist ein privates, nicht-kommerzielles Projekt.</p>
+
+      <h2>2. Welche Daten wir speichern</h2>
+      <h3>Google-Konto (bei der Anmeldung)</h3>
+      <ul>
+        <li>Name, E-Mail-Adresse und Profilbild deines Google-Kontos</li>
+      </ul>
+      <h3>Von dir eingetragene Daten</h3>
+      <ul>
+        <li>Besuchte Städte und Länder, Wunschlisten, „dort gelebt"-Markierungen</li>
+        <li>Freundschaften (wen du über einen Einladungslink hinzugefügt hast)</li>
+        <li>Gruppen, Gruppenmitgliedschaften und in Gruppen geteilte Städte</li>
+        <li>Optional hochgeladene Fotos an Gruppen-Städten (verkleinert gespeichert)</li>
+        <li>Ein zufälliger Einladungs-Token, über den Freunde dich hinzufügen können</li>
+      </ul>
+      <p>Diese Daten sind nötig, damit die App funktioniert (Art. 6 Abs. 1 lit. b DSGVO);
+      deine Einwilligung holen wir beim ersten Login ein (Art. 6 Abs. 1 lit. a DSGVO).
+      Zeitpunkt und Version deiner Einwilligung werden gespeichert.</p>
+
+      <h2>3. Wo die Daten liegen</h2>
+      <p>Anmeldung und Datenspeicherung laufen über <strong>Google Firebase</strong>
+      (Firebase Authentication, Cloud Firestore, Firebase Hosting) der Google Ireland Ltd.
+      bzw. Google LLC (USA). Dabei kann eine Übermittlung in die USA stattfinden;
+      Google ist unter dem EU-US Data Privacy Framework zertifiziert.
+      Details: <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a>.</p>
+      <p>Die Weltkarte lädt Kartenmaterial von <strong>Mapbox</strong> (Mapbox Inc., USA).
+      Beim Laden der Karte und bei der Städtesuche wird deine IP-Adresse an Mapbox übertragen.
+      Details: <a href="https://www.mapbox.com/legal/privacy" target="_blank" rel="noopener">Mapbox Privacy</a>.</p>
+
+      <h2>4. Wer deine Daten sehen kann</h2>
+      <ul>
+        <li>Dein Profil (Name, Avatar) und deine Karte: nur du und bestätigte Freunde</li>
+        <li>In Gruppen geteilte Städte und Fotos: alle Gruppenmitglieder</li>
+        <li>Niemand sonst — es gibt keine öffentlichen Profile und keine Weitergabe an Dritte</li>
+      </ul>
+
+      <h2>5. localStorage</h2>
+      <p>Im Browser speichern wir nur zwei technisch notwendige Einstellungen:
+      Theme (hell/dunkel) und Sprache. Keine Tracking-Cookies, keine Analyse-Tools.</p>
+
+      <h2>6. Speicherdauer</h2>
+      <p>Deine Daten bleiben gespeichert, bis du dein Konto löschen lässt (siehe unten).</p>
+
+      <h2>7. Deine Rechte</h2>
+      <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
+      Verarbeitung, Datenübertragbarkeit und Widerruf deiner Einwilligung (Art. 15–21 DSGVO)
+      sowie das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde.</p>
+      <p>Zum Löschen deines Kontos und aller Daten schreib eine E-Mail an
+      [DEINE E-MAIL-ADRESSE] — die Löschung erfolgt zeitnah.</p>
+
+      <h2 id="imprint">Impressum</h2>
+      <p>Angaben gemäß § 5 DDG:</p>
+      <p>[DEIN NAME]<br>[DEINE ADRESSE]<br>E-Mail: [DEINE E-MAIL-ADRESSE]</p>
+    </div>
+
+    <!-- ═══ ENGLISH ═══ -->
+    <div id="content-en" style="display:none">
+      <h1>Privacy Policy</h1>
+      <p class="privacy-updated">Last updated: July 9, 2026</p>
+
+      <h2>1. Controller</h2>
+      <p>[DEIN NAME]<br>[DEINE ADRESSE]<br>Email: [DEINE E-MAIL-ADRESSE]</p>
+      <p>TravelMap is a private, non-commercial project.</p>
+
+      <h2>2. What data we store</h2>
+      <h3>Google account (on sign-in)</h3>
+      <ul>
+        <li>Name, email address and profile picture of your Google account</li>
+      </ul>
+      <h3>Data you add</h3>
+      <ul>
+        <li>Visited cities and countries, wishlists, "lived there" markers</li>
+        <li>Friendships (people you added via an invite link)</li>
+        <li>Groups, group memberships and cities shared in groups</li>
+        <li>Optional photos attached to group cities (stored downscaled)</li>
+        <li>A random invite token that lets friends add you</li>
+      </ul>
+      <p>This data is required for the app to work (Art. 6(1)(b) GDPR);
+      we ask for your consent on first login (Art. 6(1)(a) GDPR).
+      Time and version of your consent are stored.</p>
+
+      <h2>3. Where the data lives</h2>
+      <p>Sign-in and data storage use <strong>Google Firebase</strong>
+      (Firebase Authentication, Cloud Firestore, Firebase Hosting) by Google Ireland Ltd.
+      / Google LLC (USA). Data may be transferred to the USA; Google is certified
+      under the EU-US Data Privacy Framework.
+      Details: <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a>.</p>
+      <p>The world map loads tiles from <strong>Mapbox</strong> (Mapbox Inc., USA).
+      Loading the map and searching cities transmits your IP address to Mapbox.
+      Details: <a href="https://www.mapbox.com/legal/privacy" target="_blank" rel="noopener">Mapbox Privacy</a>.</p>
+
+      <h2>4. Who can see your data</h2>
+      <ul>
+        <li>Your profile (name, avatar) and your map: only you and confirmed friends</li>
+        <li>Cities and photos shared in groups: all group members</li>
+        <li>Nobody else — there are no public profiles and no sharing with third parties</li>
+      </ul>
+
+      <h2>5. localStorage</h2>
+      <p>We store only two technically necessary settings in your browser:
+      theme (light/dark) and language. No tracking cookies, no analytics.</p>
+
+      <h2>6. Retention</h2>
+      <p>Your data is kept until you request account deletion (see below).</p>
+
+      <h2>7. Your rights</h2>
+      <p>You have the right to access, rectification, erasure, restriction of processing,
+      data portability and withdrawal of consent (Art. 15–21 GDPR), and the right to
+      lodge a complaint with a supervisory authority.</p>
+      <p>To delete your account and all data, email [DEINE E-MAIL-ADRESSE] —
+      deletion happens promptly.</p>
+
+      <h2>Legal Notice (Impressum)</h2>
+      <p>Information according to § 5 DDG (German law):</p>
+      <p>[DEIN NAME]<br>[DEINE ADRESSE]<br>Email: [DEINE E-MAIL-ADRESSE]</p>
+    </div>
+  </div>
+
+  <script>
+    // Theme + language from the app's localStorage; page-local toggle only
+    // (reading the policy in the other language must not flip the app language).
+    if ((localStorage.getItem('tm-theme') || 'dark') === 'light') {
+      document.documentElement.classList.add('light');
+    }
+    const saved = localStorage.getItem('tm-lang');
+    let lang = (saved === 'en' || saved === 'de')
+      ? saved
+      : ((navigator.language || '').toLowerCase().startsWith('de') ? 'de' : 'en');
+
+    const show = l => {
+      document.getElementById('content-de').style.display = l === 'de' ? '' : 'none';
+      document.getElementById('content-en').style.display = l === 'en' ? '' : 'none';
+      document.getElementById('lang-de').classList.toggle('active', l === 'de');
+      document.getElementById('lang-en').classList.toggle('active', l === 'en');
+      document.documentElement.lang = l;
+    };
+    document.getElementById('lang-de').addEventListener('click', () => show('de'));
+    document.getElementById('lang-en').addEventListener('click', () => show('en'));
+    show(lang);
+  </script>
+</body>
+</html>
