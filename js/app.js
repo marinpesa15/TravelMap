@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=18';
+import { onAuthChange, signOutUser } from './auth.js?v=19';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -6,15 +6,15 @@ import {
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   acceptConsent
-} from './db.js?v=20';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=1';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=19';
+} from './db.js?v=21';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=2';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=20';
+} from './countries.js?v=21';
 import { initMap } from './map.js?v=18';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers } from './markers.js?v=21';
 import {
@@ -25,7 +25,7 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=27';
+} from './ui.js?v=28';
 import { initTheme } from './theme.js?v=19';
 import { setupSettings } from './settings.js?v=2';
 import { t, getLang, applyTranslations } from './i18n.js?v=1';
@@ -42,14 +42,36 @@ let _currentGroupId = null;
 let _mapMode        = 'cities'; // 'cities' | 'countries'
 
 // Real-time listener handles
-let _unsubUserData  = null;
-let _unsubFriends   = null;
-let _unsubGroups    = null;
-let _unsubGroupView = null;
+let _unsubUserData   = null;
+let _unsubFriends    = null;
+let _unsubGroups     = null;
+let _unsubGroupView  = null;
+let _unsubFriendView = null;
 
 // First-run flags (prevent double setup of listeners)
 let _friendsSetup   = false;
 let _groupsSetup    = false;
+
+// Country layers are heavy (GeoJSON fetch) — loaded lazily on first
+// countries-mode use instead of blocking every app start.
+// Stored as a promise so concurrent callers share one init.
+let _countryLayersPromise = null;
+let _countryClickSetup    = false;
+
+function _ensureCountryLayers() {
+  if (_countryLayersPromise) return _countryLayersPromise;
+  _countryLayersPromise = (async () => {
+    await initCountryLayers(_map);
+    if (!_countryClickSetup) {
+      setupCountryMapClick(_map, _onCountryMapClick);
+      _countryClickSetup = true;
+    }
+  })().catch(err => {
+    _countryLayersPromise = null; // allow retry after a failed fetch
+    throw err;
+  });
+  return _countryLayersPromise;
+}
 
 // Translate static HTML as early as possible (before auth resolves)
 applyTranslations();
@@ -82,8 +104,8 @@ async function _init(user) {
       }
     }
 
-    await initUserProfile(_uid, user);
-    _userData = await loadUserData(_uid);   // one-shot for initial render
+    // initUserProfile returns the fresh doc data — saves a redundant read
+    _userData = await initUserProfile(_uid, user);
 
     // Process invite links before the map: friend-adding must not depend on
     // Mapbox/WebGL, which can fail inside in-app browsers (WhatsApp etc.).
@@ -92,14 +114,18 @@ async function _init(user) {
     _map = await initMap();
 
     _showUserProfile(user);
-    // Re-init country layers after style reloads (theme toggle wipes all custom sources + layers)
+    // Style reloads (theme toggle) wipe all custom sources + layers — re-init
+    // lazily, and only when the countries view actually needs them.
     _map.on('style.load', () => {
-      initCountryLayers(_map).then(() => {
+      _countryLayersPromise = null; // style reload wiped sources + layers
+      if (_mapMode !== 'countries') return;
+      _ensureCountryLayers().then(() => {
+        if (_mapMode !== 'countries') return; // user switched back meanwhile
         if (_userData) {
           const { visited, wishlist } = _getFilteredCountryData();
           updateCountryFills(_map, visited, wishlist);
         }
-        if (_mapMode === 'countries') showCountryLayers(_map);
+        showCountryLayers(_map);
       }).catch(err => console.error('[TM] country layer re-init failed:', err));
     });
 
@@ -109,16 +135,15 @@ async function _init(user) {
     _setupFilterNav();
     _initMapModeTabs();
 
-    // Country layers — async because GeoJSON is fetched from CDN on first load
-    await initCountryLayers(_map);
-    updateCountryFills(_map, _userData.visited_countries ?? [], _userData.wishlist_countries ?? []);
-    setupCountryMapClick(_map, _onCountryMapClick);
     setupCountryTooltip();
 
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
 
     // ── Real-time: own user data ──────────────────────────────────────────
+    // Defensive: clear any view listeners from a previous init
+    if (_unsubGroupView)  { _unsubGroupView();  _unsubGroupView  = null; }
+    if (_unsubFriendView) { _unsubFriendView(); _unsubFriendView = null; }
     if (_unsubUserData) _unsubUserData();
     _unsubUserData = subscribeUserData(_uid, data => {
       _userData = data;
@@ -349,16 +374,23 @@ async function _switchToFriendView(friend) {
   document.getElementById('btn-add-location').style.display = 'none';
 
   try {
-    const friendData = await loadUserData(friend.uid);
-    clearAllMarkers();
-    if (_mapMode === 'countries') {
-      // Show friend's country fills in the current map mode
-      updateCountryFills(_map, friendData.visited_countries ?? [], friendData.wishlist_countries ?? []);
-      showCountryLayers(_map);
-    } else {
-      hideCountryLayers(_map);
-      renderReadOnlyMarkers(_map, friendData);
-    }
+    if (_mapMode === 'countries') await _ensureCountryLayers();
+
+    // Real-time: friend's map updates live while we're watching it
+    if (_unsubFriendView) _unsubFriendView();
+    _unsubFriendView = subscribeUserData(friend.uid, friendData => {
+      if (_viewMode !== 'friend') return;
+      clearAllMarkers();
+      if (_mapMode === 'countries') {
+        // Show friend's country fills in the current map mode
+        updateCountryFills(_map, friendData.visited_countries ?? [], friendData.wishlist_countries ?? []);
+        showCountryLayers(_map);
+      } else {
+        hideCountryLayers(_map);
+        renderReadOnlyMarkers(_map, friendData);
+      }
+    });
+
     showViewBanner(t('banner.friendsMap', { name: friend.display_name || t('friend.fallback') }), _returnToOwnView);
     _enterBannerMode(false); // friend view: hide search, no search icon
   } catch (err) {
@@ -369,8 +401,9 @@ async function _switchToFriendView(friend) {
 }
 
 function _returnToOwnView() {
-  // Unsubscribe group view listener if active
-  if (_unsubGroupView) { _unsubGroupView(); _unsubGroupView = null; }
+  // Unsubscribe group/friend view listeners if active
+  if (_unsubGroupView)  { _unsubGroupView();  _unsubGroupView  = null; }
+  if (_unsubFriendView) { _unsubFriendView(); _unsubFriendView = null; }
 
   _exitBannerMode();
   _viewMode = 'own';
@@ -380,10 +413,13 @@ function _returnToOwnView() {
 
   if (_mapMode === 'countries') {
     clearAllMarkers(); // remove any friend/group city markers
-    const { visited, wishlist } = _getFilteredCountryData();
-    updateCountryFills(_map, visited, wishlist);
-    showCountryLayers(_map);
     if (_userData) updateCountriesView(_userData);
+    _ensureCountryLayers().then(() => {
+      if (_mapMode !== 'countries' || _viewMode !== 'own') return;
+      const { visited, wishlist } = _getFilteredCountryData();
+      updateCountryFills(_map, visited, wishlist);
+      showCountryLayers(_map);
+    }).catch(err => console.error('[TM] country layers failed:', err));
   } else {
     hideCountryLayers(_map); // remove any friend/group country fills
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
@@ -571,10 +607,17 @@ function _setMapMode(mode) {
     if (_userData) updateStats(_userData);
   } else {
     clearAllMarkers();
-    const { visited, wishlist } = _getFilteredCountryData();
-    updateCountryFills(_map, visited, wishlist);
-    showCountryLayers(_map);
     if (_userData) updateCountriesView(_userData);
+    // Lazy: first switch fetches the GeoJSON and builds the layers
+    _ensureCountryLayers().then(() => {
+      if (_mapMode !== 'countries') return; // user switched back meanwhile
+      const { visited, wishlist } = _getFilteredCountryData();
+      updateCountryFills(_map, visited, wishlist);
+      showCountryLayers(_map);
+    }).catch(err => {
+      console.error('[TM] country layers failed:', err);
+      showToast(t('toast.errorLoading'));
+    });
   }
 }
 

@@ -1,8 +1,8 @@
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
-  arrayUnion, arrayRemove, writeBatch, serverTimestamp
+  arrayUnion, arrayRemove, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { db } from './config.js';
+import { db } from './config.js?v=1';
 
 function userRef(uid) {
   return doc(db, 'users', uid);
@@ -40,34 +40,41 @@ async function ensureDoc(uid) {
 }
 
 /**
- * Writes display_name, avatar_url to the user doc.
+ * Writes display_name, avatar_url to the user doc (only when changed).
  * Generates invite_token once if not already set.
  * user: { displayName, photoURL } from Firebase Auth
+ * Returns the resulting user-doc data — callers can use it directly
+ * instead of re-reading the doc.
  */
 export async function initUserProfile(uid, user) {
-  const ref  = userRef(uid);
-  const snap = await getDoc(ref);
+  const ref      = userRef(uid);
+  const snap     = await getDoc(ref);
+  const existing = snap.exists() ? snap.data() : null;
   const profileFields = {
     display_name: user.displayName || '',
     avatar_url:   user.photoURL   || ''
   };
-  let token = snap.exists() ? snap.data().invite_token : null;
-  if (!snap.exists()) {
+
+  let token = existing?.invite_token ?? null;
+  let data;
+  if (!existing) {
     token = crypto.randomUUID();
-    await setDoc(ref, {
-      ...EMPTY_DATA(),
-      ...profileFields,
-      invite_token: token
-    });
+    data  = { ...EMPTY_DATA(), ...profileFields, invite_token: token };
+    await setDoc(ref, data);
   } else if (!token) {
     token = crypto.randomUUID();
     await updateDoc(ref, { ...profileFields, invite_token: token });
+    data = { ...existing, ...profileFields, invite_token: token };
   } else {
-    await updateDoc(ref, profileFields);
+    const changed = existing.display_name !== profileFields.display_name
+                 || existing.avatar_url   !== profileFields.avatar_url;
+    if (changed) await updateDoc(ref, profileFields);
+    data = { ...existing, ...profileFields };
   }
   // Keep the invite-lookup doc in sync — also lazily migrates existing users
   // whose token so far only lives in their user doc.
   await setDoc(inviteRef(token), { uid, ...profileFields });
+  return data;
 }
 
 /**
@@ -77,27 +84,6 @@ export async function initUserProfile(uid, user) {
 export async function getUserByToken(token) {
   const snap = await getDoc(inviteRef(token));
   return snap.exists() ? snap.data() : null;
-}
-
-/**
- * Regenerates the user's invite token and swaps the invite-lookup doc.
- */
-export async function regenerateInviteToken(uid) {
-  const snap = await getDoc(userRef(uid));
-  const data = snap.exists() ? snap.data() : {};
-  const newToken = crypto.randomUUID();
-
-  const batch = writeBatch(db);
-  if (data.invite_token) batch.delete(inviteRef(data.invite_token));
-  batch.set(inviteRef(newToken), {
-    uid,
-    display_name: data.display_name || '',
-    avatar_url:   data.avatar_url   || ''
-  });
-  batch.update(userRef(uid), { invite_token: newToken });
-  await batch.commit();
-
-  return newToken;
 }
 
 export async function addVisitedCountry(uid, isoCode) {

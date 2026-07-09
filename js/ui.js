@@ -1,5 +1,5 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
-import { searchCountries } from './countries.js?v=20';
+import { searchCountries } from './countries.js?v=21';
 import { t, getLang } from './i18n.js?v=1';
 
 // Escapes user-controlled strings before interpolation into innerHTML.
