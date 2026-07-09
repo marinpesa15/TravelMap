@@ -1,6 +1,6 @@
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
-  arrayUnion, arrayRemove, writeBatch
+  arrayUnion, arrayRemove, writeBatch, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
 
@@ -25,6 +25,13 @@ const EMPTY_DATA = () => ({
 export async function loadUserData(uid) {
   const snap = await getDoc(userRef(uid));
   return snap.exists() ? snap.data() : EMPTY_DATA();
+}
+
+/** Persists the privacy consent on the user doc (creates it if missing). */
+export async function acceptConsent(uid, version) {
+  await setDoc(userRef(uid), {
+    consent: { version, accepted_at: serverTimestamp() }
+  }, { merge: true });
 }
 
 async function ensureDoc(uid) {

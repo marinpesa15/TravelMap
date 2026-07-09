@@ -1,5 +1,6 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
-import { searchCountries } from './countries.js?v=18';
+import { searchCountries } from './countries.js?v=20';
+import { t, getLang } from './i18n.js?v=1';
 
 // Escapes user-controlled strings before interpolation into innerHTML.
 // Friend names, group names and city names come from Firestore and can be
@@ -51,7 +52,7 @@ function _updateRecentLogs(visitedCities) {
   const recent = [...visitedCities].reverse().slice(0, 3);
 
   if (recent.length === 0) {
-    el.innerHTML = '<p class="recent-log-meta" style="color:#374151">No cities logged yet.</p>';
+    el.innerHTML = `<p class="recent-log-meta" style="color:#374151">${t('empty.noCities')}</p>`;
     return;
   }
 
@@ -139,11 +140,11 @@ export function setupSearch(onAddCity, onAddCountry, getMode) {
 }
 
 async function _searchAndRenderCountries(query, resultsEl, onAddCountry) {
-  resultsEl.innerHTML = '<div class="search-result-item">Searching…</div>';
+  resultsEl.innerHTML = `<div class="search-result-item">${t('search.searching')}</div>`;
   try {
     const countries = await searchCountries(query);
     if (!countries.length) {
-      resultsEl.innerHTML = '<div class="search-result-item">No countries found</div>';
+      resultsEl.innerHTML = `<div class="search-result-item">${t('search.noCountries')}</div>`;
       return;
     }
     resultsEl.innerHTML = '';
@@ -153,8 +154,8 @@ async function _searchAndRenderCountries(query, resultsEl, onAddCountry) {
       item.innerHTML = `
         <span class="search-country-name">${esc(country.name)}</span>
         <span class="search-country-iso">${esc(country.isoCode)}</span>
-        <button class="country-add-btn visited" data-type="visited">✓ Visited</button>
-        <button class="country-add-btn wishlist" data-type="wishlist">⭐ Wishlist</button>
+        <button class="country-add-btn visited" data-type="visited">${t('dialog.visited')}</button>
+        <button class="country-add-btn wishlist" data-type="wishlist">${t('dialog.wishlist')}</button>
       `;
       item.querySelector('[data-type="visited"]').addEventListener('click', e => {
         e.stopPropagation();
@@ -172,7 +173,7 @@ async function _searchAndRenderCountries(query, resultsEl, onAddCountry) {
     });
   } catch (e) {
     if (e.name === 'AbortError') return;
-    resultsEl.innerHTML = '<div class="search-result-item">Search error</div>';
+    resultsEl.innerHTML = `<div class="search-result-item">${t('search.error')}</div>`;
   }
 }
 
@@ -181,14 +182,14 @@ async function _searchCities(query, resultsEl) {
   if (_searchAbort) _searchAbort.abort();
   _searchAbort = new AbortController();
 
-  resultsEl.innerHTML = '<div class="search-result-item">Searching…</div>';
+  resultsEl.innerHTML = `<div class="search-result-item">${t('search.searching')}</div>`;
   try {
     const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=place&limit=5&access_token=${MAPBOX_TOKEN}`;
     const res  = await fetch(url, { signal: _searchAbort.signal });
     const data = await res.json();
 
     if (!data.features?.length) {
-      resultsEl.innerHTML = '<div class="search-result-item">No results</div>';
+      resultsEl.innerHTML = `<div class="search-result-item">${t('search.noResults')}</div>`;
       return;
     }
 
@@ -212,7 +213,7 @@ async function _searchCities(query, resultsEl) {
     });
   } catch (e) {
     if (e.name === 'AbortError') return;
-    resultsEl.innerHTML = '<div class="search-result-item">Search error</div>';
+    resultsEl.innerHTML = `<div class="search-result-item">${t('search.error')}</div>`;
   }
 }
 
@@ -248,7 +249,7 @@ export function setupConfirmDialog() {
 export function showConfirm(message, actionLabel, onConfirm) {
   _confirmCb = onConfirm;
   document.getElementById('confirm-message').textContent = message;
-  document.getElementById('confirm-ok').textContent = actionLabel || 'Confirm';
+  document.getElementById('confirm-ok').textContent = actionLabel || t('dialog.confirm');
   document.getElementById('confirm-dialog').classList.add('open');
 }
 
@@ -279,9 +280,9 @@ export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onD
   document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
     const link = `${window.location.origin}/map.html?token=${inviteToken}`;
     navigator.clipboard.writeText(link).then(() => {
-      showToast('Invite link copied! 🔗');
+      showToast(t('toast.inviteCopied'));
     }).catch(() => {
-      showToast('Could not copy link.');
+      showToast(t('toast.copyFailed'));
     });
   });
 
@@ -293,7 +294,7 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
   if (!el) return;
 
   if (!friends.length) {
-    el.innerHTML = '<p class="social-empty">No friends yet. Share your invite link!</p>';
+    el.innerHTML = `<p class="social-empty">${t('empty.noFriends')}</p>`;
     return;
   }
 
@@ -310,8 +311,8 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
 
     item.innerHTML = `
       ${avatar}
-      <span class="social-name">${esc(friend.display_name) || 'Friend'}</span>
-      <button class="btn-remove-friend" title="Remove friend">✕</button>
+      <span class="social-name">${esc(friend.display_name) || t('friend.fallback')}</span>
+      <button class="btn-remove-friend" title="${t('friend.removeTitle')}">✕</button>
     `;
     item.addEventListener('click', e => {
       if (e.target.closest('.btn-remove-friend')) return;
@@ -319,8 +320,8 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
     });
     item.querySelector('.btn-remove-friend').addEventListener('click', e => {
       e.stopPropagation();
-      const name = friend.display_name || 'this friend';
-      showConfirm(`Remove ${name} from your friends?`, 'Remove', () => onDeleteFriend?.(friend.uid));
+      const name = friend.display_name || t('friend.fallback');
+      showConfirm(t('confirm.removeFriend', { name }), t('dialog.remove'), () => onDeleteFriend?.(friend.uid));
     });
     el.appendChild(item);
   });
@@ -360,12 +361,12 @@ export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, o
 
   document.getElementById('group-modal-create')?.addEventListener('click', () => {
     const checked = [...document.querySelectorAll('#group-friends-checklist input:checked')];
-    if (!checked.length) { showToast('Select at least one person.'); return; }
+    if (!checked.length) { showToast(t('toast.selectPerson')); return; }
     const memberUids = checked.map(cb => cb.value);
 
     if (_groupModalMode === 'create') {
       const name = document.getElementById('group-name-input')?.value.trim();
-      if (!name) { showToast('Please enter a group name.'); return; }
+      if (!name) { showToast(t('toast.enterGroupName')); return; }
       _groupModalCreateCb?.(name, memberUids);
     } else {
       _groupModalAddMemberCb?.(_groupModalTargetGroup.id, memberUids);
@@ -390,45 +391,45 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
   if (!checklist) return;
 
   if (mode === 'create') {
-    titleEl.textContent            = 'New Group';
+    titleEl.textContent            = t('group.new');
     nameRow.style.display          = '';
     // Guard: browsers may hold a cached map.html (max-age) that predates
     // the members section — the modal must still work without it.
     if (membersSection) membersSection.style.display = 'none';
-    friendLabel.textContent        = 'Add friends';
-    createBtn.textContent          = 'Create';
-    cancelBtn.textContent          = 'Cancel';
+    friendLabel.textContent        = t('group.addFriends');
+    createBtn.textContent          = t('dialog.create');
+    cancelBtn.textContent          = t('dialog.cancel');
     document.getElementById('group-name-input').value = '';
 
     if (!friends.length) {
-      checklist.innerHTML = '<p class="social-empty">Add friends first to create a group.</p>';
+      checklist.innerHTML = `<p class="social-empty">${t('empty.addFriendsFirst')}</p>`;
     } else {
       checklist.innerHTML = friends.map(f => `
         <label class="group-check-item">
           <input type="checkbox" value="${esc(f.uid)}">
-          <span class="group-check-name">${esc(f.display_name) || 'Friend'}</span>
+          <span class="group-check-name">${esc(f.display_name) || t('friend.fallback')}</span>
         </label>
       `).join('');
     }
   } else {
     // manage mode: current members (removable by the creator) + add friends
-    titleEl.textContent          = `Manage "${group.name}"`;
+    titleEl.textContent          = t('group.manage', { name: group.name });
     nameRow.style.display        = 'none';
     if (membersSection) membersSection.style.display = '';
-    friendLabel.textContent      = 'Select friends to add';
-    createBtn.textContent        = 'Add';
-    cancelBtn.textContent        = 'Close';
+    friendLabel.textContent      = t('group.selectFriends');
+    createBtn.textContent        = t('dialog.add');
+    cancelBtn.textContent        = t('dialog.close');
 
     _renderGroupMembers(group, friends);
 
     const available = friends.filter(f => !allMembers.includes(f.uid));
     if (!available.length) {
-      checklist.innerHTML = '<p class="social-empty">All your friends are already in this group.</p>';
+      checklist.innerHTML = `<p class="social-empty">${t('empty.allInGroup')}</p>`;
     } else {
       checklist.innerHTML = available.map(f => `
         <label class="group-check-item">
           <input type="checkbox" value="${esc(f.uid)}">
-          <span class="group-check-name">${esc(f.display_name) || 'Friend'}</span>
+          <span class="group-check-name">${esc(f.display_name) || t('friend.fallback')}</span>
         </label>
       `).join('');
     }
@@ -453,15 +454,15 @@ function _renderGroupMembers(group, friends) {
 
   (group.members ?? []).forEach(uid => {
     const friend = friends.find(f => f.uid === uid);
-    const name   = uid === _groupModalUid ? 'You'
-                 : (friend?.display_name || 'Member');
+    const name   = uid === _groupModalUid ? t('group.you')
+                 : (friend?.display_name || t('group.member'));
 
     const avatarUrl = safeUrl(friend?.avatar_url);
     const avatar = avatarUrl
       ? `<img class="social-avatar" src="${esc(avatarUrl)}" alt="" loading="lazy">`
       : `<div class="social-avatar-placeholder">👤</div>`;
 
-    const badge     = uid === group.created_by ? '<span class="group-member-badge" title="Group creator">👑</span>' : '';
+    const badge     = uid === group.created_by ? `<span class="group-member-badge" title="${t('group.creator')}">👑</span>` : '';
     const removable = isCreator && uid !== group.created_by;
 
     const item = document.createElement('div');
@@ -470,11 +471,11 @@ function _renderGroupMembers(group, friends) {
       ${avatar}
       <span class="group-member-name">${esc(name)}</span>
       ${badge}
-      ${removable ? '<button class="btn-remove-friend" title="Remove from group">✕</button>' : ''}
+      ${removable ? `<button class="btn-remove-friend" title="${t('group.removeFromGroup')}">✕</button>` : ''}
     `;
 
     item.querySelector('.btn-remove-friend')?.addEventListener('click', () => {
-      showConfirm(`Remove ${name} from "${group.name}"?`, 'Remove', () => {
+      showConfirm(t('confirm.removeMember', { name, group: group.name }), t('dialog.remove'), () => {
         _groupModalRemoveMemberCb?.(group.id, uid);
         // Optimistic update: re-render the whole modal so the member list
         // and the "add friends" checklist both reflect the change
@@ -499,7 +500,7 @@ export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, 
   if (!el) return;
 
   if (!groups.length) {
-    el.innerHTML = '<p class="social-empty">No groups yet.</p>';
+    el.innerHTML = `<p class="social-empty">${t('empty.noGroups')}</p>`;
     return;
   }
 
@@ -511,13 +512,13 @@ export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, 
 
     const isCreator   = group.created_by === currentUid;
     const leaveLabel  = isCreator ? '🗑️' : '✕';
-    const leaveTitle  = isCreator ? 'Delete group' : 'Leave group';
+    const leaveTitle  = isCreator ? t('group.deleteTitle') : t('group.leaveTitle');
     const memberCount = (group.members ?? []).length;
 
     item.innerHTML = `
       <div class="social-avatar-placeholder">🌍</div>
       <span class="social-name">${esc(group.name)}</span>
-      <button class="btn-add-member" title="Manage members">👤+</button>
+      <button class="btn-add-member" title="${t('group.manageMembers')}">👤+</button>
       <button class="btn-leave-group" title="${leaveTitle}">${leaveLabel}</button>
     `;
 
@@ -537,9 +538,9 @@ export function renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, 
     item.querySelector('.btn-leave-group').addEventListener('click', e => {
       e.stopPropagation();
       const msg   = isCreator
-        ? `Delete group "${group.name}"? This cannot be undone.`
-        : `Leave group "${group.name}"?`;
-      const label = isCreator ? 'Delete' : 'Leave';
+        ? t('confirm.deleteGroup', { name: group.name })
+        : t('confirm.leaveGroup', { name: group.name });
+      const label = isCreator ? t('dialog.delete') : t('dialog.leave');
       showConfirm(msg, label, () => onLeaveGroup(group.id, group.created_by));
     });
 
@@ -617,12 +618,12 @@ function _updateCountryLogs(visitedCodes, wishlistCodes) {
   ].slice(0, 3);
 
   if (recent.length === 0) {
-    el.innerHTML = '<p class="recent-log-meta" style="color:#374151">No countries tracked yet.</p>';
+    el.innerHTML = `<p class="recent-log-meta" style="color:#374151">${t('empty.noCountries')}</p>`;
     return;
   }
 
   let countryNames;
-  try { countryNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch { countryNames = null; }
+  try { countryNames = new Intl.DisplayNames([getLang()], { type: 'region' }); } catch { countryNames = null; }
 
   el.innerHTML = recent.map(({ code, type }) => {
     let name = code;
@@ -633,7 +634,7 @@ function _updateCountryLogs(visitedCodes, wishlistCodes) {
         <div class="recent-log-icon">${icon}</div>
         <div>
           <p class="recent-log-city">${esc(name)}</p>
-          <p class="recent-log-meta">${type === 'visited' ? 'Visited' : 'Wishlist'}</p>
+          <p class="recent-log-meta">${type === 'visited' ? t('recent.visited') : t('recent.wishlist')}</p>
         </div>
       </div>
     `;
@@ -703,10 +704,10 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
   const dialog  = document.getElementById('group-photo-dialog');
   const preview = document.getElementById('group-photo-preview');
   const input   = document.getElementById('group-photo-input');
-  const cityEl  = document.getElementById('group-photo-city');
+  const titleEl = document.getElementById('group-photo-title');
   if (!dialog) return;
 
-  cityEl.textContent  = cityName;
+  titleEl.textContent = t('photo.title', { city: cityName });
   preview.src         = defaultPhotoURL || '';
   input.value         = ''; // reset file picker
 
@@ -720,7 +721,7 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
       _chosenURL  = await _compressImage(file);
       preview.src = _chosenURL;
     } catch {
-      showToast('Could not load image.');
+      showToast(t('toast.imageFailed'));
     }
   };
   input.removeEventListener('change', input._photoHandler);
@@ -775,7 +776,7 @@ export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePh
       photoBtn = document.createElement('button');
       photoBtn.id        = 'btn-change-photo';
       photoBtn.className = 'btn-change-photo';
-      photoBtn.textContent = '📷 Photo';
+      photoBtn.textContent = t('popup.photo');
       document.getElementById('city-popup').appendChild(photoBtn);
     }
     photoBtn.style.display = 'block';

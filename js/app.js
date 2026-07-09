@@ -4,8 +4,10 @@ import {
   subscribeUserData, subscribeGroupData,
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
-  addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity
-} from './db.js?v=19';
+  addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
+  acceptConsent
+} from './db.js?v=20';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=1';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=18';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=19';
 import {
@@ -23,8 +25,10 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=26';
-import { initTheme } from './theme.js?v=18';
+} from './ui.js?v=27';
+import { initTheme } from './theme.js?v=19';
+import { setupSettings } from './settings.js?v=2';
+import { t, getLang, applyTranslations } from './i18n.js?v=1';
 
 let _uid            = null;
 let _userData       = null;
@@ -32,6 +36,7 @@ let _currentUser    = null; // Firebase Auth user (for photoURL / displayName)
 let _map            = null;
 let _currentFilter  = 'all';
 let _friends        = [];
+let _groups         = [];
 let _viewMode       = 'own'; // 'own' | 'friend' | 'group'
 let _currentGroupId = null;
 let _mapMode        = 'cities'; // 'cities' | 'countries'
@@ -45,6 +50,9 @@ let _unsubGroupView = null;
 // First-run flags (prevent double setup of listeners)
 let _friendsSetup   = false;
 let _groupsSetup    = false;
+
+// Translate static HTML as early as possible (before auth resolves)
+applyTranslations();
 
 // ===== Auth Guard =====
 onAuthChange(async user => {
@@ -63,6 +71,17 @@ onAuthChange(async user => {
 
 async function _init(user) {
   try {
+    // ── Consent gate: nothing is written to Firestore before acceptance ──
+    const preData = await loadUserData(_uid);   // read-only check
+    if (!hasConsent(preData)) {
+      const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
+      if (!accepted) {
+        try { await signOutUser(); } catch { /* ignore */ }
+        window.location.href = 'index.html';
+        return;
+      }
+    }
+
     await initUserProfile(_uid, user);
     _userData = await loadUserData(_uid);   // one-shot for initial render
 
@@ -85,6 +104,7 @@ async function _init(user) {
     });
 
     initTheme(_map);
+    setupSettings(_map);
     _initMobileSidebar();
     _setupFilterNav();
     _initMapModeTabs();
@@ -131,6 +151,7 @@ async function _init(user) {
     if (_unsubGroups) _unsubGroups();
     _groupsSetup = false;
     _unsubGroups = loadGroups(_uid, groups => {
+      _groups = groups;
       if (!_groupsSetup) {
         setupGroupsSidebar(groups, _friends, _uid, _onCreateGroup, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _onRemoveMember);
         _groupsSetup = true;
@@ -142,11 +163,6 @@ async function _init(user) {
     setupConfirmDialog();
     setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode);
 
-    document.getElementById('btn-signout').addEventListener('click', async () => {
-      try { await signOutUser(); } catch { /* ignore */ }
-      window.location.href = 'index.html';
-    });
-
     document.getElementById('btn-add-location')?.addEventListener('click', () => {
       _closeMobileSidebar();
       document.getElementById('city-search')?.focus();
@@ -156,8 +172,26 @@ async function _init(user) {
 
     _map.on('click', () => hideCityPopup());
 
+    // Live language switch: retranslate static DOM + re-render dynamic lists
+    window.addEventListener('tm-langchanged', () => {
+      applyTranslations();
+      // Search placeholder depends on view/map mode
+      const input = document.getElementById('city-search');
+      if (input) {
+        input.placeholder = (_viewMode === 'group' || _mapMode !== 'countries')
+          ? t('search.cities') : t('search.countries');
+      }
+      // Sidebar lists / stats
+      if (_userData) {
+        if (_mapMode === 'countries') updateCountriesView(_userData);
+        else updateStats(_userData);
+      }
+      renderFriendsList(_friends, _switchToFriendView, _onDeleteFriend);
+      renderGroupsList(_groups, _uid, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _friends);
+    });
+
   } catch (err) {
-    showToast('Error loading. Please reload.');
+    showToast(t('toast.errorLoading'));
     console.error(err);
   }
 }
@@ -190,23 +224,23 @@ async function _handleInviteToken(myData) {
 
   try {
     const them = await getUserByToken(token);
-    if (!them) { clearToken(); showToast('Invite link not found.'); return; }
-    if (them.uid === _uid) { clearToken(); showToast("That's your own invite link!"); return; }
+    if (!them) { clearToken(); showToast(t('toast.inviteNotFound')); return; }
+    if (them.uid === _uid) { clearToken(); showToast(t('toast.ownInvite')); return; }
 
     const alreadyFriends = await isFriend(_uid, them.uid);
     if (alreadyFriends) {
       clearToken();
-      showToast(`Already friends with ${them.display_name || 'this user'}!`);
+      showToast(t('toast.alreadyFriends', { name: them.display_name || t('friend.fallback') }));
       return;
     }
 
     await addFriendship(_uid, them.uid, them, myData);
     clearToken();
-    showToast(`You're now friends with ${them.display_name || 'your friend'}! 🎉`);
+    showToast(t('toast.nowFriends', { name: them.display_name || t('friend.fallback') }));
   } catch (err) {
     // Token stays in the URL so a reload retries the join.
     console.error('Friend join error:', err);
-    showToast('Could not process invite link.');
+    showToast(t('toast.inviteError'));
   }
 }
 
@@ -225,9 +259,9 @@ async function _onAddCity(cityData, type, lived) {
             lived: false,
             addedBy: { uid: _uid, photoURL: chosenPhoto, displayName }
           }, 'visited');
-          showToast(`${cityData.name} added to group ✓`);
+          showToast(t('toast.addedToGroup', { name: cityData.name }));
         } catch {
-          showToast('Failed to add location to group.');
+          showToast(t('toast.addToGroupFailed'));
         }
       });
     } else {
@@ -238,9 +272,9 @@ async function _onAddCity(cityData, type, lived) {
           lived: false,
           addedBy: { uid: _uid, photoURL: defaultPhoto, displayName }
         }, 'wishlist');
-        showToast(`${cityData.name} added to group ✓`);
+        showToast(t('toast.addedToGroup', { name: cityData.name }));
       } catch {
-        showToast('Failed to add location to group.');
+        showToast(t('toast.addToGroupFailed'));
       }
     }
     _closeMobileSearchOverlay();
@@ -257,10 +291,10 @@ async function _onAddCity(cityData, type, lived) {
     } else {
       await addWishlistCity(_uid, cityData);
     }
-    showToast(`${cityData.name} added ✓`);
+    showToast(t('toast.added', { name: cityData.name }));
     // Map + stats update via subscribeUserData listener automatically
   } catch {
-    showToast('Failed to add location');
+    showToast(t('toast.addFailed'));
   }
 }
 
@@ -277,9 +311,9 @@ function _onChangeGroupCityPhoto(city, type) {
   showGroupPhotoDialog(city.name, defaultPhoto, async (chosenPhoto) => {
     try {
       await updateGroupCityPhoto(_currentGroupId, city.name, type, chosenPhoto);
-      showToast('Photo updated ✓');
+      showToast(t('toast.photoUpdated'));
     } catch {
-      showToast('Failed to update photo.');
+      showToast(t('toast.photoFailed'));
     }
   });
 }
@@ -287,10 +321,10 @@ function _onChangeGroupCityPhoto(city, type) {
 async function _onRemoveCityFromGroup(city, type) {
   try {
     await removeCityFromGroup(_currentGroupId, city.name, type);
-    showToast(`${city.name} removed`);
+    showToast(t('toast.removed', { name: city.name }));
     // Map updates via subscribeGroupData listener automatically
   } catch {
-    showToast('Failed to remove location.');
+    showToast(t('toast.removeFailed'));
   }
 }
 
@@ -298,10 +332,10 @@ async function _onRemoveCity(city, type) {
   try {
     if (type === 'visited')  await removeVisitedCity(_uid, city.name);
     if (type === 'wishlist') await removeWishlistCity(_uid, city.name);
-    showToast(`${city.name} removed`);
+    showToast(t('toast.removed', { name: city.name }));
     // Map + stats update via subscribeUserData listener automatically
   } catch {
-    showToast('Failed to remove location');
+    showToast(t('toast.removeFailed'));
   }
 }
 
@@ -325,11 +359,11 @@ async function _switchToFriendView(friend) {
       hideCountryLayers(_map);
       renderReadOnlyMarkers(_map, friendData);
     }
-    showViewBanner(`${friend.display_name || 'Friend'}'s Map`, _returnToOwnView);
+    showViewBanner(t('banner.friendsMap', { name: friend.display_name || t('friend.fallback') }), _returnToOwnView);
     _enterBannerMode(false); // friend view: hide search, no search icon
   } catch (err) {
     console.error(err);
-    showToast('Could not load friend\'s map.');
+    showToast(t('toast.friendMapFailed'));
     _returnToOwnView();
   }
 }
@@ -359,16 +393,16 @@ function _returnToOwnView() {
 
   // Restore placeholder to match current map mode
   const _ownSearchInput = document.getElementById('city-search');
-  if (_ownSearchInput) _ownSearchInput.placeholder = _mapMode === 'countries' ? 'Search countries...' : 'Search cities...';
+  if (_ownSearchInput) _ownSearchInput.placeholder = _mapMode === 'countries' ? t('search.countries') : t('search.cities');
 }
 
 // ===== Friend Actions =====
 async function _onDeleteFriend(friendUid) {
   try {
     await removeFriend(_uid, friendUid);
-    showToast('Friend removed.');
+    showToast(t('toast.friendRemoved'));
   } catch {
-    showToast('Failed to remove friend.');
+    showToast(t('toast.friendRemoveFailed'));
   }
 }
 
@@ -376,10 +410,10 @@ async function _onDeleteFriend(friendUid) {
 async function _onCreateGroup(name, friendUids) {
   try {
     await createGroup(name, friendUids, _uid);
-    showToast(`Group "${name}" created! 🌍`);
+    showToast(t('toast.groupCreated', { name }));
   } catch (err) {
     console.error(err);
-    showToast('Failed to create group.');
+    showToast(t('toast.groupCreateFailed'));
   }
 }
 
@@ -387,26 +421,26 @@ async function _onLeaveGroup(groupId, createdBy) {
   try {
     await leaveGroup(groupId, _uid, createdBy);
   } catch {
-    showToast('Failed to leave group.');
+    showToast(t('toast.leaveGroupFailed'));
   }
 }
 
 async function _onRemoveMember(groupId, memberUid) {
   try {
     await removeMemberFromGroup(groupId, memberUid);
-    showToast('Member removed from group.');
+    showToast(t('toast.memberRemoved'));
   } catch (err) {
     console.error(err);
-    showToast('Could not remove member.');
+    showToast(t('toast.memberRemoveFailed'));
   }
 }
 
 async function _onAddMembersToGroup(groupId, friendUids) {
   try {
     await addMembersToGroup(groupId, friendUids);
-    showToast(`${friendUids.length === 1 ? '1 person' : friendUids.length + ' people'} added to group ✓`);
+    showToast(friendUids.length === 1 ? t('toast.onePersonAdded') : t('toast.peopleAdded', { count: friendUids.length }));
   } catch {
-    showToast('Failed to add members.');
+    showToast(t('toast.addMembersFailed'));
   }
 }
 
@@ -424,7 +458,7 @@ function _switchToGroupView(group) {
   _enterBannerMode(true); // group view: hide search bar, show search icon
   // Groups only support cities — override placeholder regardless of _mapMode
   const _groupSearchInput = document.getElementById('city-search');
-  if (_groupSearchInput) _groupSearchInput.placeholder = 'Search cities...';
+  if (_groupSearchInput) _groupSearchInput.placeholder = t('search.cities');
 
   // Real-time group city data
   if (_unsubGroupView) _unsubGroupView();
@@ -501,7 +535,7 @@ function _setMapMode(mode) {
   // Update search placeholder
   const input = document.getElementById('city-search');
   if (input) {
-    input.placeholder = mode === 'countries' ? 'Search countries...' : 'Search cities...';
+    input.placeholder = mode === 'countries' ? t('search.countries') : t('search.cities');
     input.value = '';
     const results = document.getElementById('search-results');
     if (results) results.innerHTML = '';
@@ -554,17 +588,17 @@ async function _onCountryAction(action, isoCode, countryName) {
   try {
     if (action === 'visited') {
       await addVisitedCountry(_uid, isoCode);
-      showToast(`${countryName} — visited ✓`);
+      showToast(t('toast.countryVisited', { name: countryName }));
     } else if (action === 'wishlist') {
       await addWishlistCountry(_uid, isoCode);
-      showToast(`${countryName} — added to wishlist ⭐`);
+      showToast(t('toast.countryWishlist', { name: countryName }));
     } else if (action === 'remove') {
       await removeCountry(_uid, isoCode);
-      showToast(`${countryName} removed`);
+      showToast(t('toast.removed', { name: countryName }));
     }
     // Map updates via subscribeUserData listener
   } catch {
-    showToast('Failed to update country.');
+    showToast(t('toast.countryFailed'));
   }
 }
 
@@ -633,5 +667,4 @@ function _initMobileSidebar() {
     backdrop?.classList.toggle('open');
   });
   backdrop?.addEventListener('click', _closeMobileSidebar);
-  document.getElementById('btn-signout')?.addEventListener('click', _closeMobileSidebar);
 }

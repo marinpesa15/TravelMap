@@ -1,36 +1,29 @@
-// ===== Theme Toggle =====
+// ===== Theme =====
 
-export function initTheme(map) {
-  const saved = localStorage.getItem('tm-theme') || 'dark';
-
-  // Only apply CSS + button on init — the map already loaded with dark-v11.
-  // Calling setStyle() here would trigger a style reload and race condition
-  // that prevents hex/custom layers from being added correctly.
-  _applyCSS(saved);
-  if (saved === 'light') {
-    // Map starts dark; switch to light style on init if needed.
-    map?.setStyle('mapbox://styles/mapbox/light-v11');
-  }
-
-  document.getElementById('btn-theme')?.addEventListener('click', () => {
-    const next = document.documentElement.classList.contains('light') ? 'dark' : 'light';
-    _applyFull(next, map);
-    localStorage.setItem('tm-theme', next);
-  });
+export function getTheme() {
+  return localStorage.getItem('tm-theme') || 'dark';
 }
 
-/** Called on button click — switches both CSS and map style */
-function _applyFull(theme, map) {
+/** Applies CSS class + map style and persists the choice. */
+export function setTheme(theme, map) {
   _applyCSS(theme);
   map?.setStyle(theme === 'light'
     ? 'mapbox://styles/mapbox/light-v11'
     : 'mapbox://styles/mapbox/dark-v11');
+  localStorage.setItem('tm-theme', theme);
 }
 
-/** Only updates CSS class + button text, does NOT touch map style */
+/** Applies the saved theme on init. The map already loaded with dark-v11 —
+ *  only switch the style if light is saved (setStyle during init otherwise
+ *  races with hex/custom layer setup). */
+export function initTheme(map) {
+  const saved = getTheme();
+  _applyCSS(saved);
+  if (saved === 'light') {
+    map?.setStyle('mapbox://styles/mapbox/light-v11');
+  }
+}
+
 function _applyCSS(theme) {
-  const isLight = theme === 'light';
-  document.documentElement.classList.toggle('light', isLight);
-  const btn = document.getElementById('btn-theme');
-  if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+  document.documentElement.classList.toggle('light', theme === 'light');
 }

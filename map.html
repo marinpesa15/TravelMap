@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <title>TravelMap</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=25">
+  <link rel="stylesheet" href="css/style.css?v=28">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 </head>
@@ -27,19 +27,21 @@
           </svg>
         </div>
         <h1 class="brand-name">TravelMap</h1>
-        <button class="btn-theme" id="btn-theme" title="Toggle theme">☀️</button>
+        <button class="btn-settings" id="btn-settings" title="Settings" data-i18n-title="settings.gearTitle" aria-label="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
       </div>
 
       <!-- Snapshot stats grid (clickable tabs) -->
       <div class="sidebar-section">
-        <p class="section-label">View</p>
+        <p class="section-label" data-i18n="sidebar.view">View</p>
         <div class="stats-grid">
           <div class="stat-card stat-tab active" data-mode="cities" id="tab-cities">
-            <p class="stat-label">Cities</p>
+            <p class="stat-label" data-i18n="stats.cities">Cities</p>
             <p class="stat-num" id="stat-cities-num">0</p>
           </div>
           <div class="stat-card stat-tab" data-mode="countries" id="tab-countries">
-            <p class="stat-label">Countries</p>
+            <p class="stat-label" data-i18n="stats.countries">Countries</p>
             <p class="stat-num" id="stat-countries-num">0</p>
           </div>
         </div>
@@ -47,7 +49,7 @@
 
       <!-- Collection nav -->
       <div class="sidebar-section">
-        <p class="section-label">Collection</p>
+        <p class="section-label" data-i18n="sidebar.collection">Collection</p>
         <nav class="collection-nav">
           <a href="#" class="nav-item active" data-filter="all" id="nav-all">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -55,28 +57,28 @@
               <line x1="2" y1="12" x2="22" y2="12"/>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
-            <span class="nav-label">All</span>
+            <span class="nav-label" data-i18n="nav.all">All</span>
             <span class="nav-badge" id="nav-all-count">0</span>
           </a>
           <a href="#" class="nav-item" data-filter="visited" id="nav-visited">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
-            <span class="nav-label">Visited</span>
+            <span class="nav-label" data-i18n="nav.visited">Visited</span>
             <span class="nav-badge" id="nav-visited-count">0</span>
           </a>
           <a href="#" class="nav-item" data-filter="wishlist" id="nav-wishlist">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
-            <span class="nav-label">Want to visit</span>
+            <span class="nav-label" data-i18n="nav.wishlist">Want to visit</span>
             <span class="nav-badge" id="nav-wishlist-count">0</span>
           </a>
           <a href="#" class="nav-item" data-filter="lived" id="nav-lived">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            <span class="nav-label">Lived there</span>
+            <span class="nav-label" data-i18n="nav.lived">Lived there</span>
             <span class="nav-badge" id="nav-lived-count">0</span>
           </a>
         </nav>
@@ -84,15 +86,15 @@
 
       <!-- Recent Logs -->
       <div class="sidebar-section" id="recent-logs-section">
-        <p class="section-label">Recent Logs</p>
+        <p class="section-label" data-i18n="sidebar.recentLogs">Recent Logs</p>
         <div id="recent-logs" class="recent-logs"></div>
       </div>
 
       <!-- Friends -->
       <div class="sidebar-section" id="friends-section">
         <div class="section-header">
-          <p class="section-label">Friends</p>
-          <button class="btn-section-action" id="btn-copy-invite" title="Copy invite link">+ Invite</button>
+          <p class="section-label" data-i18n="sidebar.friends">Friends</p>
+          <button class="btn-section-action" id="btn-copy-invite" data-i18n="sidebar.invite" data-i18n-title="sidebar.inviteTitle" title="Copy invite link">+ Invite</button>
         </div>
         <div id="friends-list" class="social-list"></div>
       </div>
@@ -100,8 +102,8 @@
       <!-- Groups (placeholder for Task 6) -->
       <div class="sidebar-section" id="groups-section">
         <div class="section-header">
-          <p class="section-label">Groups</p>
-          <button class="btn-section-action" id="btn-create-group" title="Create group">+ New</button>
+          <p class="section-label" data-i18n="sidebar.groups">Groups</p>
+          <button class="btn-section-action" id="btn-create-group" data-i18n="sidebar.newGroup" data-i18n-title="sidebar.newGroupTitle" title="Create group">+ New</button>
         </div>
         <div id="groups-list" class="social-list"></div>
       </div>
@@ -115,9 +117,8 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Add New Location
+          <span data-i18n="sidebar.addLocation">Add New Location</span>
         </button>
-        <button class="btn-signout" id="btn-signout">Sign out</button>
       </div>
 
     </aside>
@@ -126,7 +127,7 @@
     <main class="map-area">
       <!-- View mode banner -->
       <div id="view-banner" class="view-banner">
-        <button id="view-banner-back" class="view-banner-back">← Back</button>
+        <button id="view-banner-back" class="view-banner-back" data-i18n="banner.back">← Back</button>
         <span  id="view-banner-title" class="view-banner-title"></span>
         <button id="btn-search-mobile" class="btn-search-banner" aria-label="Search cities">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -150,7 +151,7 @@
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input type="text" id="city-search" placeholder="Search cities..." autocomplete="off">
+          <input type="text" id="city-search" placeholder="Search cities..." data-i18n-placeholder="search.cities" autocomplete="off">
           <div id="search-results"></div>
         </div>
         <div class="user-pill" id="user-pill">
@@ -161,13 +162,13 @@
 
       <!-- Bottom-left: legend (cities / countries) -->
       <div class="map-legend" id="legend-cities">
-        <div class="legend-item"><span class="legend-dot indigo"></span><span>Visited</span></div>
-        <div class="legend-item"><span class="legend-dot amber"></span><span>Lived</span></div>
-        <div class="legend-item"><span class="legend-dot emerald"></span><span>Wishlist</span></div>
+        <div class="legend-item"><span class="legend-dot indigo"></span><span data-i18n="legend.visited">Visited</span></div>
+        <div class="legend-item"><span class="legend-dot amber"></span><span data-i18n="legend.lived">Lived</span></div>
+        <div class="legend-item"><span class="legend-dot emerald"></span><span data-i18n="legend.wishlist">Wishlist</span></div>
       </div>
       <div class="map-legend" id="legend-countries" style="display:none">
-        <div class="legend-item"><span class="legend-dot indigo" style="border-radius:3px;width:14px;height:10px"></span><span>Visited</span></div>
-        <div class="legend-item"><span class="legend-dot emerald" style="border-radius:3px;width:14px;height:10px"></span><span>Wishlist</span></div>
+        <div class="legend-item"><span class="legend-dot indigo" style="border-radius:3px;width:14px;height:10px"></span><span data-i18n="legend.visited">Visited</span></div>
+        <div class="legend-item"><span class="legend-dot emerald" style="border-radius:3px;width:14px;height:10px"></span><span data-i18n="legend.wishlist">Wishlist</span></div>
       </div>
     </main>
 
@@ -182,18 +183,18 @@
   <div id="city-dialog">
     <div class="dialog-card">
       <h3 id="dialog-city-name">München</h3>
-      <div class="dialog-label">Type</div>
+      <div class="dialog-label" data-i18n="dialog.type">Type</div>
       <div class="radio-group">
-        <div class="radio-opt selected" data-type="visited">✓ Visited</div>
-        <div class="radio-opt"          data-type="wishlist">⭐ Wishlist</div>
+        <div class="radio-opt selected" data-type="visited" data-i18n="dialog.visited">✓ Visited</div>
+        <div class="radio-opt"          data-type="wishlist" data-i18n="dialog.wishlist">⭐ Wishlist</div>
       </div>
       <label class="checkbox-row" id="lived-row">
         <input type="checkbox" id="lived-checkbox">
-        🏠 Lived there
+        <span data-i18n="dialog.lived">🏠 Lived there</span>
       </label>
       <div class="dialog-actions">
-        <button class="btn-cancel" id="dialog-cancel">Cancel</button>
-        <button class="btn-add"    id="dialog-add">Add</button>
+        <button class="btn-cancel" id="dialog-cancel" data-i18n="dialog.cancel">Cancel</button>
+        <button class="btn-add"    id="dialog-add" data-i18n="dialog.add">Add</button>
       </div>
     </div>
   </div>
@@ -202,33 +203,74 @@
   <div id="country-tooltip">
     <button id="country-tooltip-close">✕</button>
     <p id="country-tooltip-name">Germany</p>
-    <button class="tooltip-btn visited"  id="country-tooltip-visited">✓ Visited</button>
-    <button class="tooltip-btn wishlist" id="country-tooltip-wishlist">⭐ Wishlist</button>
-    <button class="tooltip-btn remove"   id="country-tooltip-remove" style="display:none">🗑️ Remove</button>
+    <button class="tooltip-btn visited"  id="country-tooltip-visited" data-i18n="dialog.visited">✓ Visited</button>
+    <button class="tooltip-btn wishlist" id="country-tooltip-wishlist" data-i18n="dialog.wishlist">⭐ Wishlist</button>
+    <button class="tooltip-btn remove"   id="country-tooltip-remove" data-i18n="tooltip.remove" style="display:none">🗑️ Remove</button>
   </div>
 
   <!-- City Remove Popup -->
   <div id="city-popup">
     <button id="city-popup-close">✕</button>
     <p id="city-popup-name">München</p>
-    <button class="btn-remove-city" id="btn-remove-city">🗑️ Remove</button>
+    <button class="btn-remove-city" id="btn-remove-city" data-i18n="tooltip.remove">🗑️ Remove</button>
   </div>
 
   <!-- Group Photo Picker Dialog -->
   <div id="group-photo-dialog">
     <div class="group-photo-card">
-      <h3 id="group-photo-title">Add photo for <span id="group-photo-city"></span></h3>
+      <h3 id="group-photo-title">Add photo</h3>
       <div class="group-photo-preview-wrap">
         <img id="group-photo-preview" src="" alt="Preview">
       </div>
       <label class="btn-upload-photo" for="group-photo-input">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Choose photo
+        <span data-i18n="photo.choose">Choose photo</span>
       </label>
       <input type="file" id="group-photo-input" accept="image/*" style="display:none">
       <div class="dialog-actions" style="margin-top:16px">
-        <button class="btn-cancel" id="group-photo-skip">Skip</button>
-        <button class="btn-add"    id="group-photo-confirm">Use this photo</button>
+        <button class="btn-cancel" id="group-photo-skip" data-i18n="dialog.skip">Skip</button>
+        <button class="btn-add"    id="group-photo-confirm" data-i18n="photo.use">Use this photo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h3 data-i18n="settings.title">Settings</h3>
+        <button id="settings-close" class="settings-close" aria-label="Close">✕</button>
+      </div>
+      <div class="settings-row">
+        <p class="dialog-label" data-i18n="settings.appearance">Appearance</p>
+        <button class="btn-theme-toggle" id="settings-theme-toggle" data-i18n-title="settings.appearance" title="Appearance">☀️</button>
+      </div>
+      <p class="dialog-label" data-i18n="settings.language">Language</p>
+      <div class="radio-group" id="settings-lang">
+        <div class="radio-opt" data-lang="en">English</div>
+        <div class="radio-opt" data-lang="de">Deutsch</div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-links">
+        <a href="privacy.html#privacy" target="_blank" rel="noopener" data-i18n="settings.privacy">Privacy Policy</a>
+        <a href="privacy.html#imprint" target="_blank" rel="noopener" data-i18n="settings.imprint">Legal Notice</a>
+      </div>
+      <button class="btn-danger settings-signout" id="settings-signout" data-i18n="settings.signout">Sign out</button>
+      <p class="settings-version" id="settings-version"></p>
+    </div>
+  </div>
+
+  <!-- Privacy Consent Banner (blocking, not dismissible) -->
+  <div id="consent-banner">
+    <div class="consent-card">
+      <h3 data-i18n="consent.title">Before you start</h3>
+      <p class="consent-body">
+        <span data-i18n="consent.body">TravelMap stores…</span>
+        <a href="privacy.html" target="_blank" rel="noopener" data-i18n="consent.privacyLink">Privacy Policy</a>
+      </p>
+      <div class="dialog-actions">
+        <button class="btn-cancel" id="consent-decline" data-i18n="consent.decline">Decline</button>
+        <button class="btn-add"    id="consent-accept" data-i18n="consent.accept">Agree and continue</button>
       </div>
     </div>
   </div>
@@ -239,10 +281,10 @@
   <!-- Custom Confirm Dialog -->
   <div id="confirm-dialog">
     <div class="confirm-card">
-      <p id="confirm-message">Are you sure?</p>
+      <p id="confirm-message" data-i18n="confirm.default">Are you sure?</p>
       <div class="dialog-actions">
-        <button class="btn-cancel" id="confirm-cancel">Cancel</button>
-        <button class="btn-danger" id="confirm-ok">Remove</button>
+        <button class="btn-cancel" id="confirm-cancel" data-i18n="dialog.cancel">Cancel</button>
+        <button class="btn-danger" id="confirm-ok" data-i18n="dialog.remove">Remove</button>
       </div>
     </div>
   </div>
@@ -250,19 +292,19 @@
   <!-- Group Create / Add Member Modal -->
   <div id="group-modal">
     <div class="group-modal-card">
-      <h3 id="group-modal-title">New Group</h3>
+      <h3 id="group-modal-title" data-i18n="group.new">New Group</h3>
       <div id="group-name-row">
-        <input type="text" id="group-name-input" placeholder="Group name…" maxlength="40" autocomplete="off">
+        <input type="text" id="group-name-input" placeholder="Group name…" data-i18n-placeholder="group.namePlaceholder" maxlength="40" autocomplete="off">
       </div>
       <div id="group-members-section" style="display:none">
-        <p class="dialog-label" style="margin-top:14px">Members</p>
+        <p class="dialog-label" style="margin-top:14px" data-i18n="group.members">Members</p>
         <div id="group-members-list" class="group-members-list"></div>
       </div>
-      <p class="dialog-label" style="margin-top:14px" id="group-friends-label">Add friends</p>
+      <p class="dialog-label" style="margin-top:14px" id="group-friends-label" data-i18n="group.addFriends">Add friends</p>
       <div id="group-friends-checklist" class="group-friends-checklist"></div>
       <div class="dialog-actions" style="margin-top:16px">
-        <button class="btn-cancel" id="group-modal-cancel">Cancel</button>
-        <button class="btn-add"    id="group-modal-create">Create</button>
+        <button class="btn-cancel" id="group-modal-cancel" data-i18n="dialog.cancel">Cancel</button>
+        <button class="btn-add"    id="group-modal-create" data-i18n="dialog.create">Create</button>
       </div>
     </div>
   </div>
@@ -270,12 +312,12 @@
   <!-- Mobile Search Overlay (group view) -->
   <div id="mobile-search-overlay" class="mobile-search-overlay">
     <div class="mobile-search-header">
-      <span class="mobile-search-title">Add city to group</span>
-      <button id="btn-close-search" class="btn-close-search">✕ Close</button>
+      <span class="mobile-search-title" data-i18n="mobile.addCityToGroup">Add city to group</span>
+      <button id="btn-close-search" class="btn-close-search" data-i18n="mobile.close">✕ Close</button>
     </div>
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=28"></script>
+  <script type="module" src="js/app.js?v=30"></script>
 </body>
 </html>
