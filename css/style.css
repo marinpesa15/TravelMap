@@ -743,11 +743,28 @@ body {
 }
 .settings-close:hover { color: var(--tx-primary); }
 .settings-divider { border-top: 1px solid var(--bd-dialog); margin: 16px 0; }
-.settings-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.settings-links a {
-  font-size: 0.84rem; color: var(--tx-secondary); text-decoration: none;
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
 }
-.settings-links a:hover { color: var(--tx-primary); text-decoration: underline; }
+.settings-row .dialog-label { margin-bottom: 0; }
+.btn-theme-toggle {
+  width: 34px; height: 34px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-card); border: 1px solid var(--bd-card);
+  border-radius: 8px; cursor: pointer; font-size: 15px;
+  transition: all 0.2s;
+}
+.btn-theme-toggle:hover { background: var(--bg-card-hov); }
+.settings-links { display: flex; gap: 8px; margin-bottom: 16px; }
+.settings-links a {
+  flex: 1; padding: 9px 6px; text-align: center;
+  background: var(--bg-card); border: 1px solid var(--bd-card);
+  border-radius: 8px; font-size: 0.78rem; font-weight: 500;
+  color: var(--tx-secondary); text-decoration: none;
+  transition: all 0.15s;
+}
+.settings-links a:hover { background: var(--bg-card-hov); color: var(--tx-primary); }
 .settings-signout { width: 100%; }
 .settings-version {
   margin-top: 14px; text-align: center;

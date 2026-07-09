@@ -20,12 +20,10 @@ export function setupSettings(map) {
     if (e.target === modal) _close();
   });
 
-  // Theme
-  modal.querySelectorAll('#settings-theme .radio-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      setTheme(opt.dataset.theme, map);
-      _syncSelections();
-    });
+  // Theme — single toggle like the old header button (☀️ in dark, 🌙 in light)
+  document.getElementById('settings-theme-toggle')?.addEventListener('click', () => {
+    setTheme(getTheme() === 'light' ? 'dark' : 'light', map);
+    _syncSelections();
   });
 
   // Language
@@ -47,10 +45,9 @@ export function setupSettings(map) {
   }
 
   function _syncSelections() {
-    const theme = getTheme();
-    const lang  = getLang();
-    modal.querySelectorAll('#settings-theme .radio-opt').forEach(o =>
-      o.classList.toggle('selected', o.dataset.theme === theme));
+    const lang     = getLang();
+    const themeBtn = document.getElementById('settings-theme-toggle');
+    if (themeBtn) themeBtn.textContent = getTheme() === 'light' ? '🌙' : '☀️';
     modal.querySelectorAll('#settings-lang .radio-opt').forEach(o =>
       o.classList.toggle('selected', o.dataset.lang === lang));
   }
