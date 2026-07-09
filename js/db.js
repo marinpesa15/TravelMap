@@ -1,6 +1,6 @@
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot,
-  arrayUnion, arrayRemove, writeBatch, serverTimestamp
+  arrayUnion, arrayRemove, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js';
 
@@ -77,27 +77,6 @@ export async function initUserProfile(uid, user) {
 export async function getUserByToken(token) {
   const snap = await getDoc(inviteRef(token));
   return snap.exists() ? snap.data() : null;
-}
-
-/**
- * Regenerates the user's invite token and swaps the invite-lookup doc.
- */
-export async function regenerateInviteToken(uid) {
-  const snap = await getDoc(userRef(uid));
-  const data = snap.exists() ? snap.data() : {};
-  const newToken = crypto.randomUUID();
-
-  const batch = writeBatch(db);
-  if (data.invite_token) batch.delete(inviteRef(data.invite_token));
-  batch.set(inviteRef(newToken), {
-    uid,
-    display_name: data.display_name || '',
-    avatar_url:   data.avatar_url   || ''
-  });
-  batch.update(userRef(uid), { invite_token: newToken });
-  await batch.commit();
-
-  return newToken;
 }
 
 export async function addVisitedCountry(uid, isoCode) {
