@@ -1,5 +1,4 @@
 import { t } from './i18n.js?v=1';
-// ?v=26 matches app.js's current ui.js reference; Task 7 bumps both to ?v=27.
 import { showToast } from './ui.js?v=27';
 
 // Bump this when the privacy policy changes materially —
