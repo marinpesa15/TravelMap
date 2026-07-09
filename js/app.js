@@ -25,6 +25,7 @@ import {
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
 } from './ui.js?v=26';
 import { initTheme } from './theme.js?v=18';
+import { t, getLang, applyTranslations } from './i18n.js?v=1';
 
 let _uid            = null;
 let _userData       = null;
@@ -45,6 +46,9 @@ let _unsubGroupView = null;
 // First-run flags (prevent double setup of listeners)
 let _friendsSetup   = false;
 let _groupsSetup    = false;
+
+// Translate static HTML as early as possible (before auth resolves)
+applyTranslations();
 
 // ===== Auth Guard =====
 onAuthChange(async user => {

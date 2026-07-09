@@ -703,10 +703,10 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
   const dialog  = document.getElementById('group-photo-dialog');
   const preview = document.getElementById('group-photo-preview');
   const input   = document.getElementById('group-photo-input');
-  const cityEl  = document.getElementById('group-photo-city');
+  const titleEl = document.getElementById('group-photo-title');
   if (!dialog) return;
 
-  cityEl.textContent  = cityName;
+  titleEl.textContent = `Add photo for ${cityName}`;
   preview.src         = defaultPhotoURL || '';
   input.value         = ''; // reset file picker
 
