@@ -7,8 +7,7 @@
       "**/.*",
       "README.md",
       "docs/**",
-      "app-logo.jpeg",
-      "fav-icon.jpeg"
+      "app-logo.jpeg"
     ],
     "rewrites": [],
     "headers": [
