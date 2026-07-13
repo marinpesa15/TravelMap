@@ -4,13 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelMap — Sign In</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png?v=2">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0d19">
   <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
   <div class="auth-screen">
     <div class="auth-card">
-      <h1>🗺️ TravelMap</h1>
+      <h1><img src="icons/logo-mark.png?v=1" alt="" style="height:44px;vertical-align:middle;margin-right:10px"> TravelMap</h1>
       <p data-i18n="auth.tagline">Track your travels on the world map</p>
       <!-- Spinner while Firebase resolves the persisted session — prevents
            the sign-in button flashing for already-logged-in users -->

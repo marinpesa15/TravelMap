@@ -6,7 +6,9 @@
       ".firebaserc",
       "**/.*",
       "README.md",
-      "docs/**"
+      "docs/**",
+      "app-logo.jpeg",
+      "fav-icon.jpeg"
     ],
     "rewrites": [],
     "headers": [
