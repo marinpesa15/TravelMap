@@ -1,5 +1,6 @@
 import { t } from './i18n.js?v=1';
-import { showToast } from './ui.js?v=28';
+import { showToast } from './ui.js?v=29';
+import { openOverlay, closeOverlay } from './anim.js?v=1';
 
 // Bump this when the privacy policy changes materially —
 // every user will then see the consent banner again.
@@ -22,13 +23,13 @@ export function requestConsent(onAccept) {
     const accept  = document.getElementById('consent-accept');
     const decline = document.getElementById('consent-decline');
 
-    banner.classList.add('open');
+    openOverlay(banner);
 
     accept.onclick = async () => {
       accept.disabled = true;
       try {
         await onAccept();
-        banner.classList.remove('open');
+        closeOverlay(banner);
         resolve(true);
       } catch (err) {
         console.error('Consent write failed:', err);
@@ -38,7 +39,7 @@ export function requestConsent(onAccept) {
     };
 
     decline.onclick = () => {
-      banner.classList.remove('open');
+      closeOverlay(banner);
       resolve(false);
     };
   });

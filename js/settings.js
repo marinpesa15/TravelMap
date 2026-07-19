@@ -2,6 +2,7 @@ import { getLang, setLang } from './i18n.js?v=1';
 import { getTheme, setTheme } from './theme.js?v=19';
 import { signOutUser } from './auth.js?v=19';
 import { APP_VERSION } from './version.js?v=1';
+import { openOverlay, closeOverlay } from './anim.js?v=1';
 
 /** Wires the gear button, settings modal, theme/language switches,
  *  sign-out and version display. Call once after map init. */
@@ -13,7 +14,7 @@ export function setupSettings(map) {
 
   document.getElementById('btn-settings')?.addEventListener('click', () => {
     _syncSelections();
-    modal.classList.add('open');
+    openOverlay(modal);
   });
   document.getElementById('settings-close')?.addEventListener('click', _close);
   modal.addEventListener('click', e => {
@@ -41,7 +42,7 @@ export function setupSettings(map) {
   });
 
   function _close() {
-    modal.classList.remove('open');
+    closeOverlay(modal);
   }
 
   function _syncSelections() {

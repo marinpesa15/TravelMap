@@ -1,4 +1,15 @@
+import { dropIn } from './anim.js?v=1';
+
 const _activeMarkers = [];
+
+// City the user just added — its marker plays a one-time drop animation on
+// the next render. Expires so a failed write can't animate a later render.
+let _pendingDrop = null; // { name, until }
+
+/** Call right before adding a city so its new marker drops in. */
+export function animateNextAdd(cityName) {
+  _pendingDrop = { name: cityName, until: Date.now() + 8000 };
+}
 
 /**
  * Renders all city markers from userData.
@@ -58,9 +69,21 @@ function _addMarker(map, city, type, onRemove, isGroup = false) {
   const useFallback = isGroup && type === 'visited' && !city.addedBy?.photoURL && city.addedBy?.displayName;
   const isGroupVisited = isGroup && type === 'visited';
 
-  const el     = isGroupVisited
+  let el = isGroupVisited
     ? _createGroupVisitedMarkerEl(city, onRemove)
     : _createMarkerEl(city, type, onRemove);
+
+  // Just-added city → drop animation. Mapbox positions the outer element via
+  // its transform, so we wrap and animate the inner one.
+  if (_pendingDrop && _pendingDrop.name === city.name && Date.now() < _pendingDrop.until) {
+    _pendingDrop = null;
+    const wrap = document.createElement('div');
+    wrap.style.width  = isGroupVisited ? '40px' : '12px';
+    wrap.style.height = isGroupVisited ? '48px' : '12px';
+    wrap.appendChild(el);
+    dropIn(el);
+    el = wrap;
+  }
 
   const anchor = isGroupVisited ? 'bottom' : 'center';
   const marker = new mapboxgl.Marker({ element: el, anchor })

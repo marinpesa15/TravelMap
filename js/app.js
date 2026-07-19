@@ -7,7 +7,7 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   acceptConsent
 } from './db.js?v=21';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=2';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=3';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
 import {
@@ -16,7 +16,7 @@ import {
   setupCountryMapClick
 } from './countries.js?v=21';
 import { initMap } from './map.js?v=18';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers } from './markers.js?v=21';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=22';
 import {
   updateStats, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
@@ -25,10 +25,11 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=28';
+} from './ui.js?v=29';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=2';
+import { setupSettings } from './settings.js?v=3';
 import { t, getLang, applyTranslations } from './i18n.js?v=1';
+import { staggerIn } from './anim.js?v=1';
 
 let _uid            = null;
 let _userData       = null;
@@ -139,6 +140,9 @@ async function _init(user) {
 
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
+
+    // One-time staggered entrance for the sidebar lists (app start only)
+    staggerIn('.collection-nav .nav-item, #recent-logs .recent-log-item');
 
     // ── Real-time: own user data ──────────────────────────────────────────
     // Defensive: clear any view listeners from a previous init
@@ -279,6 +283,7 @@ async function _onAddCity(cityData, type, lived) {
     if (type === 'visited') {
       showGroupPhotoDialog(cityData.name, defaultPhoto, async (chosenPhoto) => {
         try {
+          animateNextAdd(cityData.name);
           await addCityToGroup(_currentGroupId, {
             ...cityData,
             lived: false,
@@ -292,6 +297,7 @@ async function _onAddCity(cityData, type, lived) {
     } else {
       // Wishlist: add directly, no photo dialog
       try {
+        animateNextAdd(cityData.name);
         await addCityToGroup(_currentGroupId, {
           ...cityData,
           lived: false,
@@ -306,6 +312,7 @@ async function _onAddCity(cityData, type, lived) {
     return;
   }
   try {
+    animateNextAdd(cityData.name);
     if (type === 'visited') {
       await addVisitedCity(_uid, { ...cityData, lived });
       const iso = cityData.country;

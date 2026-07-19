@@ -1,6 +1,10 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
 import { searchCountries } from './countries.js?v=21';
 import { t, getLang } from './i18n.js?v=1';
+import {
+  openOverlay, closeOverlay, popoverIn,
+  countUp, popScale, toastIn, toastOut, expandIn
+} from './anim.js?v=1';
 
 // Escapes user-controlled strings before interpolation into innerHTML.
 // Friend names, group names and city names come from Firestore and can be
@@ -26,9 +30,9 @@ export function updateStats(userData) {
   const wCountries= (userData.wishlist_countries ?? []).length;
   const wishlist  = wCities + wCountries;
 
-  // Snapshot grid
-  _setText('stat-countries-num', countries);
-  _setText('stat-cities-num',    cities);
+  // Snapshot grid — counts up on first render, ticks with a pop on change
+  _setStat('stat-countries-num', countries);
+  _setStat('stat-cities-num',    cities);
 
   // Collection nav badges
   _setText('nav-all-count',      cities + wCities);
@@ -43,6 +47,40 @@ export function updateStats(userData) {
 function _setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+// Animated stat numbers: first render counts up from 0, later changes
+// count from the previous value with a small scale pop.
+const _statPrev = {};
+
+function _setStat(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const prev = _statPrev[id];
+  _statPrev[id] = value;
+  if (prev === undefined) {
+    countUp(el, value, 0, 0.8);
+  } else if (prev !== value) {
+    countUp(el, value, prev, 0.35);
+    popScale(el);
+  } else {
+    el.textContent = value;
+  }
+}
+
+// Tracks the newest log entry so a newly added one can grow into the list.
+// Kind guard: switching cities ↔ countries mode replaces the whole list and
+// must not play the insert animation.
+let _lastLogKey = null;
+
+function _animateNewLogEntry(containerEl, kind, firstLabel) {
+  const key = firstLabel ? `${kind}:${firstLabel}` : null;
+  const prev = _lastLogKey;
+  _lastLogKey = key;
+  if (!key || !prev || prev === key) return;
+  if (prev.split(':')[0] !== kind) return;
+  const first = containerEl.querySelector('.recent-log-item');
+  if (first) expandIn(first);
 }
 
 function _updateRecentLogs(visitedCities) {
@@ -65,6 +103,8 @@ function _updateRecentLogs(visitedCities) {
       </div>
     </div>
   `).join('');
+
+  _animateNewLogEntry(el, 'cities', recent[0]?.name);
 }
 
 // ===== City Remove Popup =====
@@ -222,11 +262,11 @@ function _openDialog(cityName) {
   document.querySelectorAll('.radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
   document.getElementById('lived-checkbox').checked   = false;
   document.getElementById('lived-row').style.display  = 'flex';
-  document.getElementById('city-dialog').classList.add('open');
+  openOverlay(document.getElementById('city-dialog'));
 }
 
 function _closeDialog() {
-  document.getElementById('city-dialog').classList.remove('open');
+  closeOverlay(document.getElementById('city-dialog'));
   _selectedCity = null;
 }
 
@@ -250,21 +290,28 @@ export function showConfirm(message, actionLabel, onConfirm) {
   _confirmCb = onConfirm;
   document.getElementById('confirm-message').textContent = message;
   document.getElementById('confirm-ok').textContent = actionLabel || t('dialog.confirm');
-  document.getElementById('confirm-dialog').classList.add('open');
+  openOverlay(document.getElementById('confirm-dialog'));
 }
 
 function _closeConfirm() {
-  document.getElementById('confirm-dialog').classList.remove('open');
+  closeOverlay(document.getElementById('confirm-dialog'));
   _confirmCb = null;
 }
 
 // ===== Toast =====
 
+let _toastTimer = null;
+
 export function showToast(message) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  toastIn(toast);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    toastOut(toast);
+  }, 3000);
 }
 
 // ===== Friends Sidebar =====
@@ -435,11 +482,11 @@ function _openGroupModal(friends, mode = 'create', group = null, allMembers = []
     }
   }
 
-  document.getElementById('group-modal').classList.add('open');
+  openOverlay(document.getElementById('group-modal'));
 }
 
 function _closeGroupModal() {
-  document.getElementById('group-modal').classList.remove('open');
+  closeOverlay(document.getElementById('group-modal'));
 }
 
 // Renders the current member list inside the manage modal.
@@ -579,6 +626,7 @@ export function showCountryTooltip(isoCode, name, isVisited, isWishlist, point, 
   el.style.left    = x + 'px';
   el.style.top     = y + 'px';
   el.style.display = 'block';
+  popoverIn(el);
 }
 
 export function hideCountryTooltip() {
@@ -594,8 +642,8 @@ export function updateCountriesView(userData) {
   const wishlist = (userData.wishlist_countries ?? []).length;
 
   // Stat grid (same totals as always)
-  _setText('stat-countries-num', visited);
-  _setText('stat-cities-num',    (userData.visited_cities ?? []).length);
+  _setStat('stat-countries-num', visited);
+  _setStat('stat-cities-num',    (userData.visited_cities ?? []).length);
 
   // Collection nav badges — country-aware
   _setText('nav-all-count',      visited + wishlist);
@@ -639,6 +687,8 @@ function _updateCountryLogs(visitedCodes, wishlistCodes) {
       </div>
     `;
   }).join('');
+
+  _animateNewLogEntry(el, 'countries', recent[0]?.code);
 }
 
 // ===== View Mode Banner =====
@@ -733,7 +783,7 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
   const confirmBtn = document.getElementById('group-photo-confirm');
 
   const _cleanup = () => {
-    dialog.style.display = 'none';
+    closeOverlay(dialog);
     skipBtn.onclick    = null;
     confirmBtn.onclick = null;
   };
@@ -741,7 +791,7 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
   skipBtn.onclick    = () => { _cleanup(); onConfirm(defaultPhotoURL || ''); };
   confirmBtn.onclick = () => { _cleanup(); onConfirm(_chosenURL); };
 
-  dialog.style.display = 'flex';
+  openOverlay(dialog);
 }
 
 /**
@@ -763,6 +813,7 @@ export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePh
   popup.style.left    = x + 'px';
   popup.style.top     = y + 'px';
   popup.style.display = 'block';
+  popoverIn(popup);
 
   document.getElementById('btn-remove-city').onclick = () => {
     if (_cityPopupData) onRemove(_cityPopupData.city, _cityPopupData.type);
