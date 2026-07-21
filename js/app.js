@@ -78,17 +78,24 @@ function _ensureCountryLayers() {
 applyTranslations();
 
 // ===== Boot Splash =====
-// The splash covers the booting app until the map is rendered. Removal runs
-// on every exit path (ready, consent gate, error, safety timeout) so it can
-// never trap the user. Timer-based removal — see closeOverlay in anim.js.
-function _hideSplash() {
+// The splash covers the booting app until the map is rendered, but stays up
+// at least SPLASH_MIN_MS from navigation start (Lumiq-style fixed stage) even
+// when init finishes earlier. Blocking UI (consent dialog, error toast) passes
+// now=true to skip the wait — nothing may sit hidden under the splash. Removal
+// runs on every exit path so it can never trap the user; timers, not the
+// transition promise — see closeOverlay in anim.js.
+const SPLASH_MIN_MS = 2600;
+function _hideSplash(now = false) {
   const el = document.getElementById('app-splash');
   if (!el) return;
-  el.classList.add('done');
-  setTimeout(() => el.remove(), 500);
+  const wait = now ? 0 : Math.max(0, SPLASH_MIN_MS - performance.now());
+  setTimeout(() => {
+    el.classList.add('done');
+    setTimeout(() => el.remove(), 500);
+  }, wait);
 }
 // Safety net: a stalled init (offline, Mapbox failure) must not stick forever
-setTimeout(_hideSplash, 8000);
+setTimeout(() => _hideSplash(true), 8000);
 
 // index.html reads this flag to skip the Firebase bounce for returning users
 function _setSessionHint(on) {
@@ -120,7 +127,7 @@ async function _init(user) {
     // ── Consent gate: nothing is written to Firestore before acceptance ──
     const preData = await loadUserData(_uid);   // read-only check
     if (!hasConsent(preData)) {
-      _hideSplash(); // consent dialog must not sit under the splash
+      _hideSplash(true); // consent dialog must not sit under the splash
       const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
       if (!accepted) {
         _setSessionHint(false);
@@ -248,7 +255,7 @@ async function _init(user) {
     });
 
   } catch (err) {
-    _hideSplash();
+    _hideSplash(true);
     showToast(t('toast.errorLoading'));
     console.error(err);
   }
