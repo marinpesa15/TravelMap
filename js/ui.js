@@ -68,6 +68,15 @@ function _setStat(id, value) {
   }
 }
 
+// Mobile drawer: the initial count-up plays while the sidebar is off-screen,
+// so the hamburger handler replays it every time the drawer opens.
+export function replayStatsCountUp() {
+  for (const id of ['stat-countries-num', 'stat-cities-num']) {
+    const value = _statPrev[id];
+    if (value !== undefined) countUp(document.getElementById(id), value, 0, 0.8);
+  }
+}
+
 // Tracks the newest log entry so a newly added one can grow into the list.
 // Kind guard: switching cities ↔ countries mode replaces the whole list and
 // must not play the insert animation.

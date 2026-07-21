@@ -7,7 +7,7 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   acceptConsent
 } from './db.js?v=21';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=3';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=4';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
 import {
@@ -18,14 +18,14 @@ import {
 import { initMap } from './map.js?v=18';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=22';
 import {
-  updateStats, updateCountriesView, setupSearch,
+  updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=29';
+} from './ui.js?v=30';
 import { initTheme } from './theme.js?v=19';
 import { setupSettings } from './settings.js?v=3';
 import { t, getLang, applyTranslations } from './i18n.js?v=1';
@@ -713,8 +713,12 @@ function _initMobileSidebar() {
   if (!btn) return;
 
   btn.addEventListener('click', () => {
-    document.getElementById('sidebar')?.classList.toggle('open');
+    const sidebar = document.getElementById('sidebar');
+    sidebar?.classList.toggle('open');
     backdrop?.classList.toggle('open');
+    // The initial count-up played while the drawer was off-screen — replay it
+    // each time the drawer opens so the animation is actually visible.
+    if (sidebar?.classList.contains('open')) replayStatsCountUp();
   });
   backdrop?.addEventListener('click', _closeMobileSidebar);
 }
