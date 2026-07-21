@@ -27,9 +27,10 @@ import {
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
 } from './ui.js?v=30';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=3';
+import { setupSettings } from './settings.js?v=4';
 import { t, getLang, applyTranslations } from './i18n.js?v=1';
 import { staggerIn } from './anim.js?v=1';
+import { startUpdateCheck } from './version.js?v=2';
 
 let _uid            = null;
 let _userData       = null;
@@ -178,6 +179,9 @@ async function _init(user) {
 
     // One-time staggered entrance for the sidebar lists (app start only)
     staggerIn('.collection-nav .nav-item, #recent-logs .recent-log-item');
+
+    // Watch for newer deploys and offer a reload (Lumiq-style update prompt)
+    startUpdateCheck();
 
     // ── Real-time: own user data ──────────────────────────────────────────
     // Defensive: clear any view listeners from a previous init
