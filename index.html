@@ -10,7 +10,18 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-v4.png">
   <link rel="manifest" href="manifest.webmanifest?v=6">
   <meta name="theme-color" content="#0b0d19">
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <script>
+    // Fast path: this device had a session last time — skip the Firebase
+    // bounce (SDK download + auth resolution) and go straight to the map.
+    // map.html's own auth guard redirects back here if the session is gone.
+    try {
+      if (localStorage.getItem('tm-has-session') === '1') {
+        const token = new URLSearchParams(location.search).get('token');
+        location.replace(token ? 'map.html?token=' + encodeURIComponent(token) : 'map.html');
+      }
+    } catch (e) { /* storage unavailable — normal sign-in flow */ }
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
   <div class="auth-screen">

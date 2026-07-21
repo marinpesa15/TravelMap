@@ -77,9 +77,31 @@ function _ensureCountryLayers() {
 // Translate static HTML as early as possible (before auth resolves)
 applyTranslations();
 
+// ===== Boot Splash =====
+// The splash covers the booting app until the map is rendered. Removal runs
+// on every exit path (ready, consent gate, error, safety timeout) so it can
+// never trap the user. Timer-based removal — see closeOverlay in anim.js.
+function _hideSplash() {
+  const el = document.getElementById('app-splash');
+  if (!el) return;
+  el.classList.add('done');
+  setTimeout(() => el.remove(), 500);
+}
+// Safety net: a stalled init (offline, Mapbox failure) must not stick forever
+setTimeout(_hideSplash, 8000);
+
+// index.html reads this flag to skip the Firebase bounce for returning users
+function _setSessionHint(on) {
+  try {
+    if (on) localStorage.setItem('tm-has-session', '1');
+    else    localStorage.removeItem('tm-has-session');
+  } catch { /* storage unavailable */ }
+}
+
 // ===== Auth Guard =====
 onAuthChange(async user => {
   if (!user) {
+    _setSessionHint(false);
     // Preserve invite token across the login redirect
     const params = new URLSearchParams(window.location.search);
     const token  = params.get('token');
@@ -89,6 +111,7 @@ onAuthChange(async user => {
   if (_uid === user.uid) return;
   _uid         = user.uid;
   _currentUser = user;
+  _setSessionHint(true);
   await _init(user);
 });
 
@@ -97,8 +120,10 @@ async function _init(user) {
     // ── Consent gate: nothing is written to Firestore before acceptance ──
     const preData = await loadUserData(_uid);   // read-only check
     if (!hasConsent(preData)) {
+      _hideSplash(); // consent dialog must not sit under the splash
       const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
       if (!accepted) {
+        _setSessionHint(false);
         try { await signOutUser(); } catch { /* ignore */ }
         window.location.href = 'index.html';
         return;
@@ -140,6 +165,9 @@ async function _init(user) {
 
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
+
+    // Map + stats are on screen — reveal the app
+    _hideSplash();
 
     // One-time staggered entrance for the sidebar lists (app start only)
     staggerIn('.collection-nav .nav-item, #recent-logs .recent-log-item');
@@ -220,6 +248,7 @@ async function _init(user) {
     });
 
   } catch (err) {
+    _hideSplash();
     showToast(t('toast.errorLoading'));
     console.error(err);
   }

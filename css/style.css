@@ -968,3 +968,74 @@ body {
   transition: opacity 0.15s, background 0.15s;
 }
 .btn-leave-group:hover { opacity: 1; background: var(--bg-card-hov); }
+
+/* ===== Boot Splash (map.html) =====
+   Covers the booting app until the map is rendered. Pure CSS keyframes so
+   the entrance plays before any JS loads; app.js adds .done to fade it out.
+   Always dark regardless of theme (branded stage), transform/opacity only. */
+#app-splash {
+  position: fixed; inset: 0; z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 38%, #141a3a 0%, #0b0d19 68%);
+  transition: opacity 0.45s ease;
+}
+#app-splash.done { opacity: 0; pointer-events: none; }
+
+.splash-center {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 0 24px;
+}
+.splash-logo {
+  height: 78px; width: auto;
+  animation: splash-pop 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.splash-name {
+  margin-top: 14px; font-size: 1.65rem; font-weight: 700;
+  color: #e7e9ff; letter-spacing: 0.02em;
+  animation: splash-rise 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.25s both;
+}
+.splash-tagline {
+  margin-top: 6px; font-size: 0.85rem; color: #8b93b8;
+  animation: splash-rise 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.4s both;
+}
+.splash-dots {
+  display: flex; gap: 7px; margin-top: 26px;
+  animation: splash-rise 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.55s both;
+}
+.splash-dots span {
+  width: 7px; height: 7px; border-radius: 50%; background: #818cf8;
+  animation: splash-dot 1.2s ease-in-out infinite;
+}
+.splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+.splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Scattered faint pins behind the mark, some half off-screen on purpose.
+   Outer span owns position + rotation, inner svg animates — a keyframe
+   transform on the same element would clobber the rotation. */
+.splash-pin { position: absolute; display: block; color: #818cf8; opacity: 0.13; pointer-events: none; }
+.splash-pin svg { display: block; width: 100%; height: auto; animation: splash-pop 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.splash-pin:nth-of-type(1) svg { animation-delay: 0.15s; }
+.splash-pin:nth-of-type(2) svg { animation-delay: 0.24s; }
+.splash-pin:nth-of-type(3) svg { animation-delay: 0.33s; }
+.splash-pin:nth-of-type(4) svg { animation-delay: 0.42s; }
+.splash-pin:nth-of-type(5) svg { animation-delay: 0.51s; }
+.splash-pin:nth-of-type(6) svg { animation-delay: 0.6s; }
+
+@keyframes splash-pop {
+  from { transform: scale(0.55); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+@keyframes splash-rise {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes splash-dot {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  40%      { opacity: 1;    transform: scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app-splash { transition: none; }
+  #app-splash *, #app-splash svg { animation: none !important; }
+}
