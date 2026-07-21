@@ -1010,17 +1010,17 @@ body {
 .splash-dots span:nth-child(2) { animation-delay: 0.2s; }
 .splash-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-/* Scattered faint pins behind the mark, some half off-screen on purpose.
-   Outer span owns position + rotation, inner svg animates — a keyframe
-   transform on the same element would clobber the rotation. */
-.splash-pin { position: absolute; display: block; color: #818cf8; opacity: 0.13; pointer-events: none; }
-.splash-pin svg { display: block; width: 100%; height: auto; animation: splash-pop 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
-.splash-pin:nth-of-type(1) svg { animation-delay: 0.15s; }
-.splash-pin:nth-of-type(2) svg { animation-delay: 0.24s; }
-.splash-pin:nth-of-type(3) svg { animation-delay: 0.33s; }
-.splash-pin:nth-of-type(4) svg { animation-delay: 0.42s; }
-.splash-pin:nth-of-type(5) svg { animation-delay: 0.51s; }
-.splash-pin:nth-of-type(6) svg { animation-delay: 0.6s; }
+/* Scattered faint landmark line art behind the mark, some half off-screen
+   on purpose. Outer span owns position + rotation, inner svg animates — a
+   keyframe transform on the same element would clobber the rotation. */
+.splash-motif { position: absolute; display: block; color: #818cf8; opacity: 0.16; pointer-events: none; }
+.splash-motif svg { display: block; width: 100%; height: auto; animation: splash-pop 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.splash-motif:nth-of-type(1) svg { animation-delay: 0.15s; }
+.splash-motif:nth-of-type(2) svg { animation-delay: 0.24s; }
+.splash-motif:nth-of-type(3) svg { animation-delay: 0.33s; }
+.splash-motif:nth-of-type(4) svg { animation-delay: 0.42s; }
+.splash-motif:nth-of-type(5) svg { animation-delay: 0.51s; }
+.splash-motif:nth-of-type(6) svg { animation-delay: 0.6s; }
 
 @keyframes splash-pop {
   from { transform: scale(0.55); opacity: 0; }

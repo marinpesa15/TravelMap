@@ -20,23 +20,45 @@
        Pure CSS animations so it plays before any JS module has loaded;
        app.js removes it once the map is rendered (plus a safety timeout). -->
   <div id="app-splash" role="status" aria-label="TravelMap">
-    <span class="splash-pin" style="left:-2%;top:10%;width:62px;transform:rotate(-14deg)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6"/></svg>
+    <!-- Faint world-landmark line art scattered behind the mark,
+         some half off-screen on purpose -->
+    <span class="splash-motif" style="left:-1%;top:8%;width:52px;transform:rotate(-8deg)">
+      <svg viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+        <path d="M12 1v3"/><path d="M11 4h2c.4 6 1.5 13 8 26"/><path d="M11 4c-.4 6-1.5 13-8 26"/>
+        <path d="M6.5 19h11"/><path d="M8.5 12.5h7"/><path d="M6 30c2.5-5 9.5-5 12 0"/>
+        <path d="M9 12.5 5.5 19M15 12.5l3.5 6.5"/>
+      </svg>
     </span>
-    <span class="splash-pin" style="left:47%;top:4%;width:40px;transform:rotate(10deg)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6"/></svg>
+    <span class="splash-motif" style="left:46%;top:4%;width:82px;transform:rotate(5deg)">
+      <svg viewBox="0 0 34 20" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round">
+        <path d="M2 18 13 3l11 15z"/><path d="M13 3l2.5 15"/><path d="M20 18l7-9 6 9z"/><path d="M27 9l1.5 9"/>
+      </svg>
     </span>
-    <span class="splash-pin" style="left:88%;top:18%;width:54px;transform:rotate(18deg)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6"/></svg>
+    <span class="splash-motif" style="left:89%;top:14%;width:34px;transform:rotate(9deg)">
+      <svg viewBox="0 0 14 32" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+        <path d="M4 30V8h6v22"/><path d="M4 8 7 2l3 6"/><path d="M7 2V0.5"/>
+        <circle cx="7" cy="12" r="2.2"/><path d="M7 10.8v1.4l1 .6"/>
+        <path d="M4 17h6M4 24h6"/><path d="M2 30h10"/>
+      </svg>
     </span>
-    <span class="splash-pin" style="left:4%;top:66%;width:48px;transform:rotate(12deg)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6"/></svg>
+    <span class="splash-motif" style="left:2%;top:64%;width:64px;transform:rotate(-6deg)">
+      <svg viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+        <path d="M2 5C7 2.8 23 2.8 28 5"/><path d="M4.5 9h21"/>
+        <path d="M8 5.5V22M22 5.5V22"/><path d="M15 5v4"/><path d="M6 22h4M20 22h4"/>
+      </svg>
     </span>
-    <span class="splash-pin" style="left:92%;top:60%;width:44px;transform:rotate(-10deg)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6"/></svg>
+    <span class="splash-motif" style="left:90%;top:62%;width:76px;transform:rotate(7deg)">
+      <svg viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 16h30"/><path d="M4 16c.5-6 4-10.5 10-11-2.5 3-3.5 7-3.7 11z"/>
+        <path d="M12 16c1-6.5 5-11.5 11.5-12-3 3.5-4.2 7.8-4.4 12z"/>
+        <path d="M21 16c1-5 4.5-8.5 9-9-2.2 2.7-3 5.6-3.2 9z"/>
+      </svg>
     </span>
-    <span class="splash-pin" style="left:36%;top:88%;width:56px;transform:rotate(-6deg)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6"/></svg>
+    <span class="splash-motif" style="left:34%;top:88%;width:78px;transform:rotate(-4deg)">
+      <svg viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+        <path d="M4 16V8.5C9 3.5 25 3.5 30 8.5V16"/><path d="M4 11.5c5-4.5 21-4.5 26 0"/>
+        <path d="M2 16h30"/><path d="M8 16v-3.2M13 16v-4M17 16v-4.2M21 16v-4M26 16v-3.2"/>
+      </svg>
     </span>
     <div class="splash-center">
       <img src="icons/logo-mark.png?v=1" alt="" class="splash-logo">
