@@ -64,35 +64,64 @@ function _addMarker(map, city, type, onRemove, isGroup = false) {
     return;
   }
 
-  // Group visited pins anchor at bottom (tip of the tail), regular pins anchor center
-  const useAvatar = isGroup && type === 'visited' && city.addedBy?.photoURL;
-  const useFallback = isGroup && type === 'visited' && !city.addedBy?.photoURL && city.addedBy?.displayName;
+  // Own + friend views use the beacon pin; group view keeps its existing
+  // markers (avatar pin for visited, standard dot for wishlist).
   const isGroupVisited = isGroup && type === 'visited';
 
-  let el = isGroupVisited
-    ? _createGroupVisitedMarkerEl(city, onRemove)
-    : _createMarkerEl(city, type, onRemove);
+  let el;
+  if (isGroupVisited)  el = _createGroupVisitedMarkerEl(city, onRemove);
+  else if (isGroup)    el = _createMarkerEl(city, type, onRemove);
+  else                 el = _createBeaconEl(city, type, onRemove);
 
   // Just-added city → drop animation. Mapbox positions the outer element via
   // its transform, so we wrap and animate the inner one.
   if (_pendingDrop && _pendingDrop.name === city.name && Date.now() < _pendingDrop.until) {
     _pendingDrop = null;
     const wrap = document.createElement('div');
-    wrap.style.width  = isGroupVisited ? '40px' : '12px';
-    wrap.style.height = isGroupVisited ? '48px' : '12px';
+    if (isGroupVisited)  { wrap.style.width = '40px'; wrap.style.height = '48px'; }
+    else if (isGroup)    { wrap.style.width = '12px'; wrap.style.height = '12px'; }
+    else                 { wrap.style.width = '16px'; wrap.style.height = '22px'; }
     wrap.appendChild(el);
     dropIn(el);
     el = wrap;
   }
 
-  const anchor = isGroupVisited ? 'bottom' : 'center';
+  // Beacons and avatar pins point at the spot with their foot — anchor bottom
+  const anchor = (isGroupVisited || !isGroup) ? 'bottom' : 'center';
   const marker = new mapboxgl.Marker({ element: el, anchor })
     .setLngLat([city.lng, city.lat])
     .addTo(map);
   _activeMarkers.push({ marker, name: city.name, type });
 }
 
-// ── Standard dot marker (own view, friend view, group wishlist) ───────────────
+// ── Beacon marker (own view, friend view) ─────────────────────────────────────
+// Small glowing head on a thin stem, anchored at the base. State drives the
+// look: visited = indigo, lived = amber, wishlist = dashed hollow emerald.
+
+function _createBeaconEl(city, type, onRemove) {
+  const el     = document.createElement('div');
+  el.title     = city.name;
+  el.className = 'beacon-marker';
+
+  const state = type === 'wishlist' ? 'wishlist' : (city.lived ? 'lived' : 'visited');
+  el.innerHTML = `
+    <div class="beacon ${state}">
+      <div class="beacon-head"></div>
+      <div class="beacon-stem"></div>
+      <div class="beacon-base"></div>
+    </div>`;
+
+  if (onRemove) {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onRemove(city, type, e.clientX, e.clientY);
+    });
+  }
+
+  return el;
+}
+
+// ── Standard dot marker (group wishlist) ──────────────────────────────────────
 
 function _createMarkerEl(city, type, onRemove) {
   const el      = document.createElement('div');

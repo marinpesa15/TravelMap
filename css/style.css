@@ -1039,3 +1039,32 @@ body {
   #app-splash { transition: none; }
   #app-splash *, #app-splash svg { animation: none !important; }
 }
+
+/* ===== Beacon Markers (own + friend view) =====
+   Glowing head on a thin stem, bottom-anchored at the exact spot.
+   Visited = indigo, lived = amber, wishlist = dashed hollow emerald. */
+.beacon-marker { width: 16px; height: 22px; cursor: pointer; }
+.beacon {
+  display: flex; flex-direction: column; align-items: center;
+  transition: transform 0.15s ease; transform-origin: center bottom;
+}
+.beacon-marker:hover .beacon { transform: scale(1.18); }
+.beacon-head {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.85);
+}
+.beacon-stem {
+  width: 1.5px; height: 8px;
+  background: linear-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.2));
+}
+.beacon-base { width: 4px; height: 2px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+.beacon.visited .beacon-head { background: #6366f1; box-shadow: 0 0 8px rgba(99,102,241,0.55), 0 1px 3px rgba(0,0,0,0.6); }
+.beacon.lived   .beacon-head { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.55), 0 1px 3px rgba(0,0,0,0.6); }
+.beacon.wishlist .beacon-head {
+  background: rgba(16,185,129,0.12);
+  border: 1.5px dashed #10b981;
+  box-shadow: 0 0 8px rgba(16,185,129,0.25);
+}
+/* Light map style: white stem/base would wash out — darken the hardware */
+html.light .beacon-stem { background: linear-gradient(rgba(15,23,42,0.6), rgba(15,23,42,0.25)); }
+html.light .beacon-base { background: rgba(15,23,42,0.35); }
