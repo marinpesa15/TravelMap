@@ -22,22 +22,36 @@ async function _check() {
   } catch { /* offline — next round will retry */ }
 }
 
-// Two strings only, so they live here instead of i18n.js — adding keys there
-// would force a ?v= bump across every i18n importer.
+// Centered blocking dialog — updating is the only way forward, so there is
+// deliberately no dismiss. The few strings live here instead of i18n.js;
+// adding keys there would force a ?v= bump across every i18n importer.
 function _showBanner() {
   if (_shown) return;
   _shown = true;
   const de = getLang() === 'de';
-  const banner = document.createElement('div');
-  banner.className = 'update-banner';
-  const label = document.createElement('span');
-  label.textContent = de ? 'Update verfügbar' : 'Update available';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'update-overlay';
+
+  const card = document.createElement('div');
+  card.className = 'update-card';
+
+  const title = document.createElement('h3');
+  title.textContent = de ? 'Update verfügbar' : 'Update available';
+
+  const body = document.createElement('p');
+  body.textContent = de
+    ? 'Eine neue Version von TravelMap ist da. Lade neu, um sie zu verwenden.'
+    : 'A new version of TravelMap is ready. Reload to use it.';
+
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = de ? 'Neu laden' : 'Reload';
   btn.addEventListener('click', () => location.reload());
-  banner.append(label, btn);
-  document.body.appendChild(banner);
+
+  card.append(title, body, btn);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
 }
 
 /** Call once after app init. */
