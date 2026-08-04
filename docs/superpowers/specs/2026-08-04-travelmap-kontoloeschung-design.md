@@ -83,11 +83,18 @@ Nebeneffekt: Das ist dieselbe Abstraktion, die Sign in with Apple später brauch
 | Modul | Aufgabe | Kennt |
 |---|---|---|
 | `js/auth.js` | Anmeldung, Abmeldung, Neuanmeldung | Firebase Auth, Provider |
-| `js/account.js` | Löschablauf, Reihenfolge, Fehlerbehandlung | Firestore, `auth.reauthenticate()` |
+| `js/account.js` | Löschablauf, Reihenfolge, Fehlerbehandlung | nur das IO-Objekt |
+| `js/account-io.js` | dünne Hülle um Firestore und Auth, keine Logik | Firestore, `auth.reauthenticate()` |
 | `js/account-logic.js` | reine Funktionen ohne Firebase | nichts |
 | `js/settings.js` | Gefahrenzone, Warnmodal, Fortschritt | `account.js`, `i18n.js` |
 
 `account-logic.js` existiert, damit die riskanten Entscheidungen ohne Firebase testbar sind.
+
+`account-io.js` ist die zweite Hälfte davon. `deleteAccount(uid, { io })` bekommt das
+IO-Objekt injiziert und benutzt im Normalfall `firestoreIo`. Im Test kommt ein Fake herein,
+das nur seine Aufrufe mitschreibt. Damit lässt sich die **Reihenfolge** prüfen, ohne Firebase
+zu mocken, und genau das ist die Zusage, die dieser Entwurf macht: Der Auth-Account fällt
+zuletzt.
 
 ## Löschablauf
 
