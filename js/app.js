@@ -27,7 +27,7 @@ import {
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
 } from './ui.js?v=31';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=6';
+import { setupSettings } from './settings.js?v=7';
 import { t, getLang, applyTranslations } from './i18n.js?v=2';
 import { staggerIn } from './anim.js?v=1';
 import { startUpdateCheck } from './version.js?v=4';
