@@ -16,6 +16,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.js']
+    include: ['tests/**/*.test.js'],
+    // Rules-Tests brauchen den Firestore-Emulator und laufen separat
+    // ueber `npm run test:rules`.
+    exclude: ['tests/rules/**', '**/node_modules/**']
   }
 });

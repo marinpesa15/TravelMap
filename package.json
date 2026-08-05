@@ -4,9 +4,12 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:rules": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" npx -y firebase-tools emulators:exec --only firestore --project travelmap-f4e3a \"vitest run --config vitest.rules.config.js\""
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.14.1",
     "vitest": "^2.1.8"
   }
 }
