@@ -23,6 +23,7 @@ function fakeIo(over = {}) {
     },
     loadFriendUids: rec('loadFriendUids', []),
     deleteFriendPairs: rec('deleteFriendPairs'),
+    findInviteTokens: rec('findInviteTokens', ['tok']),
     deleteInvite: rec('deleteInvite'),
     deleteUserDoc: rec('deleteUserDoc'),
     deleteAuthUser: rec('deleteAuthUser'),
@@ -39,6 +40,7 @@ describe('deleteAccount', () => {
     expect(io.calls.at(-1)).toBe('deleteAuthUser');
     expect(io.calls.indexOf('deleteUserDoc')).toBeLessThan(io.calls.indexOf('deleteAuthUser'));
     expect(io.calls.indexOf('deleteFriendPairs')).toBeLessThan(io.calls.indexOf('deleteUserDoc'));
+    expect(io.calls.indexOf('deleteInvite')).toBeLessThan(io.calls.indexOf('deleteUserDoc'));
   });
 
   it('bricht ohne jede Datenaenderung ab, wenn die Neuanmeldung fehlschlaegt', async () => {
@@ -95,10 +97,23 @@ describe('deleteAccount', () => {
     expect(io.calls).toContain('deleteAuthUser');
   });
 
-  it('ueberspringt das Invite-Doc, wenn kein Token vorhanden ist', async () => {
-    const io = fakeIo({ loadUser: () => Promise.resolve({}) });
+  it('ueberspringt das Invite-Doc, wenn keines existiert', async () => {
+    const io = fakeIo({ findInviteTokens: () => Promise.resolve([]) });
     await deleteAccount('me', { io });
     expect(io.calls).not.toContain('deleteInvite');
+  });
+
+  it('loescht das Invite-Doc auch, wenn das User-Doc schon weg ist', async () => {
+    // Wiederholungsfall: Ein frueherer Versuch starb zwischen deleteUserDoc
+    // und deleteAuthUser. Das Token steht nirgends mehr, die Query nach der
+    // eigenen uid findet das Invite-Doc trotzdem.
+    const io = fakeIo({
+      loadUser: () => Promise.resolve(null),
+      findInviteTokens: () => { io.calls.push('findInviteTokens'); return Promise.resolve(['verwaist']); }
+    });
+    await deleteAccount('me', { io });
+    expect(io.calls).toContain('deleteInvite');
+    expect(io.calls.at(-1)).toBe('deleteAuthUser');
   });
 
   it('meldet jeden Schritt an onProgress', async () => {

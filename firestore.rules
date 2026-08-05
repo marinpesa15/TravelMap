@@ -7,7 +7,12 @@ service cloud.firestore {
     // Only the owning user can create/overwrite/delete their invite doc.
     match /invites/{token} {
       allow get: if request.auth != null;
-      allow list: if false;
+      // list nur fuer die eigenen Invite-Docs, also nur ueber eine Query,
+      // die auf die eigene uid filtert. Gebraucht von der Kontoloeschung,
+      // um ein verwaistes Invite nach einem Teil-Durchlauf noch zu finden.
+      // Enumeration fremder Invites bleibt unmoeglich.
+      allow list: if request.auth != null
+        && resource.data.uid == request.auth.uid;
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid', 'display_name', 'avatar_url'])

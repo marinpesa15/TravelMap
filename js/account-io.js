@@ -61,6 +61,14 @@ export const firestoreIo = {
     }
   },
 
+  // Eigene Invite-Docs per Query statt ueber das Token aus dem User-Doc.
+  // Die Rules erlauben list nur mit Filter auf die eigene uid.
+  async findInviteTokens(uid) {
+    const q = query(collection(db, 'invites'), where('uid', '==', uid));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.id);
+  },
+
   deleteInvite(token) {
     return deleteDoc(doc(db, 'invites', token));
   },

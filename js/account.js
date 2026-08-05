@@ -32,11 +32,7 @@ export async function deleteAccount(uid, { io = firestoreIo, onProgress = () => 
   // 1. Frische Anmeldung. Schlaegt sie fehl, ist noch nichts passiert.
   await io.reauthenticate();
 
-  // 2. Profil lesen, solange es noch existiert. Das Invite-Token steht dort.
-  onProgress('profile');
-  const user = await io.loadUser(uid);
-
-  // 3. Gruppen. Je Gruppe eine Transaktion: Der Plan wird auf dem frisch
+  // 2. Gruppen. Je Gruppe eine Transaktion: Der Plan wird auf dem frisch
   //    gelesenen Stand berechnet, damit parallele Aenderungen anderer
   //    Mitglieder nicht ueberschrieben werden.
   onProgress('groups');
@@ -50,23 +46,27 @@ export async function deleteAccount(uid, { io = firestoreIo, onProgress = () => 
     });
   }
 
-  // 4. Freundschaften, beide Richtungen. Muss vor dem User-Doc laufen:
+  // 3. Freundschaften, beide Richtungen. Muss vor dem User-Doc laufen:
   //    Firestore loescht Subcollections NICHT mit dem Dokument mit, sonst
   //    bliebe users/{uid}/friends/* verwaist und unerreichbar zurueck.
   onProgress('friends');
   const friendUids = await io.loadFriendUids(uid);
   if (friendUids.length) await io.deleteFriendPairs(uid, friendUids);
 
-  // 5. Invite-Doc.
+  // 4. Invite-Docs per Query nach der eigenen uid, nicht ueber das Token im
+  //    User-Doc. Starb ein frueherer Versuch zwischen deleteUserDoc und
+  //    deleteAuthUser, existiert das User-Doc nicht mehr und das Token waere
+  //    verloren, das Invite-Doc bliebe fuer immer verwaist liegen.
   onProgress('invite');
-  if (user?.invite_token) await io.deleteInvite(user.invite_token);
+  const inviteTokens = await io.findInviteTokens(uid);
+  for (const token of inviteTokens) await io.deleteInvite(token);
 
-  // 6. User-Doc. Nimmt Staedte, Laender, Consent und Profil mit, weil alles
+  // 5. User-Doc. Nimmt Staedte, Laender, Consent und Profil mit, weil alles
   //    als Felder im Dokument liegt.
   onProgress('profileDoc');
   await io.deleteUserDoc(uid);
 
-  // 7. Zuletzt der Auth-Account.
+  // 6. Zuletzt der Auth-Account.
   onProgress('account');
   await io.deleteAuthUser();
 }
