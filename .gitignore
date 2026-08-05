@@ -4,3 +4,6 @@ js/constants.js
 
 # OS
 .DS_Store
+
+node_modules/
+.firebase/hosting..cache
