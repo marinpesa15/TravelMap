@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-v4.png">
   <link rel="manifest" href="manifest.webmanifest?v=6">
   <meta name="theme-color" content="#0b0d19">
-  <link rel="stylesheet" href="css/style.css?v=34">
+  <link rel="stylesheet" href="css/style.css?v=35">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script defer src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 </head>
@@ -309,7 +309,25 @@
         <a href="privacy.html#imprint" target="_blank" rel="noopener" data-i18n="settings.imprint">Legal Notice</a>
       </div>
       <button class="btn-danger settings-signout" id="settings-signout" data-i18n="settings.signout">Sign out</button>
+      <button class="btn-danger settings-delete" id="settings-delete" data-i18n="delete.button">Delete account</button>
       <p class="settings-version" id="settings-version"></p>
+    </div>
+  </div>
+
+  <!-- Account deletion confirmation -->
+  <div id="delete-modal">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h3 data-i18n="delete.title">Delete your account?</h3>
+      </div>
+      <p class="dialog-label" data-i18n="delete.body">Your account and this data will be permanently deleted:</p>
+      <p id="delete-summary" class="delete-summary"></p>
+      <p class="delete-warning" data-i18n="delete.warning">This cannot be undone.</p>
+      <p id="delete-status" class="delete-status" hidden></p>
+      <div class="delete-actions">
+        <button class="btn-cancel" id="delete-cancel" data-i18n="delete.cancel">Cancel</button>
+        <button class="btn-danger" id="delete-confirm" data-i18n="delete.confirm">Delete permanently</button>
+      </div>
     </div>
   </div>
 

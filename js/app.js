@@ -28,7 +28,7 @@ import {
 } from './ui.js?v=30';
 import { initTheme } from './theme.js?v=19';
 import { setupSettings } from './settings.js?v=5';
-import { t, getLang, applyTranslations } from './i18n.js?v=1';
+import { t, getLang, applyTranslations } from './i18n.js?v=2';
 import { staggerIn } from './anim.js?v=1';
 import { startUpdateCheck } from './version.js?v=3';
 
