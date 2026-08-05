@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=19';
+import { onAuthChange, signOutUser } from './auth.js?v=20';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
