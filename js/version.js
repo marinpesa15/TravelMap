@@ -3,7 +3,7 @@ import { getLang } from './i18n.js?v=2';
 // Single source of truth for the app version, shown in the settings modal.
 // Bump together with version.json on every release — running clients compare
 // the two and offer a reload when they drift apart.
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 
 // There is no service worker, so an update arrives with a plain reload:
 // HTML is served no-cache and every JS/CSS asset carries a ?v= version.
