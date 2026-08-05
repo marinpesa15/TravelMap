@@ -36,13 +36,18 @@ export async function deleteAccount(uid, { io = firestoreIo, onProgress = () => 
   onProgress('profile');
   const user = await io.loadUser(uid);
 
-  // 3. Gruppen. Je Gruppe ein Schreibvorgang, damit sie einzeln atomar ist.
+  // 3. Gruppen. Je Gruppe eine Transaktion: Der Plan wird auf dem frisch
+  //    gelesenen Stand berechnet, damit parallele Aenderungen anderer
+  //    Mitglieder nicht ueberschrieben werden.
   onProgress('groups');
   const groups = await io.loadMyGroups(uid);
   for (const group of groups) {
-    const plan = planGroupChange(group, uid);
-    if (plan.action === 'delete') await io.deleteGroup(group.id);
-    else await io.updateGroup(group.id, plan.data);
+    await io.applyGroupChange(group.id, g => {
+      // Schon ausgetreten (frueherer Versuch): Ein Update waere unnoetig und
+      // wuerde von den Rules abgelehnt, weil ich kein Mitglied mehr bin.
+      if (!(g.members ?? []).includes(uid)) return null;
+      return planGroupChange(g, uid);
+    });
   }
 
   // 4. Freundschaften, beide Richtungen. Muss vor dem User-Doc laufen:

@@ -6,12 +6,21 @@ function fakeIo(over = {}) {
   const rec = (name, ret) => (...args) => { calls.push(name); return Promise.resolve(ret); };
   const io = {
     calls,
+    // Fake-Datenbestand: loadMyGroups liefert ihn, applyGroupChange liest
+    // daraus wie die echte Transaktion frisch aus Firestore.
+    groups: [],
     reauthenticate: rec('reauthenticate'),
     loadUser: rec('loadUser', { invite_token: 'tok', visited_cities: [], wishlist_cities: [],
                                 visited_countries: [], wishlist_countries: [] }),
-    loadMyGroups: rec('loadMyGroups', []),
-    updateGroup: rec('updateGroup'),
-    deleteGroup: rec('deleteGroup'),
+    loadMyGroups: (...args) => { calls.push('loadMyGroups'); return Promise.resolve(io.groups); },
+    applyGroupChange: (groupId, decide) => {
+      calls.push('applyGroupChange');
+      const g = io.groups.find(x => x.id === groupId);
+      const plan = g ? decide(g) : null;
+      if (plan?.action === 'delete') calls.push('deleteGroup');
+      else if (plan) calls.push('updateGroup');
+      return Promise.resolve();
+    },
     loadFriendUids: rec('loadFriendUids', []),
     deleteFriendPairs: rec('deleteFriendPairs'),
     deleteInvite: rec('deleteInvite'),
@@ -41,23 +50,49 @@ describe('deleteAccount', () => {
 
   it('laesst den Auth-Account stehen, wenn eine Gruppe fehlschlaegt', async () => {
     const io = fakeIo({
-      loadMyGroups: () => Promise.resolve([
-        { id: 'g1', created_by: 'me', members: ['me', 'anna'] }
-      ]),
-      updateGroup: () => Promise.reject(new Error('permission-denied'))
+      applyGroupChange: () => Promise.reject(new Error('permission-denied'))
     });
+    io.groups = [{ id: 'g1', created_by: 'me', members: ['me', 'anna'] }];
     await expect(deleteAccount('me', { io })).rejects.toThrow('permission-denied');
     expect(io.calls).not.toContain('deleteAuthUser');
     expect(io.calls).not.toContain('deleteUserDoc');
   });
 
   it('loescht eine Gruppe, in der ich das letzte Mitglied bin', async () => {
-    const io = fakeIo({
-      loadMyGroups: () => Promise.resolve([{ id: 'g1', created_by: 'me', members: ['me'] }])
-    });
+    const io = fakeIo();
+    io.groups = [{ id: 'g1', created_by: 'me', members: ['me'] }];
     await deleteAccount('me', { io });
     expect(io.calls).toContain('deleteGroup');
     expect(io.calls).not.toContain('updateGroup');
+  });
+
+  it('fasst eine Gruppe nicht an, aus der ich zwischenzeitlich raus bin', async () => {
+    // loadMyGroups sah mich noch als Mitglied, die Transaktion liest den
+    // frischen Stand ohne mich. Ein Update wuerde von den Rules abgelehnt.
+    const io = fakeIo({
+      loadMyGroups: (...a) => { io.calls.push('loadMyGroups'); return Promise.resolve([
+        { id: 'g1', created_by: 'anna', members: ['me', 'anna'] }
+      ]); }
+    });
+    io.groups = [{ id: 'g1', created_by: 'anna', members: ['anna'] }];
+    await deleteAccount('me', { io });
+    expect(io.calls).toContain('applyGroupChange');
+    expect(io.calls).not.toContain('updateGroup');
+    expect(io.calls).not.toContain('deleteGroup');
+    expect(io.calls).toContain('deleteAuthUser');
+  });
+
+  it('fasst eine Gruppe nicht an, die zwischenzeitlich geloescht wurde', async () => {
+    const io = fakeIo({
+      loadMyGroups: (...a) => { io.calls.push('loadMyGroups'); return Promise.resolve([
+        { id: 'weg', created_by: 'me', members: ['me'] }
+      ]); }
+    });
+    io.groups = [];
+    await deleteAccount('me', { io });
+    expect(io.calls).not.toContain('updateGroup');
+    expect(io.calls).not.toContain('deleteGroup');
+    expect(io.calls).toContain('deleteAuthUser');
   });
 
   it('ueberspringt das Invite-Doc, wenn kein Token vorhanden ist', async () => {

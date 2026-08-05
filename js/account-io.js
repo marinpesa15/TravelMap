@@ -2,7 +2,7 @@
 // account.js im Test ein Fake-IO bekommen kann und trotzdem derselbe Ablauf
 // laeuft wie in der App.
 import {
-  doc, collection, getDoc, getDocs, deleteDoc, updateDoc,
+  doc, collection, getDoc, getDocs, deleteDoc, runTransaction,
   writeBatch, query, where
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db, auth } from './config.js?v=1';
@@ -25,12 +25,22 @@ export const firestoreIo = {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
 
-  updateGroup(groupId, data) {
-    return updateDoc(doc(db, 'groups', groupId), data);
-  },
-
-  deleteGroup(groupId) {
-    return deleteDoc(doc(db, 'groups', groupId));
+  // Liest die Gruppe innerhalb einer Transaktion frisch und wendet `decide`
+  // auf diesen Stand an. Ohne Transaktion wuerde der Austritt parallele
+  // Aenderungen anderer Mitglieder ueberschreiben, weil die drei Felder
+  // komplett zurueckgeschrieben werden (Last-Write-Wins).
+  // `decide` liefert null (nichts tun), {action:'delete'} oder
+  // {action:'update', data}.
+  applyGroupChange(groupId, decide) {
+    return runTransaction(db, async tx => {
+      const ref = doc(db, 'groups', groupId);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) return;
+      const plan = decide({ id: snap.id, ...snap.data() });
+      if (!plan) return;
+      if (plan.action === 'delete') tx.delete(ref);
+      else tx.update(ref, plan.data);
+    });
   },
 
   async loadFriendUids(uid) {
