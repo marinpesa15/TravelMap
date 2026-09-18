@@ -5,10 +5,11 @@ import {
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
-  markWishlistCityVisited, markGroupWishlistCityVisited,
+  markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=23';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=6';
+} from './db.js?v=24';
+import { planDedupeCities } from './city-logic.js?v=3';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=7';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
 import {
@@ -26,12 +27,12 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=32';
+} from './ui.js?v=33';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=8';
-import { t, getLang, applyTranslations } from './i18n.js?v=3';
+import { setupSettings } from './settings.js?v=9';
+import { t, getLang, applyTranslations } from './i18n.js?v=4';
 import { staggerIn } from './anim.js?v=1';
-import { startUpdateCheck } from './version.js?v=5';
+import { startUpdateCheck } from './version.js?v=6';
 
 let _uid            = null;
 let _userData       = null;
@@ -141,6 +142,13 @@ async function _init(user) {
 
     // initUserProfile returns the fresh doc data — saves a redundant read
     _userData = await initUserProfile(_uid, user);
+
+    // Self-heal: aeltere Versionen konnten eine Stadt in beiden Listen
+    // ablegen. Nur schreiben, wenn der geladene Stand wirklich Doppel hat;
+    // das Ergebnis kommt ueber den subscribeUserData-Listener rein.
+    if (planDedupeCities(_userData)) {
+      dedupeUserCities(_uid).catch(err => console.error('[TM] city dedupe failed:', err));
+    }
 
     // Process invite links before the map: friend-adding must not depend on
     // Mapbox/WebGL, which can fail inside in-app browsers (WhatsApp etc.).
@@ -355,14 +363,14 @@ async function _onAddCity(cityData, type, lived) {
   try {
     animateNextAdd(cityData.name);
     if (type === 'visited') {
+      // Nimmt die Stadt auch von der Wunschliste und trackt ihr Land mit
       await addVisitedCity(_uid, { ...cityData, lived });
-      const iso = cityData.country;
-      if (iso && iso !== 'XX') {
-        const alreadyTracked = (_userData.visited_countries ?? []).includes(iso);
-        if (!alreadyTracked) await addVisitedCountry(_uid, iso);
-      }
     } else {
-      await addWishlistCity(_uid, cityData);
+      const status = await addWishlistCity(_uid, cityData);
+      if (status === 'alreadyVisited') {
+        showToast(t('toast.alreadyVisited', { name: cityData.name }));
+        return;
+      }
     }
     showToast(t('toast.added', { name: cityData.name }));
     // Map + stats update via subscribeUserData listener automatically

@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited } from '../js/city-logic.js';
+import {
+  planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited,
+  planAddVisitedCity, planAddWishlistCity, planDedupeCities
+} from '../js/city-logic.js';
 
 const rom  = { name: 'Rom',  lat: 41.9, lng: 12.5, country: 'IT' };
 const oslo = { name: 'Oslo', lat: 59.9, lng: 10.7, country: 'NO' };
@@ -106,5 +109,97 @@ describe('planMarkGroupWishlistCityVisited', () => {
   it('liefert null, wenn die Stadt nicht (mehr) auf der Wunschliste steht', () => {
     expect(planMarkGroupWishlistCityVisited(group(), 'Paris', me)).toBeNull();
     expect(planMarkGroupWishlistCityVisited({}, 'Rom', me)).toBeNull();
+  });
+});
+
+describe('planAddVisitedCity', () => {
+  it('nimmt eine gleichnamige Stadt von der Wunschliste und behaelt den gewaehlten lived-Wert', () => {
+    const plan = planAddVisitedCity(user(), { ...rom, lived: true });
+    expect(plan.visited_cities).toEqual([{ ...rom, lived: true }]);
+    expect(plan.wishlist_cities).toEqual([oslo]);
+  });
+
+  it('matcht die Wunsch-Stadt ueber den Namen, auch wenn sich das Objekt unterscheidet', () => {
+    // Suchergebnis hat leicht andere Koordinaten als der alte Wunsch-Eintrag,
+    // arrayRemove wuerde hier nichts finden.
+    const fromSearch = { ...rom, lat: 41.9028, lived: false };
+    const plan = planAddVisitedCity(user(), fromSearch);
+    expect(plan.wishlist_cities).toEqual([oslo]);
+    expect(plan.visited_cities).toEqual([fromSearch]);
+  });
+
+  it('haengt eine neue Stadt an, ohne die Wunschliste anzufassen', () => {
+    const paris = { name: 'Paris', lat: 48.8, lng: 2.3, country: 'FR', lived: false };
+    const plan = planAddVisitedCity(user({ visited_cities: [{ ...oslo, lived: false }], wishlist_cities: [rom] }), paris);
+    expect(plan.visited_cities).toEqual([{ ...oslo, lived: false }, paris]);
+    expect(plan.wishlist_cities).toEqual([rom]);
+  });
+
+  it('aktualisiert lived einer schon besuchten Stadt an Ort und Stelle statt sie zu verdoppeln', () => {
+    const plan = planAddVisitedCity(
+      user({ visited_cities: [{ ...oslo, lived: false }, { ...rom, lived: false }], wishlist_cities: [] }),
+      { ...rom, lived: true });
+    expect(plan.visited_cities).toEqual([{ ...oslo, lived: false }, { ...rom, lived: true }]);
+  });
+
+  it('markiert das Land als besucht und nimmt es von der Laender-Wunschliste', () => {
+    const plan = planAddVisitedCity(
+      user({ visited_countries: ['DE'], wishlist_countries: ['IT', 'NO'] }), { ...rom, lived: false });
+    expect(plan.visited_countries).toEqual(['DE', 'IT']);
+    expect(plan.wishlist_countries).toEqual(['NO']);
+  });
+
+  it('laesst die Laender unangetastet, wenn die Stadt kein Land hat', () => {
+    for (const country of ['XX', '', undefined]) {
+      const plan = planAddVisitedCity(user(), { ...rom, country, lived: false });
+      expect(plan).not.toHaveProperty('visited_countries');
+      expect(plan).not.toHaveProperty('wishlist_countries');
+    }
+  });
+
+  it('vertraegt ein Dokument ohne die Listenfelder', () => {
+    const plan = planAddVisitedCity({}, { ...rom, lived: false });
+    expect(plan.visited_cities).toEqual([{ ...rom, lived: false }]);
+    expect(plan.wishlist_cities).toEqual([]);
+  });
+});
+
+describe('planAddWishlistCity', () => {
+  it('lehnt eine schon besuchte Stadt ab und schreibt nichts', () => {
+    const result = planAddWishlistCity(user({ visited_cities: [{ ...rom, lived: true }], wishlist_cities: [] }), rom);
+    expect(result).toEqual({ status: 'alreadyVisited' });
+  });
+
+  it('erkennt die besuchte Stadt ueber den Namen', () => {
+    const result = planAddWishlistCity(
+      user({ visited_cities: [{ ...rom, lat: 41.9028, lived: false }], wishlist_cities: [] }), rom);
+    expect(result.status).toBe('alreadyVisited');
+  });
+
+  it('legt keinen zweiten Eintrag an, wenn die Stadt schon auf der Wunschliste steht', () => {
+    const result = planAddWishlistCity(user(), { ...rom, lat: 41.9028 });
+    expect(result).toEqual({ status: 'unchanged' });
+  });
+
+  it('haengt eine neue Stadt an die Wunschliste an', () => {
+    const paris = { name: 'Paris', lat: 48.8, lng: 2.3, country: 'FR' };
+    const result = planAddWishlistCity(user(), paris);
+    expect(result).toEqual({ status: 'added', update: { wishlist_cities: [rom, oslo, paris] } });
+  });
+
+  it('vertraegt ein Dokument ohne die Listenfelder', () => {
+    expect(planAddWishlistCity({}, rom)).toEqual({ status: 'added', update: { wishlist_cities: [rom] } });
+  });
+});
+
+describe('planDedupeCities', () => {
+  it('entfernt Wunsch-Staedte, die auch besucht sind', () => {
+    const plan = planDedupeCities(user({ visited_cities: [{ ...rom, lat: 41.9028, lived: true }] }));
+    expect(plan).toEqual({ wishlist_cities: [oslo] });
+  });
+
+  it('liefert null, wenn es keine Ueberschneidung gibt', () => {
+    expect(planDedupeCities(user({ visited_cities: [{ name: 'Paris', lived: false }] }))).toBeNull();
+    expect(planDedupeCities({})).toBeNull();
   });
 });
