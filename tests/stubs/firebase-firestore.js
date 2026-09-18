@@ -10,3 +10,4 @@ export const updateDoc = async () => {};
 export const writeBatch = () => ({ delete: () => {}, commit: async () => {} });
 export const query = () => ({});
 export const where = () => ({});
+export const runTransaction = async () => {};

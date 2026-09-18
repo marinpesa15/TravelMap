@@ -12,7 +12,8 @@
       "tests/**",
       "package.json",
       "package-lock.json",
-      "vitest.config.js"
+      "vitest.config.js",
+      "vitest.rules.config.js"
     ],
     "rewrites": [],
     "headers": [
