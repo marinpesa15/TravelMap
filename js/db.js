@@ -3,7 +3,7 @@ import {
   arrayUnion, arrayRemove, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js?v=1';
-import { planMarkWishlistCityVisited } from './city-logic.js?v=1';
+import { planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited } from './city-logic.js?v=2';
 
 function userRef(uid) {
   return doc(db, 'users', uid);
@@ -182,6 +182,22 @@ export async function removeCityFromGroup(groupId, cityName, type) {
   const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
   const updated = (data[field] ?? []).filter(c => c.name !== cityName);
   await updateDoc(groupRef(groupId), { [field]: updated });
+}
+
+/**
+ * Gruppen-Variante von markWishlistCityVisited, gleiches Muster wie
+ * applyGroupChange in account-io.js: lesen, planen und schreiben in einer
+ * Transaktion, damit parallele Aenderungen anderer Mitglieder erhalten bleiben.
+ * addedBy: { uid, photoURL, displayName } des umwandelnden Mitglieds.
+ */
+export async function markGroupWishlistCityVisited(groupId, cityName, addedBy) {
+  const ref = groupRef(groupId);
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const plan = planMarkGroupWishlistCityVisited(snap.data(), cityName, addedBy);
+    if (plan) tx.update(ref, plan);
+  });
 }
 
 export async function updateGroupCityPhoto(groupId, cityName, type, newPhotoURL) {

@@ -32,3 +32,24 @@ export function planMarkWishlistCityVisited(data, cityName) {
   }
   return plan;
 }
+
+/**
+ * Gruppen-Variante: verschiebt eine Wunsch-Stadt der Gruppe nach
+ * visited_cities. addedBy wird das umwandelnde Mitglied, weil der Pin zeigt,
+ * wer dort war (und die Kontoloeschung Pins ueber addedBy.uid zuordnet).
+ * Steht die Stadt schon als besucht drin (anderes Mitglied), bleibt dieser
+ * Pin wie er ist und nur der Wunsch verschwindet. Gruppen kennen keine
+ * Laender, deshalb nur die beiden Staedte-Felder.
+ */
+export function planMarkGroupWishlistCityVisited(data, cityName, addedBy) {
+  const wishlist = data.wishlist_cities ?? [];
+  const visited  = data.visited_cities  ?? [];
+  const city = wishlist.find(c => c.name === cityName);
+  if (!city) return null;
+
+  const alreadyVisited = visited.some(c => c.name === cityName);
+  return {
+    visited_cities:  alreadyVisited ? visited : [...visited, { ...city, lived: false, addedBy }],
+    wishlist_cities: wishlist.filter(c => c.name !== cityName)
+  };
+}

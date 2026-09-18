@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planMarkWishlistCityVisited } from '../js/city-logic.js';
+import { planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited } from '../js/city-logic.js';
 
 const rom  = { name: 'Rom',  lat: 41.9, lng: 12.5, country: 'IT' };
 const oslo = { name: 'Oslo', lat: 59.9, lng: 10.7, country: 'NO' };
@@ -73,5 +73,38 @@ describe('planMarkWishlistCityVisited', () => {
 
   it('vertraegt ein Dokument ohne die Listenfelder', () => {
     expect(planMarkWishlistCityVisited({}, 'Rom')).toBeNull();
+  });
+});
+
+describe('planMarkGroupWishlistCityVisited', () => {
+  const anna = { uid: 'anna', photoURL: 'anna.jpg', displayName: 'Anna' };
+  const me   = { uid: 'me',   photoURL: 'me.jpg',   displayName: 'Me' };
+  const group = (over = {}) => ({
+    visited_cities: [],
+    wishlist_cities: [{ ...rom, lived: false, addedBy: anna }, { ...oslo, lived: false, addedBy: anna }],
+    ...over
+  });
+
+  it('verschiebt die Stadt mit dem umwandelnden Mitglied als addedBy', () => {
+    const plan = planMarkGroupWishlistCityVisited(group(), 'Rom', me);
+    expect(plan.visited_cities).toEqual([{ ...rom, lived: false, addedBy: me }]);
+    expect(plan.wishlist_cities).toEqual([{ ...oslo, lived: false, addedBy: anna }]);
+  });
+
+  it('schreibt nur die beiden Staedte-Felder, keine Laender', () => {
+    const plan = planMarkGroupWishlistCityVisited(group(), 'Rom', me);
+    expect(Object.keys(plan).sort()).toEqual(['visited_cities', 'wishlist_cities']);
+  });
+
+  it('laesst einen schon besuchten Pin unveraendert und entfernt nur den Wunsch', () => {
+    const existing = { ...rom, lived: false, addedBy: anna };
+    const plan = planMarkGroupWishlistCityVisited(group({ visited_cities: [existing] }), 'Rom', me);
+    expect(plan.visited_cities).toEqual([existing]);
+    expect(plan.wishlist_cities.map(c => c.name)).toEqual(['Oslo']);
+  });
+
+  it('liefert null, wenn die Stadt nicht (mehr) auf der Wunschliste steht', () => {
+    expect(planMarkGroupWishlistCityVisited(group(), 'Paris', me)).toBeNull();
+    expect(planMarkGroupWishlistCityVisited({}, 'Rom', me)).toBeNull();
   });
 });
