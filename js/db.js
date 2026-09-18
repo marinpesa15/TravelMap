@@ -1,8 +1,9 @@
 import {
-  doc, getDoc, setDoc, updateDoc, onSnapshot,
+  doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction,
   arrayUnion, arrayRemove, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js?v=1';
+import { planMarkWishlistCityVisited } from './city-logic.js?v=1';
 
 function userRef(uid) {
   return doc(db, 'users', uid);
@@ -109,7 +110,7 @@ export async function removeCountry(uid, isoCode) {
   });
 }
 
-/** cityData: { name, lat, lng, country, lived, color } */
+/** cityData: { name, lat, lng, country, lived } */
 export async function addVisitedCity(uid, cityData) {
   await ensureDoc(uid);
   await updateDoc(userRef(uid), {
@@ -135,6 +136,23 @@ export async function removeWishlistCity(uid, cityName) {
   const data = await loadUserData(uid);
   const updated = data.wishlist_cities.filter(c => c.name !== cityName);
   await updateDoc(userRef(uid), { wishlist_cities: updated });
+}
+
+/**
+ * Verschiebt eine Stadt von wishlist_cities nach visited_cities.
+ * Lesen und Schreiben laufen in einer Transaktion, alle Felder gehen in
+ * einem einzigen Update raus. So steht die Stadt zu keinem Zeitpunkt in
+ * keiner oder in beiden Listen, und parallele Aenderungen (anderes Geraet)
+ * werden nicht ueberschrieben.
+ */
+export async function markWishlistCityVisited(uid, cityName) {
+  const ref = userRef(uid);
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const plan = planMarkWishlistCityVisited(snap.data(), cityName);
+    if (plan) tx.update(ref, plan);
+  });
 }
 
 // ===== Group City Data =====
