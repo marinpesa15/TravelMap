@@ -1,6 +1,6 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
 import { searchCountries } from './countries.js?v=21';
-import { t, getLang } from './i18n.js?v=3';
+import { t, getLang } from './i18n.js?v=4';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn

@@ -3,7 +3,10 @@ import {
   arrayUnion, arrayRemove, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from './config.js?v=1';
-import { planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited } from './city-logic.js?v=2';
+import {
+  planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited,
+  planAddVisitedCity, planAddWishlistCity, planDedupeCities
+} from './city-logic.js?v=3';
 
 function userRef(uid) {
   return doc(db, 'users', uid);
@@ -110,11 +113,22 @@ export async function removeCountry(uid, isoCode) {
   });
 }
 
-/** cityData: { name, lat, lng, country, lived } */
+/**
+ * Fuegt eine besuchte Stadt hinzu (cityData: { name, lat, lng, country, lived }).
+ * In einer Transaktion: eine gleichnamige Wunsch-Stadt verschwindet, ein
+ * schon besuchter Eintrag bekommt den neuen lived-Wert, und das Land wird
+ * mit besucht. Legt das Dokument an, falls es noch fehlt.
+ */
 export async function addVisitedCity(uid, cityData) {
-  await ensureDoc(uid);
-  await updateDoc(userRef(uid), {
-    visited_cities: arrayUnion(cityData)
+  const ref = userRef(uid);
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (snap.exists()) {
+      tx.update(ref, planAddVisitedCity(snap.data(), cityData));
+    } else {
+      const data = EMPTY_DATA();
+      tx.set(ref, { ...data, ...planAddVisitedCity(data, cityData) });
+    }
   });
 }
 
@@ -124,11 +138,21 @@ export async function removeVisitedCity(uid, cityName) {
   await updateDoc(userRef(uid), { visited_cities: updated });
 }
 
-/** cityData: { name, lat, lng, country } */
+/**
+ * Fuegt eine Wunsch-Stadt hinzu (cityData: { name, lat, lng, country }).
+ * Eine schon besuchte Stadt bleibt unangetastet. Liefert 'added',
+ * 'unchanged' (stand schon drauf) oder 'alreadyVisited'.
+ */
 export async function addWishlistCity(uid, cityData) {
-  await ensureDoc(uid);
-  await updateDoc(userRef(uid), {
-    wishlist_cities: arrayUnion(cityData)
+  const ref = userRef(uid);
+  return runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    const data = snap.exists() ? snap.data() : EMPTY_DATA();
+    const { status, update } = planAddWishlistCity(data, cityData);
+    if (status !== 'added') return status;
+    if (snap.exists()) tx.update(ref, update);
+    else tx.set(ref, { ...data, ...update });
+    return status;
   });
 }
 
@@ -151,6 +175,21 @@ export async function markWishlistCityVisited(uid, cityName) {
     const snap = await tx.get(ref);
     if (!snap.exists()) return;
     const plan = planMarkWishlistCityVisited(snap.data(), cityName);
+    if (plan) tx.update(ref, plan);
+  });
+}
+
+/**
+ * Raeumt alte Doppel-Eintraege auf: Staedte, die in visited_cities und
+ * wishlist_cities stehen, verlieren den Wunsch-Eintrag. Schreibt nur, wenn
+ * es wirklich etwas aufzuraeumen gibt.
+ */
+export async function dedupeUserCities(uid) {
+  const ref = userRef(uid);
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const plan = planDedupeCities(snap.data());
     if (plan) tx.update(ref, plan);
   });
 }
