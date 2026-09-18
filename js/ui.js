@@ -1,6 +1,6 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
 import { searchCountries } from './countries.js?v=21';
-import { t, getLang } from './i18n.js?v=2';
+import { t, getLang } from './i18n.js?v=3';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -811,8 +811,9 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
  * @param {number}   clientY
  * @param {function} onRemove(city, type)
  * @param {function} [onChangePhoto(city, type)] — if provided, shows change-photo button
+ * @param {function} [onMarkVisited(city)] — if provided, wishlist pins get a "mark as visited" button
  */
-export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null) {
+export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null, onMarkVisited = null) {
   _cityPopupData = { city, type };
   const popup = document.getElementById('city-popup');
   document.getElementById('city-popup-name').textContent = city.name;
@@ -823,6 +824,19 @@ export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePh
   popup.style.top     = y + 'px';
   popup.style.display = 'block';
   popoverIn(popup);
+
+  const markBtn = document.getElementById('btn-mark-visited');
+  if (onMarkVisited && type === 'wishlist') {
+    markBtn.style.display = 'block';
+    markBtn.onclick = () => {
+      const snapshot = _cityPopupData; // save before hideCityPopup nulls _cityPopupData
+      hideCityPopup();
+      if (snapshot) onMarkVisited(snapshot.city);
+    };
+  } else {
+    markBtn.style.display = 'none';
+    markBtn.onclick = null;
+  }
 
   document.getElementById('btn-remove-city').onclick = () => {
     if (_cityPopupData) onRemove(_cityPopupData.city, _cityPopupData.type);

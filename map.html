@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-v4.png">
   <link rel="manifest" href="manifest.webmanifest?v=6">
   <meta name="theme-color" content="#0b0d19">
-  <link rel="stylesheet" href="css/style.css?v=35">
+  <link rel="stylesheet" href="css/style.css?v=36">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script defer src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 </head>
@@ -265,6 +265,7 @@
   <div id="city-popup">
     <button id="city-popup-close">✕</button>
     <p id="city-popup-name">München</p>
+    <button class="btn-mark-visited" id="btn-mark-visited" data-i18n="popup.markVisited">✓ Mark as visited</button>
     <button class="btn-remove-city" id="btn-remove-city" data-i18n="tooltip.remove">🗑️ Remove</button>
   </div>
 
@@ -389,6 +390,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=39"></script>
+  <script type="module" src="js/app.js?v=40"></script>
 </body>
 </html>

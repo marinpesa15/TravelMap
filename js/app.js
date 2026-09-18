@@ -5,9 +5,10 @@ import {
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
+  markWishlistCityVisited,
   acceptConsent
-} from './db.js?v=21';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=5';
+} from './db.js?v=22';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=6';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
 import {
@@ -25,12 +26,12 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=31';
+} from './ui.js?v=32';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=7';
-import { t, getLang, applyTranslations } from './i18n.js?v=2';
+import { setupSettings } from './settings.js?v=8';
+import { t, getLang, applyTranslations } from './i18n.js?v=3';
 import { staggerIn } from './anim.js?v=1';
-import { startUpdateCheck } from './version.js?v=4';
+import { startUpdateCheck } from './version.js?v=5';
 
 let _uid            = null;
 let _userData       = null;
@@ -375,7 +376,18 @@ function _onCityRemoveRequest(city, type, clientX, clientY) {
     showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto);
     return;
   }
-  showCityPopup(city, type, clientX, clientY, _onRemoveCity);
+  showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited);
+}
+
+async function _onMarkCityVisited(city) {
+  try {
+    animateNextAdd(city.name);
+    await markWishlistCityVisited(_uid, city.name);
+    showToast(t('toast.markedVisited', { name: city.name }));
+    // Map + stats update via subscribeUserData listener automatically
+  } catch {
+    showToast(t('toast.markVisitedFailed'));
+  }
 }
 
 function _onChangeGroupCityPhoto(city, type) {

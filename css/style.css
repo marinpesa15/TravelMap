@@ -506,6 +506,11 @@ body {
   border: none; border-radius: 5px;
   color: #f87171; font-size: 0.77rem; font-weight: 600; cursor: pointer; font-family: inherit;
 }
+.btn-mark-visited {
+  display: none; width: 100%; padding: 6px; margin-bottom: 5px;
+  background: rgba(99,102,241,0.1); border: none; border-radius: 5px;
+  color: #818cf8; font-size: 0.77rem; font-weight: 600; cursor: pointer; font-family: inherit;
+}
 .btn-change-photo {
   width: 100%; padding: 6px; margin-top: 5px;
   background: rgba(99,102,241,0.1); border: none; border-radius: 5px;

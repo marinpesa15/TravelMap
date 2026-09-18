@@ -52,6 +52,7 @@ const translations = {
     'confirm.default': 'Are you sure?',
     'tooltip.remove': '🗑️ Remove',
     'popup.photo': '📷 Photo',
+    'popup.markVisited': '✓ Mark as visited',
     // Group photo dialog
     'photo.title': 'Add photo for {city}',
     'photo.choose': 'Choose photo',
@@ -99,6 +100,8 @@ const translations = {
     'toast.photoFailed': 'Failed to update photo.',
     'toast.removed': '{name} removed',
     'toast.removeFailed': 'Failed to remove location',
+    'toast.markedVisited': '{name} marked as visited ✓',
+    'toast.markVisitedFailed': 'Failed to mark as visited',
     'toast.friendMapFailed': "Could not load friend's map.",
     'toast.friendRemoved': 'Friend removed.',
     'toast.friendRemoveFailed': 'Failed to remove friend.',
@@ -205,6 +208,7 @@ const translations = {
     'confirm.default': 'Bist du sicher?',
     'tooltip.remove': '🗑️ Entfernen',
     'popup.photo': '📷 Foto',
+    'popup.markVisited': '✓ Als besucht markieren',
     // Group photo dialog
     'photo.title': 'Foto für {city} hinzufügen',
     'photo.choose': 'Foto auswählen',
@@ -252,6 +256,8 @@ const translations = {
     'toast.photoFailed': 'Foto konnte nicht aktualisiert werden.',
     'toast.removed': '{name} entfernt',
     'toast.removeFailed': 'Ort konnte nicht entfernt werden',
+    'toast.markedVisited': '{name} als besucht markiert ✓',
+    'toast.markVisitedFailed': 'Ort konnte nicht als besucht markiert werden',
     'toast.friendMapFailed': 'Karte konnte nicht geladen werden.',
     'toast.friendRemoved': 'Freund entfernt.',
     'toast.friendRemoveFailed': 'Freund konnte nicht entfernt werden.',
