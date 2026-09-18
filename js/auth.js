@@ -4,8 +4,8 @@ import {
   reauthenticateWithPopup,
   signOut,
   onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { auth } from './config.js?v=1';
+} from '../vendor/firebase/10.12.0/firebase-auth.js';
+import { auth } from './config.js?v=2';
 
 const provider = new GoogleAuthProvider();
 

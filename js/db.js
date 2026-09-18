@@ -1,8 +1,8 @@
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction,
   arrayUnion, arrayRemove, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { db } from './config.js?v=1';
+} from '../vendor/firebase/10.12.0/firebase-firestore.js';
+import { db } from './config.js?v=2';
 import {
   planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited,
   planAddVisitedCity, planAddWishlistCity, planDedupeCities

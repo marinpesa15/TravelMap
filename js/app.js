@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=20';
+import { onAuthChange, signOutUser } from './auth.js?v=21';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -7,18 +7,18 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=24';
+} from './db.js?v=25';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=7';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=8';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=20';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=21';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
 } from './countries.js?v=21';
 import { initMap } from './map.js?v=18';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=23';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=24';
 import {
   updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
@@ -27,11 +27,11 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=33';
+} from './ui.js?v=34';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=9';
+import { setupSettings } from './settings.js?v=10';
 import { t, getLang, applyTranslations } from './i18n.js?v=4';
-import { staggerIn } from './anim.js?v=1';
+import { staggerIn } from './anim.js?v=2';
 import { startUpdateCheck } from './version.js?v=6';
 
 let _uid            = null;
