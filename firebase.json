@@ -5,6 +5,7 @@
       "firebase.json",
       ".firebaserc",
       "**/.*",
+      "**/.*/**",
       "README.md",
       "docs/**",
       "app-logo.jpeg",
@@ -13,7 +14,14 @@
       "package.json",
       "package-lock.json",
       "vitest.config.js",
-      "vitest.rules.config.js"
+      "vitest.rules.config.js",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "**/*.log",
+      "scripts/**",
+      "dist/**",
+      "ios/**",
+      "capacitor.config.json"
     ],
     "rewrites": [],
     "headers": [
