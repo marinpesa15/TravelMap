@@ -5,9 +5,9 @@ import {
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
-  markWishlistCityVisited,
+  markWishlistCityVisited, markGroupWishlistCityVisited,
   acceptConsent
-} from './db.js?v=22';
+} from './db.js?v=23';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=6';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=19';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=20';
@@ -373,7 +373,7 @@ async function _onAddCity(cityData, type, lived) {
 
 function _onCityRemoveRequest(city, type, clientX, clientY) {
   if (_viewMode === 'group' && _currentGroupId) {
-    showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto);
+    showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto, _onMarkGroupCityVisited);
     return;
   }
   showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited);
@@ -388,6 +388,25 @@ async function _onMarkCityVisited(city) {
   } catch {
     showToast(t('toast.markVisitedFailed'));
   }
+}
+
+// Wie ein normales Hinzufuegen als besucht: Fotodialog, und der Pin gehoert
+// danach dem Mitglied, das umwandelt.
+function _onMarkGroupCityVisited(city) {
+  const groupId      = _currentGroupId;
+  const defaultPhoto = _currentUser?.photoURL    || '';
+  const displayName  = _currentUser?.displayName || _userData?.display_name || '';
+  showGroupPhotoDialog(city.name, defaultPhoto, async (chosenPhoto) => {
+    try {
+      animateNextAdd(city.name);
+      await markGroupWishlistCityVisited(groupId, city.name,
+        { uid: _uid, photoURL: chosenPhoto, displayName });
+      showToast(t('toast.markedVisited', { name: city.name }));
+      // Map updates via subscribeGroupData listener automatically
+    } catch {
+      showToast(t('toast.markVisitedFailed'));
+    }
+  });
 }
 
 function _onChangeGroupCityPhoto(city, type) {
