@@ -1,4 +1,8 @@
-import { animate, stagger } from 'https://cdn.jsdelivr.net/npm/motion@12/+esm';
+// Motion's UMD bundle, vendored. The +esm build on jsDelivr is only a stub
+// that re-imports framer-motion/motion-dom from the CDN, so it can't be
+// self-hosted. Imported for its side effect: the UMD sets globalThis.Motion.
+import '../vendor/motion/12.43.0/motion.js';
+const { animate, stagger } = globalThis.Motion;
 
 // Central animation helpers (Motion / motion.dev).
 // Everything animates transform + opacity only and respects

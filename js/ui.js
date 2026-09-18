@@ -4,7 +4,7 @@ import { t, getLang } from './i18n.js?v=4';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
-} from './anim.js?v=1';
+} from './anim.js?v=2';
 
 // Escapes user-controlled strings before interpolation into innerHTML.
 // Friend names, group names and city names come from Firestore and can be

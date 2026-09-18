@@ -6,14 +6,14 @@ import { fileURLToPath } from 'node:url';
 // `npm run test:rules` startet ihn via emulators:exec selbst.
 //
 // Damit auch js/db.js selbst gegen den Emulator laufen kann, zeigt das
-// Firestore-CDN-Modul hier auf das npm-Paket (statt auf einen leeren Stub)
+// Firestore-Vendor-Modul hier auf das npm-Paket (statt auf einen leeren Stub)
 // und config.js auf einen Stub, dem der Test die Emulator-Instanz reicht.
 const stub = name => fileURLToPath(new URL(`./tests/stubs/${name}`, import.meta.url));
 
 export default defineConfig({
   resolve: {
     alias: [
-      { find: /^https:\/\/www\.gstatic\.com\/firebasejs\/.+\/firebase-firestore\.js$/, replacement: 'firebase/firestore' },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-firestore\.js$/, replacement: 'firebase/firestore' },
       { find: /^\.\/config\.js(\?v=\d+)?$/, replacement: stub('config-emulator.js') }
     ]
   },

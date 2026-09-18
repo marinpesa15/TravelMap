@@ -1,4 +1,4 @@
-import { dropIn } from './anim.js?v=1';
+import { dropIn } from './anim.js?v=2';
 
 const _activeMarkers = [];
 
