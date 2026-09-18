@@ -1,5 +1,5 @@
-import { t } from './i18n.js?v=2';
-import { showToast } from './ui.js?v=31';
+import { t } from './i18n.js?v=3';
+import { showToast } from './ui.js?v=32';
 import { openOverlay, closeOverlay } from './anim.js?v=1';
 
 // Bump this when the privacy policy changes materially —
