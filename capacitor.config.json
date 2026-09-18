@@ -1,0 +1,8 @@
+{
+  "appId": "com.marinpesa.travelmap",
+  "appName": "TravelMap",
+  "webDir": "dist",
+  "ios": {
+    "backgroundColor": "#0b0d19"
+  }
+}
