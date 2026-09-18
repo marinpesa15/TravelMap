@@ -8,3 +8,6 @@ js/constants.js
 node_modules/
 .firebase/hosting..cache
 firestore-debug.log
+
+# Firestore emulator logs
+*-debug.log
