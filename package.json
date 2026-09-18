@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
+    "ios:sync": "npm run build:web && cap sync ios",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:rules": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" npx -y firebase-tools emulators:exec --only firestore --project travelmap-f4e3a \"vitest run --config vitest.rules.config.js\""
@@ -12,5 +13,10 @@
     "@firebase/rules-unit-testing": "^3.0.4",
     "firebase": "^10.14.1",
     "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2"
   }
 }
