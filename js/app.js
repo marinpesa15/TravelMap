@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=21';
+import { onAuthChange, signOutUser } from './auth.js?v=22';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=25';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=8';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=9';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=20';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=21';
 import {
@@ -27,12 +27,12 @@ import {
   showViewBanner, hideViewBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=34';
+} from './ui.js?v=35';
 import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=10';
-import { t, getLang, applyTranslations } from './i18n.js?v=4';
+import { setupSettings } from './settings.js?v=11';
+import { t, getLang, applyTranslations } from './i18n.js?v=5';
 import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=6';
+import { startUpdateCheck } from './version.js?v=7';
 
 let _uid            = null;
 let _userData       = null;

@@ -1,4 +1,4 @@
-import { getLang } from './i18n.js?v=4';
+import { getLang } from './i18n.js?v=5';
 
 // Single source of truth for the app version, shown in the settings modal.
 // Bump together with version.json on every release — running clients compare

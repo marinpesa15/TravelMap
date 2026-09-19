@@ -1,9 +1,9 @@
-import { t, getLang, setLang } from './i18n.js?v=4';
+import { t, getLang, setLang } from './i18n.js?v=5';
 import { getTheme, setTheme } from './theme.js?v=19';
-import { signOutUser } from './auth.js?v=21';
-import { APP_VERSION } from './version.js?v=6';
+import { signOutUser } from './auth.js?v=22';
+import { APP_VERSION } from './version.js?v=7';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { collectDeletionSummary, deleteAccount } from './account.js?v=3';
+import { collectDeletionSummary, deleteAccount } from './account.js?v=4';
 import { auth } from './config.js?v=2';
 
 /** Wires the gear button, settings modal, theme/language switches,

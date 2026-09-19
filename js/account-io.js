@@ -6,7 +6,7 @@ import {
   writeBatch, query, where
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { db, auth } from './config.js?v=2';
-import { reauthenticate } from './auth.js?v=21';
+import { reauthenticate, revokeAppleSignIn } from './auth.js?v=22';
 
 // Firestore erlaubt hoechstens 500 Operationen pro Batch.
 const BATCH_LIMIT = 500;
@@ -80,6 +80,7 @@ export const firestoreIo = {
   async deleteAuthUser() {
     const user = auth.currentUser;
     if (!user) throw new Error('not-signed-in');
+    await revokeAppleSignIn();
     await user.delete();
   }
 };

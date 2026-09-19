@@ -125,6 +125,7 @@ body {
   border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s;
 }
 .btn-google:hover { background: #f1f5f9; }
+.btn-apple { margin-top: 10px; }
 .auth-error { margin-top: 12px; font-size: 0.8rem; color: #f87171; min-height: 20px; }
 .auth-loading {
   width: 24px; height: 24px; margin: 14px auto;
