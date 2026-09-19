@@ -14,3 +14,6 @@ firestore-debug.log
 
 # Staged web build for Capacitor (npm run build:web)
 dist/
+
+# Firebase iOS config, like js/config.js not in git (backup next to TravelMap-config.backup.js)
+ios/App/App/GoogleService-Info.plist

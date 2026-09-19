@@ -157,6 +157,7 @@ const translations = {
     // Login page
     'auth.tagline': 'Track your travels on the world map',
     'auth.signin': 'Sign in with Google',
+    'auth.signinApple': 'Sign in with Apple',
     'auth.error': 'Sign in failed. Please try again.',
     'auth.privacyNotice': 'By signing in you accept our',
     'auth.privacyLink': 'Privacy Policy'
@@ -314,6 +315,7 @@ const translations = {
     // Login page
     'auth.tagline': 'Verfolge deine Reisen auf der Weltkarte',
     'auth.signin': 'Mit Google anmelden',
+    'auth.signinApple': 'Mit Apple anmelden',
     'auth.error': 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
     'auth.privacyNotice': 'Mit der Anmeldung akzeptierst du unsere',
     'auth.privacyLink': 'Datenschutzerklärung'
