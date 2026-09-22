@@ -15,6 +15,11 @@ firestore-debug.log
 # Staged web build for Capacitor (npm run build:web)
 dist/
 
-# Firebase iOS config, like js/config.js not in git (backup next to TravelMap-config.backup.js)
+# Firebase iOS config, wie js/config.js nicht in git (Kopie in .local/)
 ios/App/App/GoogleService-Info.plist
 .cache/
+
+# Kopien der gitignorten Geheimnisse (config.js, GoogleService-Info.plist).
+# Liegen bewusst im Projekt, aber weder in git noch auf dem Hosting: der
+# Punkt-Ordner faellt unter die ignore-Regel `**/.*` in firebase.json.
+.local/
