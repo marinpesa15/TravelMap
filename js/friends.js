@@ -1,7 +1,7 @@
 import {
   doc, collection, getDoc, onSnapshot, writeBatch, serverTimestamp, deleteDoc
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db } from './config.js?v=2';
+import { db } from './config.js?v=3';
 
 function _friendRef(uid, friendUid) {
   return doc(db, 'users', uid, 'friends', friendUid);

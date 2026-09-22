@@ -1161,6 +1161,21 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 
 .delete-actions button { min-width: 120px; }
 
+/* ===== Offline-Hinweis =====
+   Sitzt unter der Top-Bar und erklaert, dass die App weiterlaeuft und nur
+   die Synchronisierung wartet. Ohne Netz ist auch die Karte leer. */
+.offline-banner {
+  position: absolute; top: 68px; left: 50%; transform: translateX(-50%);
+  z-index: 26; max-width: min(92%, 420px);
+  padding: 9px 16px;
+  background: var(--bg-input); border: 1px solid var(--bd-input);
+  border-radius: 12px; backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  color: var(--tx-input); font-size: 0.78rem; line-height: 1.35;
+  text-align: center;
+}
+.offline-banner[hidden] { display: none; }
+
 /* ===== Safe Area (iOS-App) =====
    In der nativen App reicht die Webview unter Statusleiste und Home-Indikator.
    Dieser Block steht bewusst ganz am Ende: die Grunddefinitionen von
@@ -1186,6 +1201,8 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
   .mobile-search-overlay {
     padding-top: calc(20px + env(safe-area-inset-top));
   }
+
+  .offline-banner { top: calc(64px + env(safe-area-inset-top)); }
 
   /* Gleiche Hoehe und Form fuer alles in der Top-Bar. Das Banner braucht die
      Regeln hier unten, weil seine Grunddefinition weiter oben im Stylesheet

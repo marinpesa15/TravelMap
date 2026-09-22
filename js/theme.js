@@ -1,5 +1,10 @@
 // ===== Theme =====
 
+const STYLE = {
+  light: 'mapbox://styles/mapbox/light-v11',
+  dark:  'mapbox://styles/mapbox/dark-v11'
+};
+
 export function getTheme() {
   return localStorage.getItem('tm-theme') || 'dark';
 }
@@ -7,9 +12,7 @@ export function getTheme() {
 /** Applies CSS class + map style and persists the choice. */
 export function setTheme(theme, map) {
   _applyCSS(theme);
-  map?.setStyle(theme === 'light'
-    ? 'mapbox://styles/mapbox/light-v11'
-    : 'mapbox://styles/mapbox/dark-v11');
+  map?.setStyle(theme === 'light' ? STYLE.light : STYLE.dark);
   localStorage.setItem('tm-theme', theme);
 }
 
@@ -20,8 +23,16 @@ export function initTheme(map) {
   const saved = getTheme();
   _applyCSS(saved);
   if (saved === 'light') {
-    map?.setStyle('mapbox://styles/mapbox/light-v11');
+    map?.setStyle(STYLE.light);
   }
+}
+
+/**
+ * Laedt das Kartenbild der aktuellen Wahl neu. Noetig, wenn die App ohne Netz
+ * gestartet ist: Mapbox holt ein gescheitertes Style nicht von selbst nach.
+ */
+export function reloadMapStyle(map) {
+  map?.setStyle(STYLE[getTheme()] ?? STYLE.dark);
 }
 
 function _applyCSS(theme) {

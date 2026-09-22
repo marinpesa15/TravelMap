@@ -2,7 +2,9 @@ import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction,
   arrayUnion, arrayRemove, serverTimestamp
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db } from './config.js?v=2';
+import { db } from './config.js?v=3';
+import { isOnline } from './net-status.js?v=1';
+import { isOfflineError, settleWrite } from './offline-write.js?v=1';
 import {
   planMarkWishlistCityVisited, planMarkGroupWishlistCityVisited,
   planAddVisitedCity, planAddWishlistCity, planDedupeCities
@@ -19,6 +21,48 @@ function inviteRef(token) {
   return doc(db, 'invites', token);
 }
 
+// Offline bestaetigt Firestore erst beim naechsten Netz, das Versprechen
+// bleibt bis dahin offen. Der lokale Cache ist sofort aktuell, deshalb wird
+// offline nicht gewartet. Siehe js/offline-write.js.
+const write = promise => settleWrite(promise, {
+  online:  isOnline(),
+  onError: err => console.error('[TM] write failed after reconnect:', err)
+});
+
+/**
+ * Liest ein Dokument, laesst `decide` daraus einen Plan machen und schreibt ihn.
+ *
+ * Online laeuft das in einer Transaktion, damit parallele Aenderungen von
+ * einem anderen Geraet nicht ueberschrieben werden. Offline gibt es keine
+ * Transaktionen, dort wird aus dem lokalen Cache gelesen und normal
+ * geschrieben; der Schreibvorgang geht beim naechsten Netz raus.
+ *
+ * `decide(data|null)` liefert null (nichts tun) oder { update } oder { set },
+ * jeweils optional mit { status } als Rueckgabewert fuer den Aufrufer.
+ */
+async function applyToDoc(ref, decide) {
+  if (isOnline()) {
+    try {
+      return await runTransaction(db, async tx => {
+        const snap = await tx.get(ref);
+        const plan = decide(snap.exists() ? snap.data() : null);
+        if (plan?.update) tx.update(ref, plan.update);
+        if (plan?.set)    tx.set(ref, plan.set);
+        return plan?.status;
+      });
+    } catch (err) {
+      // Netz war laut Browser da, der Server antwortet aber nicht: unten
+      // lokal weitermachen statt die Aktion zu verlieren.
+      if (!isOfflineError(err)) throw err;
+    }
+  }
+  const snap = await getDoc(ref);
+  const plan = decide(snap.exists() ? snap.data() : null);
+  if (plan?.update) write(updateDoc(ref, plan.update));
+  if (plan?.set)    write(setDoc(ref, plan.set));
+  return plan?.status;
+}
+
 const EMPTY_DATA = () => ({
   visited_countries: [],
   wishlist_countries: [],
@@ -33,14 +77,14 @@ export async function loadUserData(uid) {
 
 /** Persists the privacy consent on the user doc (creates it if missing). */
 export async function acceptConsent(uid, version) {
-  await setDoc(userRef(uid), {
+  await write(setDoc(userRef(uid), {
     consent: { version, accepted_at: serverTimestamp() }
-  }, { merge: true });
+  }, { merge: true }));
 }
 
 async function ensureDoc(uid) {
   const snap = await getDoc(userRef(uid));
-  if (!snap.exists()) await setDoc(userRef(uid), EMPTY_DATA());
+  if (!snap.exists()) await write(setDoc(userRef(uid), EMPTY_DATA()));
 }
 
 /**
@@ -64,20 +108,20 @@ export async function initUserProfile(uid, user) {
   if (!existing) {
     token = crypto.randomUUID();
     data  = { ...EMPTY_DATA(), ...profileFields, invite_token: token };
-    await setDoc(ref, data);
+    await write(setDoc(ref, data));
   } else if (!token) {
     token = crypto.randomUUID();
-    await updateDoc(ref, { ...profileFields, invite_token: token });
+    await write(updateDoc(ref, { ...profileFields, invite_token: token }));
     data = { ...existing, ...profileFields, invite_token: token };
   } else {
     const changed = existing.display_name !== profileFields.display_name
                  || existing.avatar_url   !== profileFields.avatar_url;
-    if (changed) await updateDoc(ref, profileFields);
+    if (changed) await write(updateDoc(ref, profileFields));
     data = { ...existing, ...profileFields };
   }
   // Keep the invite-lookup doc in sync — also lazily migrates existing users
   // whose token so far only lives in their user doc.
-  await setDoc(inviteRef(token), { uid, ...profileFields });
+  await write(setDoc(inviteRef(token), { uid, ...profileFields }));
   return data;
 }
 
@@ -92,25 +136,25 @@ export async function getUserByToken(token) {
 
 export async function addVisitedCountry(uid, isoCode) {
   await ensureDoc(uid);
-  await updateDoc(userRef(uid), {
+  await write(updateDoc(userRef(uid), {
     visited_countries: arrayUnion(isoCode),
     wishlist_countries: arrayRemove(isoCode)
-  });
+  }));
 }
 
 export async function addWishlistCountry(uid, isoCode) {
   await ensureDoc(uid);
-  await updateDoc(userRef(uid), {
+  await write(updateDoc(userRef(uid), {
     wishlist_countries: arrayUnion(isoCode),
     visited_countries: arrayRemove(isoCode)
-  });
+  }));
 }
 
 export async function removeCountry(uid, isoCode) {
-  await updateDoc(userRef(uid), {
+  await write(updateDoc(userRef(uid), {
     visited_countries: arrayRemove(isoCode),
     wishlist_countries: arrayRemove(isoCode)
-  });
+  }));
 }
 
 /**
@@ -120,22 +164,17 @@ export async function removeCountry(uid, isoCode) {
  * mit besucht. Legt das Dokument an, falls es noch fehlt.
  */
 export async function addVisitedCity(uid, cityData) {
-  const ref = userRef(uid);
-  await runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (snap.exists()) {
-      tx.update(ref, planAddVisitedCity(snap.data(), cityData));
-    } else {
-      const data = EMPTY_DATA();
-      tx.set(ref, { ...data, ...planAddVisitedCity(data, cityData) });
-    }
+  await applyToDoc(userRef(uid), data => {
+    if (data) return { update: planAddVisitedCity(data, cityData) };
+    const empty = EMPTY_DATA();
+    return { set: { ...empty, ...planAddVisitedCity(empty, cityData) } };
   });
 }
 
 export async function removeVisitedCity(uid, cityName) {
   const data = await loadUserData(uid);
   const updated = data.visited_cities.filter(c => c.name !== cityName);
-  await updateDoc(userRef(uid), { visited_cities: updated });
+  await write(updateDoc(userRef(uid), { visited_cities: updated }));
 }
 
 /**
@@ -144,22 +183,20 @@ export async function removeVisitedCity(uid, cityName) {
  * 'unchanged' (stand schon drauf) oder 'alreadyVisited'.
  */
 export async function addWishlistCity(uid, cityData) {
-  const ref = userRef(uid);
-  return runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    const data = snap.exists() ? snap.data() : EMPTY_DATA();
+  return applyToDoc(userRef(uid), existing => {
+    const data = existing ?? EMPTY_DATA();
     const { status, update } = planAddWishlistCity(data, cityData);
-    if (status !== 'added') return status;
-    if (snap.exists()) tx.update(ref, update);
-    else tx.set(ref, { ...data, ...update });
-    return status;
+    if (status !== 'added') return { status };
+    return existing
+      ? { status, update }
+      : { status, set: { ...data, ...update } };
   });
 }
 
 export async function removeWishlistCity(uid, cityName) {
   const data = await loadUserData(uid);
   const updated = data.wishlist_cities.filter(c => c.name !== cityName);
-  await updateDoc(userRef(uid), { wishlist_cities: updated });
+  await write(updateDoc(userRef(uid), { wishlist_cities: updated }));
 }
 
 /**
@@ -170,12 +207,10 @@ export async function removeWishlistCity(uid, cityName) {
  * werden nicht ueberschrieben.
  */
 export async function markWishlistCityVisited(uid, cityName) {
-  const ref = userRef(uid);
-  await runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (!snap.exists()) return;
-    const plan = planMarkWishlistCityVisited(snap.data(), cityName);
-    if (plan) tx.update(ref, plan);
+  await applyToDoc(userRef(uid), data => {
+    if (!data) return null;
+    const plan = planMarkWishlistCityVisited(data, cityName);
+    return plan ? { update: plan } : null;
   });
 }
 
@@ -185,12 +220,10 @@ export async function markWishlistCityVisited(uid, cityName) {
  * es wirklich etwas aufzuraeumen gibt.
  */
 export async function dedupeUserCities(uid) {
-  const ref = userRef(uid);
-  await runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (!snap.exists()) return;
-    const plan = planDedupeCities(snap.data());
-    if (plan) tx.update(ref, plan);
+  await applyToDoc(userRef(uid), data => {
+    if (!data) return null;
+    const plan = planDedupeCities(data);
+    return plan ? { update: plan } : null;
   });
 }
 
@@ -212,7 +245,7 @@ export async function loadGroupData(groupId) {
 
 export async function addCityToGroup(groupId, cityData, type) {
   const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
-  await updateDoc(groupRef(groupId), { [field]: arrayUnion(cityData) });
+  await write(updateDoc(groupRef(groupId), { [field]: arrayUnion(cityData) }));
 }
 
 export async function removeCityFromGroup(groupId, cityName, type) {
@@ -220,7 +253,7 @@ export async function removeCityFromGroup(groupId, cityName, type) {
   const data = snap.data() ?? {};
   const field = type === 'visited' ? 'visited_cities' : 'wishlist_cities';
   const updated = (data[field] ?? []).filter(c => c.name !== cityName);
-  await updateDoc(groupRef(groupId), { [field]: updated });
+  await write(updateDoc(groupRef(groupId), { [field]: updated }));
 }
 
 /**
@@ -230,12 +263,10 @@ export async function removeCityFromGroup(groupId, cityName, type) {
  * addedBy: { uid, photoURL, displayName } des umwandelnden Mitglieds.
  */
 export async function markGroupWishlistCityVisited(groupId, cityName, addedBy) {
-  const ref = groupRef(groupId);
-  await runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (!snap.exists()) return;
-    const plan = planMarkGroupWishlistCityVisited(snap.data(), cityName, addedBy);
-    if (plan) tx.update(ref, plan);
+  await applyToDoc(groupRef(groupId), data => {
+    if (!data) return null;
+    const plan = planMarkGroupWishlistCityVisited(data, cityName, addedBy);
+    return plan ? { update: plan } : null;
   });
 }
 
@@ -248,7 +279,7 @@ export async function updateGroupCityPhoto(groupId, cityName, type, newPhotoURL)
       ? { ...c, addedBy: { ...(c.addedBy ?? {}), photoURL: newPhotoURL } }
       : c
   );
-  await updateDoc(groupRef(groupId), { [field]: updated });
+  await write(updateDoc(groupRef(groupId), { [field]: updated }));
 }
 
 // ===== Real-time Subscriptions =====
