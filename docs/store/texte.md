@@ -1,0 +1,135 @@
+# Store-Texte
+
+Für App Store Connect, Reiter **Vertrieb**. Deutsch ist die Primärsprache,
+Englisch als zweite Lokalisierung über die Sprachauswahl oben rechts.
+
+Zeichenlimits laut Apple: Untertitel 30, Werbetext 170, Beschreibung 4.000,
+Schlüsselwörter 100, Copyright 200.
+
+---
+
+## Deutsch
+
+### Untertitel (30)
+
+```
+Deine Reisen auf der Weltkarte
+```
+
+### Werbetext (170)
+
+```
+Neu: TravelMap läuft auch ohne Netz. Orte suchen und eintragen klappt im Flugmodus, alles überträgt sich, sobald du wieder online bist.
+```
+
+### Beschreibung (4000)
+
+```
+TravelMap zeigt dir auf einen Blick, wo du überall warst.
+
+Trag die Städte ein, in denen du warst, und sieh zu, wie sich deine Weltkarte füllt. Wechsle jederzeit in die Länderansicht, dort färben sich alle Länder ein, die du schon besucht hast. Was noch fehlt, kommt auf die Wunschliste, und Orte, an denen du gelebt hast, bekommen ihre eigene Markierung.
+
+GEMEINSAM REISEN
+Verbinde dich per Einladungslink mit Freunden und schau dir ihre Karten an. In Gruppenkarten tragt ihr eure Orte zusammen ein, jeder Pin zeigt, wer ihn gesetzt hat. Zu jedem Ort in einer Gruppe könnt ihr ein Foto hinterlegen.
+
+AUCH OHNE NETZ
+TravelMap bringt eine Ortsliste mit fast 70.000 Städten mit. Du kannst also auch im Flugzeug oder im Funkloch suchen, Orte eintragen und ändern. Sobald du wieder online bist, wird alles übertragen.
+
+DEINE DATEN BLEIBEN DEINE
+Kein Tracking, keine Werbung, keine Weitergabe an Dritte. Deine Karte sehen nur du und die Freunde, die du selbst bestätigt hast. Dein Konto kannst du jederzeit in den Einstellungen löschen, mitsamt allen Daten.
+
+Anmeldung mit Google oder Apple. TravelMap ist ein privates Projekt und kostet nichts.
+```
+
+### Schlüsselwörter (100)
+
+```
+reise,reisetagebuch,weltkarte,länder,städte,urlaub,bucket,list,tracker,karte,freunde,offline,pins
+```
+
+### Support-URL
+
+```
+https://travel.marinpesa.dev/support.html
+```
+
+### Marketing-URL (optional)
+
+```
+https://travel.marinpesa.dev
+```
+
+### Copyright (200)
+
+```
+2026 Marin Pesa
+```
+
+---
+
+## English
+
+### Subtitle (30)
+
+```
+Your travels on a world map
+```
+
+### Promotional text (170)
+
+```
+New: TravelMap now works without a connection. Search and add places in airplane mode, everything syncs as soon as you are back online.
+```
+
+### Description (4000)
+
+```
+TravelMap shows you at a glance where you have been.
+
+Add the cities you have visited and watch your world map fill up. Switch to the country view at any time, where every country you have been to is coloured in. Whatever is still missing goes on your wishlist, and places you have lived in get their own marker.
+
+TRAVEL TOGETHER
+Connect with friends through an invite link and look at their maps. In group maps you add places together, and every pin shows who put it there. You can attach a photo to any place in a group.
+
+WORKS OFFLINE
+TravelMap ships with a place list of almost 70,000 cities. That means you can search, add and edit places on a plane or with no signal. Everything is sent once you are back online.
+
+YOUR DATA STAYS YOURS
+No tracking, no ads, nothing shared with third parties. Your map is visible only to you and the friends you confirmed yourself. You can delete your account and all its data at any time in the settings.
+
+Sign in with Google or Apple. TravelMap is a private project and free of charge.
+```
+
+### Keywords (100)
+
+```
+travel,journal,world,map,countries,cities,trips,bucket,list,tracker,friends,offline,pins,vacation
+```
+
+### Support URL
+
+```
+https://travel.marinpesa.dev/support.html
+```
+
+### Marketing URL (optional)
+
+```
+https://travel.marinpesa.dev
+```
+
+### Copyright (200)
+
+```
+2026 Marin Pesa
+```
+
+---
+
+## Version
+
+Das Feld **Version** auf der Vertriebsseite muss zur hochgeladenen Binärdatei
+passen. Die trägt `1.4.1` (Xcode: MARKETING_VERSION), dort steht aktuell noch
+`1.0`. Entweder das Feld auf `1.4.1` setzen oder die App vor dem Archivieren auf
+`1.0` zurückdrehen. Empfehlung: `1.4.1`, dann passen App, Website und
+`version.json` zusammen.
