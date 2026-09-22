@@ -19,6 +19,7 @@ mit „Mindestens ein Screenshot weist falsche Maße auf" ab.
 | `03-laender.png` | Länderansicht mit eingefärbten Ländern |
 | `04-gruppe.png` | Gruppenkarte mit Zurück-Banner |
 | `05-suche.png` | Ortssuche mit Treffern aus der lokalen Liste |
+| `06-splash.png` | Startbildschirm mit Logo, Name und Tagline |
 
 Erzeugt am 22.09.2026 aus einer Kopie der App mit Demo-Daten (Zweig
 `test/local-demo`), aufgenommen über Playwright mit `device_scale_factor=3`:
