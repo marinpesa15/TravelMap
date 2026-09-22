@@ -1,4 +1,4 @@
-import { t, getLang, setLang } from './i18n.js?v=6';
+import { t, getLang, setLang } from './i18n.js?v=7';
 import { getTheme, setTheme } from './theme.js?v=20';
 import { signOutUser } from './auth.js?v=23';
 import { APP_VERSION } from './version.js?v=7';

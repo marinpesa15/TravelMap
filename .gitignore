@@ -17,3 +17,4 @@ dist/
 
 # Firebase iOS config, like js/config.js not in git (backup next to TravelMap-config.backup.js)
 ios/App/App/GoogleService-Info.plist
+.cache/
