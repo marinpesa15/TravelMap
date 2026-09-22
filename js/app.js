@@ -456,6 +456,7 @@ async function _onRemoveCity(city, type) {
 
 // ===== Friend View Mode =====
 async function _switchToFriendView(friend) {
+  _closeMobileSidebar(); // auf dem Handy verdeckt die Schublade sonst die Karte
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'friend';
 
@@ -572,6 +573,7 @@ async function _onAddMembersToGroup(groupId, friendUids) {
 
 // ===== Group View Mode =====
 function _switchToGroupView(group) {
+  _closeMobileSidebar(); // auf dem Handy verdeckt die Schublade sonst die Karte
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'group';
   _currentGroupId = group.id;

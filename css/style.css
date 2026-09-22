@@ -639,7 +639,7 @@ body {
   #city-search { min-width: 0; width: 100%; }
 
   /* Top-Bar-Elemente in einheitlicher Form */
-  .btn-menu, #city-search, .user-pill, .view-banner { border-radius: 12px; }
+  .btn-menu, #city-search, .user-pill { border-radius: 12px; }
 
   /* User-Button: nur der Avatar, gleiche Kachel wie der Hamburger */
   .user-pill { padding: 4px; gap: 0; }
@@ -1186,4 +1186,13 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
   .mobile-search-overlay {
     padding-top: calc(20px + env(safe-area-inset-top));
   }
+
+  /* Gleiche Hoehe und Form fuer alles in der Top-Bar. Das Banner braucht die
+     Regeln hier unten, weil seine Grunddefinition weiter oben im Stylesheet
+     steht und den Mobile-Block sonst ueberschreibt. */
+  .btn-menu, .user-pill, .view-banner, #city-search {
+    height: 40px; box-sizing: border-box;
+  }
+  .view-banner { border-radius: 12px; }
+  .view-banner-back, .view-banner-title { font-size: 0.83rem; padding: 0 12px; }
 }
