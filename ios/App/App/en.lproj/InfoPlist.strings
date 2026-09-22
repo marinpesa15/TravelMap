@@ -1,0 +1,3 @@
+/* Shown when the photo picker for a group place offers "Take Photo". */
+"NSCameraUsageDescription" = "TravelMap needs the camera if you want to take a photo for a place on a shared group map.";
+"NSPhotoLibraryUsageDescription" = "TravelMap needs your photo library if you want to attach a picture to a place on a shared group map.";
