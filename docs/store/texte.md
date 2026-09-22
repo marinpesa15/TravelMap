@@ -133,3 +133,60 @@ passen. Die trägt `1.4.1` (Xcode: MARKETING_VERSION), dort steht aktuell noch
 `1.0`. Entweder das Feld auf `1.4.1` setzen oder die App vor dem Archivieren auf
 `1.0` zurückdrehen. Empfehlung: `1.4.1`, dann passen App, Website und
 `version.json` zusammen.
+
+---
+
+## Informationen zur App-Prüfung
+
+### Anmeldeinformationen
+
+Haken bei **„Anmeldung erforderlich" entfernen**. Die App verlangt zwar eine
+Anmeldung, aber sie bietet „Sign in with Apple" an, und die Prüfer melden sich
+damit mit ihrer eigenen Apple-ID an. Genau dafür ist der Weg gedacht. Ein
+Google-Testkonto wäre der schlechtere Weg: Google blockt Anmeldungen von
+unbekannten Geräten aus den USA regelmäßig, und dann scheitert die Prüfung an
+etwas, das wir nicht steuern können.
+
+Wichtig ist, dass der Grund in den Anmerkungen steht, sonst wirkt der fehlende
+Haken wie ein Versehen.
+
+### Kontaktinformationen
+
+```
+Vorname: Marin
+Nachname: Pesa
+E-Mail: pesamarin81@gmail.com
+Telefonnummer: (deine Nummer mit Ländervorwahl, z. B. +49 …)
+```
+
+### Anmerkungen (4.000, auf Englisch)
+
+```
+TravelMap is a private, free travel-logging app. There are no purchases, no ads and no analytics.
+
+SIGNING IN
+Sign-in is required, but no demo account is needed: the app offers Sign in with Apple, so you can sign in with your own Apple ID on the review device. Google sign-in is offered as an alternative. If you would still prefer a dedicated test account, please let me know and I will provide one.
+
+WHAT TO TRY
+1. Add a place: use the search at the top, pick a city from the list, then choose Visited, Wishlist or Lived there.
+2. Country view: open the sidebar (hamburger, top left) and switch from Cities to Countries. Visited countries are filled in on the map.
+3. Friends and groups: the sidebar has an invite link and group creation. Seeing another person's map needs a second account.
+4. Group photo: inside a group map you can attach a photo to a place. This opens the system picker, which is why the app declares camera and photo library usage.
+
+ACCOUNT DELETION (5.1.1(v))
+Sidebar, gear icon, "Delete account". It removes the account itself plus the user document, friendships, invite entries and the user's contributions to group maps. For accounts created with Sign in with Apple, the Apple token is revoked as part of the deletion.
+
+OFFLINE
+The app also runs without a connection. It ships with a place list of about 70,000 cities, so search and new entries work in airplane mode and sync once the device is back online. Only the map imagery itself needs a connection; a short notice explains that.
+
+PRIVACY
+Data is stored with Google Firebase (Authentication, Firestore). Privacy policy: https://travel.marinpesa.dev/privacy.html
+Support: https://travel.marinpesa.dev/support.html
+Contact: pesamarin81@gmail.com
+```
+
+### Veröffentlichung
+
+„Diese Version manuell veröffentlichen" ist die ruhigere Wahl: Die App geht
+dann erst live, wenn du auf den Knopf drückst, und nicht automatisch mitten in
+der Nacht nach der Freigabe.
