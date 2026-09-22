@@ -1,0 +1,3 @@
+/* Erscheint, wenn die Fotoauswahl fuer einen Gruppen-Ort "Foto aufnehmen" anbietet. */
+"NSCameraUsageDescription" = "TravelMap braucht die Kamera, wenn du ein Foto für einen Ort auf einer geteilten Gruppenkarte aufnehmen möchtest.";
+"NSPhotoLibraryUsageDescription" = "TravelMap braucht deine Mediathek, wenn du ein Foto an einen Ort auf einer geteilten Gruppenkarte hängen möchtest.";

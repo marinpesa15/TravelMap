@@ -48,6 +48,20 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
+		<!-- Fotos, die Mitglieder an Orte einer Gruppenkarte haengen. Sie werden
+		     verkleinert im Gruppendokument gespeichert. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhotosorVideos</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
 		<!-- Die eingetragenen Orte und Laender: Inhalte, die der Nutzer anlegt. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>

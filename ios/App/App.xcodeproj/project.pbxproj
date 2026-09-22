@@ -18,6 +18,7 @@
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		A1F0C0022F60000100C0FFEE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F60000100C0FFEE /* GoogleService-Info.plist */; };
 		A1F0C0052F60000100C0FFEE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1F0C0042F60000100C0FFEE /* PrivacyInfo.xcprivacy */; };
+		A1F0C0092F60000100C0FFEE /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A1F0C0082F60000100C0FFEE /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,8 @@
 		A1F0C0012F60000100C0FFEE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A1F0C0032F60000100C0FFEE /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		A1F0C0042F60000100C0FFEE /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A1F0C0062F60000100C0FFEE /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A1F0C0072F60000100C0FFEE /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +82,7 @@
 				A1F0C0012F60000100C0FFEE /* GoogleService-Info.plist */,
 				A1F0C0032F60000100C0FFEE /* App.entitlements */,
 				A1F0C0042F60000100C0FFEE /* PrivacyInfo.xcprivacy */,
+				A1F0C0082F60000100C0FFEE /* InfoPlist.strings */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
@@ -130,6 +134,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				de,
 				Base,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
@@ -158,6 +163,7 @@
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				A1F0C0022F60000100C0FFEE /* GoogleService-Info.plist in Resources */,
 				A1F0C0052F60000100C0FFEE /* PrivacyInfo.xcprivacy in Resources */,
+				A1F0C0092F60000100C0FFEE /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -190,6 +196,15 @@
 				504EC3111FED79650016851F /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		A1F0C0082F60000100C0FFEE /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A1F0C0062F60000100C0FFEE /* en */,
+				A1F0C0072F60000100C0FFEE /* de */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
