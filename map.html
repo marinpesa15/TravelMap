@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-v4.png">
   <link rel="manifest" href="manifest.webmanifest?v=6">
   <meta name="theme-color" content="#0b0d19">
-  <link rel="stylesheet" href="css/style.css?v=38">
+  <link rel="stylesheet" href="css/style.css?v=42">
   <link href="vendor/mapbox-gl/3.4.0/mapbox-gl.css" rel="stylesheet">
   <script defer src="vendor/mapbox-gl/3.4.0/mapbox-gl.js"></script>
 </head>
@@ -209,6 +209,12 @@
         </div>
         <div class="user-pill" id="user-pill">
           <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
+          <!-- Platzhalter, wenn der Anbieter kein Foto liefert (Apple) -->
+          <svg id="user-avatar-fallback" class="user-avatar user-avatar-fallback" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="9" r="3.4"/>
+            <path d="M5.5 19.2c0-3.3 2.9-5.2 6.5-5.2s6.5 1.9 6.5 5.2"/>
+          </svg>
           <span id="user-name" class="user-name">...</span>
         </div>
       </div>
@@ -390,6 +396,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=44"></script>
+  <script type="module" src="js/app.js?v=45"></script>
 </body>
 </html>

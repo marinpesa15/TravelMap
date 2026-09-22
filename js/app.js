@@ -278,11 +278,15 @@ async function _init(user) {
 function _showUserProfile(user) {
   const avatarEl = document.getElementById('user-avatar');
   const nameEl   = document.getElementById('user-name');
-  if (avatarEl && user.photoURL) {
-    avatarEl.src = user.photoURL;
-  } else if (avatarEl) {
-    avatarEl.style.display = 'none';
+  // Apple gibt kein Foto heraus. Dann tritt das neutrale Symbol an die
+  // Stelle des Bildes, damit der Button ueberall gleich gross bleibt.
+  const fallbackEl = document.getElementById('user-avatar-fallback');
+  const hasPhoto   = Boolean(user.photoURL);
+  if (avatarEl) {
+    if (hasPhoto) avatarEl.src = user.photoURL;
+    avatarEl.style.display = hasPhoto ? '' : 'none';
   }
+  if (fallbackEl) fallbackEl.style.display = hasPhoto ? 'none' : 'block';
   if (nameEl) {
     nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
   }

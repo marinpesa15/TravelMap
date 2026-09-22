@@ -311,9 +311,14 @@ body {
   display: flex; align-items: center; gap: 8px;
   padding: 5px 14px 5px 5px;
   background: var(--bg-input); border: 1px solid var(--bd-input);
-  border-radius: 14px; backdrop-filter: blur(16px);
+  border-radius: 12px; backdrop-filter: blur(16px);
 }
-.user-avatar { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; background: rgba(99,102,241,0.2); }
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 8px; object-fit: cover;
+  background: rgba(99,102,241,0.2); flex-shrink: 0; box-sizing: border-box;
+}
+/* Platzhalter statt Foto: gleiche Kachel, nur mit Symbol statt Bild */
+.user-avatar-fallback { display: none; padding: 4px; color: var(--tx-input); }
 .user-name   { font-size: 0.81rem; font-weight: 600; color: var(--tx-input); }
 
 /* ===== Legend ===== */
@@ -613,48 +618,42 @@ body {
   }
   #sidebar.open { transform: translateX(0); }
 
-  /* Drawer-Kopf unter die Statusleiste, Fuss ueber den Home-Indikator.
-     Der Kopf bleibt beim Scrollen stehen, sonst schiebt er sich in der App
-     unter die Uhr. Eigener Blur, weil --bg-sidebar durchscheinend ist. */
-  .sidebar-header {
-    position: sticky; top: 0; z-index: 1;
-    padding-top: calc(18px + env(safe-area-inset-top));
-    background: var(--bg-sidebar);
-    backdrop-filter: blur(16px);
-  }
-
-  /* Vollflaechige Suche startet ebenfalls unter der Statusleiste */
-  .mobile-search-overlay {
-    padding-top: calc(20px + env(safe-area-inset-top));
-  }
-
   /* Sidebar footer: pad above home indicator */
   .sidebar-footer {
     padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
 
   /* Show hamburger, hide on desktop */
-  .btn-menu { display: flex; top: calc(14px + env(safe-area-inset-top)); }
+  .btn-menu { display: flex; }
 
   /* Map takes full screen */
   .map-area { width: 100%; }
 
   /* Shift search bar right to avoid hamburger overlap */
-  .top-right-bar { left: 64px; right: 12px; top: calc(14px + env(safe-area-inset-top)); }
+  .top-right-bar { left: 64px; right: 12px; top: 14px; }
 
   /* Banner slots into top bar area — search is hidden when banner is active */
-  .view-banner { top: calc(14px + env(safe-area-inset-top)); left: 64px; right: 130px; max-width: none; overflow: hidden; }
+  .view-banner { top: 14px; left: 64px; right: 130px; max-width: none; overflow: hidden; }
   .view-banner-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .search-wrap { flex: 1; min-width: 0; }
   #city-search { min-width: 0; width: 100%; }
+
+  /* Top-Bar-Elemente in einheitlicher Form */
+  .btn-menu, #city-search, .user-pill, .view-banner { border-radius: 12px; }
+
+  /* User-Button: nur der Avatar, gleiche Kachel wie der Hamburger */
+  .user-pill { padding: 4px; gap: 0; }
+  .user-name { display: none; }
+  .user-avatar { width: 30px; height: 30px; }
 
   /* When banner is visible: hide hamburger + search, push user-pill right */
   .banner-active .btn-menu { display: none; }
   .banner-active .search-wrap { display: none; }
   .banner-active .top-right-bar { justify-content: flex-end; }
 
-  /* Banner can use full width when hamburger is gone */
-  .banner-active #view-banner { left: 12px; right: 150px; }
+  /* Banner can use full width when hamburger is gone. Rechts steht nur noch
+     der quadratische User-Button, deshalb bleibt mehr Platz fuer den Namen. */
+  .banner-active #view-banner { left: 12px; right: 64px; max-width: none; }
 
   /* Show search button inside banner in group mode */
   .map-area.group-active .btn-search-banner { display: flex; }
@@ -1161,3 +1160,30 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 }
 
 .delete-actions button { min-width: 120px; }
+
+/* ===== Safe Area (iOS-App) =====
+   In der nativen App reicht die Webview unter Statusleiste und Home-Indikator.
+   Dieser Block steht bewusst ganz am Ende: die Grunddefinitionen von
+   .view-banner und .mobile-search-overlay kommen spaeter im Stylesheet als der
+   Mobile-Block und wuerden dieselben Eigenschaften sonst wieder ueberschreiben.
+   Im Browser sind die Insets 0, dort aendert sich also nichts. */
+@media (max-width: 768px) {
+  .btn-menu,
+  .top-right-bar,
+  .view-banner {
+    top: calc(14px + env(safe-area-inset-top));
+  }
+
+  /* Kopf der Schublade bleibt beim Scrollen stehen, sonst wandert er unter
+     die Uhr. Eigener Blur, weil --bg-sidebar durchscheinend ist. */
+  .sidebar-header {
+    position: sticky; top: 0; z-index: 1;
+    padding-top: calc(18px + env(safe-area-inset-top));
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-search-overlay {
+    padding-top: calc(20px + env(safe-area-inset-top));
+  }
+}
