@@ -179,6 +179,9 @@ Sidebar, gear icon, "Delete account". It removes the account itself plus the use
 OFFLINE
 The app also runs without a connection. It ships with a place list of about 70,000 cities, so search and new entries work in airplane mode and sync once the device is back online. Only the map imagery itself needs a connection; a short notice explains that.
 
+USER CONTENT (1.2)
+Nothing users add is public. A map is visible only to friends both sides confirmed through an invite link, and places and photos inside a group only to its members. Users can remove a friend, leave a group, or, as the group creator, remove a member at any time, which also removes that person's entries from their view. Abuse can be reported by email; reports are handled within 24 hours. The procedure is documented at https://travel.marinpesa.dev/support.html
+
 PRIVACY
 Data is stored with Google Firebase (Authentication, Firestore). Privacy policy: https://travel.marinpesa.dev/privacy.html
 Support: https://travel.marinpesa.dev/support.html
