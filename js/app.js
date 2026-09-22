@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=22';
+import { onAuthChange, signOutUser } from './auth.js?v=23';
 import {
   loadUserData, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -7,30 +7,31 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=25';
+} from './db.js?v=26';
 import { planDedupeCities } from './city-logic.js?v=3';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=9';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=20';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=21';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
 } from './countries.js?v=21';
-import { initMap } from './map.js?v=18';
+import { initMap } from './map.js?v=19';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=24';
 import {
   updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
-  showViewBanner, hideViewBanner,
+  showViewBanner, hideViewBanner, setOfflineBanner,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=35';
-import { initTheme } from './theme.js?v=19';
-import { setupSettings } from './settings.js?v=11';
-import { t, getLang, applyTranslations } from './i18n.js?v=5';
+} from './ui.js?v=36';
+import { initTheme, reloadMapStyle } from './theme.js?v=20';
+import { isOnline, onNetChange } from './net-status.js?v=1';
+import { setupSettings } from './settings.js?v=12';
+import { t, getLang, applyTranslations } from './i18n.js?v=6';
 import { staggerIn } from './anim.js?v=2';
 import { startUpdateCheck } from './version.js?v=7';
 
@@ -175,6 +176,7 @@ async function _init(user) {
     initTheme(_map);
     setupSettings(_map);
     _initMobileSidebar();
+    _initNetStatus();
     _setupFilterNav();
     _initMapModeTabs();
 
@@ -303,6 +305,11 @@ async function _handleInviteToken(myData) {
   // Strip the token only once the outcome is final — if the session dies
   // mid-processing (mobile tab kill, reload), the link stays retryable.
   const clearToken = () => history.replaceState({}, '', window.location.pathname);
+
+  // Eine Freundschaft schreibt in beide Nutzerdokumente. Offline bliebe der
+  // Aufruf haengen, und der Start danach ebenfalls. Das Token bleibt in der
+  // URL, der naechste Start mit Netz holt es nach.
+  if (!isOnline()) { showToast(t('toast.needsNetwork')); return; }
 
   try {
     const them = await getUserByToken(token);
@@ -525,6 +532,7 @@ function _returnToOwnView() {
 
 // ===== Friend Actions =====
 async function _onDeleteFriend(friendUid) {
+  if (!isOnline()) { showToast(t('toast.needsNetwork')); return; }
   try {
     await removeFriend(_uid, friendUid);
     showToast(t('toast.friendRemoved'));
@@ -535,6 +543,7 @@ async function _onDeleteFriend(friendUid) {
 
 // ===== Group Actions =====
 async function _onCreateGroup(name, friendUids) {
+  if (!isOnline()) { showToast(t('toast.needsNetwork')); return; }
   try {
     await createGroup(name, friendUids, _uid);
     showToast(t('toast.groupCreated', { name }));
@@ -545,6 +554,7 @@ async function _onCreateGroup(name, friendUids) {
 }
 
 async function _onLeaveGroup(groupId, createdBy) {
+  if (!isOnline()) { showToast(t('toast.needsNetwork')); return; }
   try {
     await leaveGroup(groupId, _uid, createdBy);
   } catch {
@@ -553,6 +563,7 @@ async function _onLeaveGroup(groupId, createdBy) {
 }
 
 async function _onRemoveMember(groupId, memberUid) {
+  if (!isOnline()) { showToast(t('toast.needsNetwork')); return; }
   try {
     await removeMemberFromGroup(groupId, memberUid);
     showToast(t('toast.memberRemoved'));
@@ -563,6 +574,7 @@ async function _onRemoveMember(groupId, memberUid) {
 }
 
 async function _onAddMembersToGroup(groupId, friendUids) {
+  if (!isOnline()) { showToast(t('toast.needsNetwork')); return; }
   try {
     await addMembersToGroup(groupId, friendUids);
     showToast(friendUids.length === 1 ? t('toast.onePersonAdded') : t('toast.peopleAdded', { count: friendUids.length }));
@@ -708,7 +720,7 @@ function _setMapMode(mode) {
       showCountryLayers(_map);
     }).catch(err => {
       console.error('[TM] country layers failed:', err);
-      showToast(t('toast.errorLoading'));
+      showToast(isOnline() ? t('toast.errorLoading') : t('toast.offlineMap'));
     });
   }
 }
@@ -784,6 +796,19 @@ function _closeMobileSearchOverlay() {
     if (userPill) topRightBar.insertBefore(searchWrap, userPill);
   }
   overlay.classList.remove('open');
+}
+
+// ===== Netzzustand =====
+// Offline laeuft die App weiter: Firestore liest aus dem lokalen Cache und
+// sammelt Schreibvorgaenge, bis wieder Netz da ist. Nur die Karte bleibt
+// leer, weil Mapbox seine Kacheln vom Server holt.
+function _initNetStatus() {
+  setOfflineBanner(!isOnline());
+  onNetChange(online => {
+    setOfflineBanner(!online);
+    // Mapbox versucht ein gescheitertes Style nicht von selbst erneut.
+    if (online && _map && !_map.isStyleLoaded()) reloadMapStyle(_map);
+  });
 }
 
 // ===== Mobile Sidebar =====

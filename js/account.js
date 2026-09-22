@@ -5,7 +5,7 @@
 // Nutzer kann es erneut anstossen. Andersherum waere es fatal, denn ohne
 // Konto fehlt die Berechtigung, die eigenen Reste zu loeschen.
 import { planGroupChange } from './account-logic.js?v=1';
-import { firestoreIo } from './account-io.js?v=4';
+import { firestoreIo } from './account-io.js?v=5';
 
 /** Zahlen fuer die Warnung, bevor irgendetwas veraendert wird. */
 export async function collectDeletionSummary(uid, { io = firestoreIo } = {}) {

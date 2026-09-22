@@ -4,7 +4,11 @@
 
 import { initializeApp } from '../vendor/firebase/10.12.0/firebase-app.js';
 import { getAuth, initializeAuth, indexedDBLocalPersistence } from '../vendor/firebase/10.12.0/firebase-auth.js';
-import { getFirestore } from '../vendor/firebase/10.12.0/firebase-firestore.js';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { isNative } from './platform.js?v=1';
 
 const firebaseConfig = {
@@ -24,4 +28,10 @@ const app = initializeApp(firebaseConfig);
 export const auth = isNative()
   ? initializeAuth(app, { persistence: indexedDBLocalPersistence })
   : getAuth(app);
-export const db = getFirestore(app);
+// IndexedDB statt reinem Speicher-Cache: ohne das haben angemeldete Nutzer
+// nach einem Neustart offline gar keine Daten. Firestore beantwortet Lesen
+// dann aus dem Cache und schiebt Schreibvorgaenge nach, sobald Netz da ist.
+// Der Multi-Tab-Manager erlaubt mehrere offene Tabs auf demselben Cache.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});

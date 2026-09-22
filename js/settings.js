@@ -1,10 +1,11 @@
-import { t, getLang, setLang } from './i18n.js?v=5';
-import { getTheme, setTheme } from './theme.js?v=19';
-import { signOutUser } from './auth.js?v=22';
+import { t, getLang, setLang } from './i18n.js?v=6';
+import { getTheme, setTheme } from './theme.js?v=20';
+import { signOutUser } from './auth.js?v=23';
 import { APP_VERSION } from './version.js?v=7';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { collectDeletionSummary, deleteAccount } from './account.js?v=4';
-import { auth } from './config.js?v=2';
+import { collectDeletionSummary, deleteAccount } from './account.js?v=5';
+import { auth } from './config.js?v=3';
+import { isOnline } from './net-status.js?v=1';
 
 /** Wires the gear button, settings modal, theme/language switches,
  *  sign-out and version display. Call once after map init. */
@@ -66,7 +67,7 @@ export function setupSettings(map) {
   delConfirm?.addEventListener('click', async () => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-    if (!navigator.onLine) {
+    if (!isOnline()) {
       delStatus.hidden = false;
       delStatus.textContent = t('delete.offline');
       return;
