@@ -8,7 +8,7 @@
 import {
   buildCityIndex, buildCountryIndex, searchCityRows, searchCountryRows
 } from './place-search.js?v=1';
-import { getLang } from './i18n.js?v=7';
+import { getLang } from './i18n.js?v=8';
 
 const DATA_URL = '../data/places.json?v=1';
 
