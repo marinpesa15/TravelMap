@@ -1,4 +1,4 @@
-import { MAPBOX_TOKEN } from './constants.js?v=12';
+import { searchLocalCountries } from './places.js?v=1';
 
 const LAYER_VISITED  = 'tm-visited';
 const LAYER_WISHLIST = 'tm-wishlist';
@@ -134,18 +134,12 @@ export function setupCountryMapClick(map, onCountryClick) {
 
 // ── Country search ────────────────────────────────────────────────────────────
 
-let _countryAbort = null;
-
+/**
+ * Laeuft komplett ueber data/places.json. Die Laenderliste ist vollstaendig
+ * (alle ISO-Laender) und damit auch ohne Netz verwendbar; Mapbox brauchte es
+ * hier nur, solange es keinen lokalen Datensatz gab.
+ */
 export async function searchCountries(query) {
-  if (_countryAbort) _countryAbort.abort();
-  _countryAbort = new AbortController();
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=country&limit=8&access_token=${MAPBOX_TOKEN}`;
-  const res  = await fetch(url, { signal: _countryAbort.signal });
-  const data = await res.json();
-  return (data.features ?? [])
-    .map(f => ({
-      name:    f.text,
-      isoCode: (f.properties?.short_code || '').toUpperCase()
-    }))
-    .filter(c => c.isoCode.length === 2);
+  return searchLocalCountries(query, 8);
 }
+

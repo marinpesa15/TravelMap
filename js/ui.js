@@ -1,6 +1,9 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
-import { searchCountries } from './countries.js?v=21';
-import { t, getLang } from './i18n.js?v=6';
+import { searchCountries } from './countries.js?v=22';
+import { t, getLang } from './i18n.js?v=7';
+import { searchLocalCities } from './places.js?v=1';
+import { normalize } from './place-search.js?v=1';
+import { isOnline } from './net-status.js?v=1';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -230,40 +233,86 @@ async function _searchCities(query, resultsEl) {
   // Cancel any in-flight request before starting a new one
   if (_searchAbort) _searchAbort.abort();
   _searchAbort = new AbortController();
+  const signal = _searchAbort.signal;
 
   resultsEl.innerHTML = `<div class="search-result-item">${t('search.searching')}</div>`;
+
+  // Zuerst der lokale Datensatz: sofort da und funktioniert ohne Netz.
+  let local = [];
+  try {
+    local = await searchLocalCities(query, 5);
+  } catch (err) {
+    console.error('[TM] local place index failed:', err);
+  }
+  if (signal.aborted) return;
+  if (local.length) _renderCityResults(resultsEl, local);
+
+  if (!isOnline()) {
+    if (!local.length) resultsEl.innerHTML = `<div class="search-result-item">${t('search.noResults')}</div>`;
+    return;
+  }
+
+  // Mit Netz kommt Mapbox dazu: kleine Orte und Schreibweisen, die der
+  // lokale Datensatz nicht kennt. Die lokalen Treffer bleiben vorne.
   try {
     const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=place&limit=5&access_token=${MAPBOX_TOKEN}`;
-    const res  = await fetch(url, { signal: _searchAbort.signal });
+    const res  = await fetch(url, { signal });
     const data = await res.json();
-
-    if (!data.features?.length) {
+    const remote = (data.features ?? [])
+      .filter(f => f.center)
+      .map(f => ({
+        name:    f.text,
+        lat:     f.center[1],
+        lng:     f.center[0],
+        country: f.context?.find(c => c.id.startsWith('country.'))?.short_code?.toUpperCase() || 'XX',
+        label:   f.place_name
+      }));
+    const merged = _mergeCityResults(local, remote, 6);
+    if (signal.aborted) return;
+    if (!merged.length) {
       resultsEl.innerHTML = `<div class="search-result-item">${t('search.noResults')}</div>`;
       return;
     }
-
-    resultsEl.innerHTML = '';
-    data.features.forEach(f => {
-      if (!f.center) return;
-      const item = document.createElement('div');
-      item.className   = 'search-result-item';
-      item.textContent = f.place_name;
-      item.addEventListener('click', () => {
-        _selectedCity = {
-          name:    f.text,
-          lat:     f.center[1],
-          lng:     f.center[0],
-          country: f.context?.find(c => c.id.startsWith('country.'))?.short_code?.toUpperCase() || 'XX'
-        };
-        _openDialog(f.text);
-        resultsEl.innerHTML = '';
-      });
-      resultsEl.appendChild(item);
-    });
+    _renderCityResults(resultsEl, merged);
   } catch (e) {
     if (e.name === 'AbortError') return;
-    resultsEl.innerHTML = `<div class="search-result-item">${t('search.error')}</div>`;
+    // Netz laut Browser da, Anfrage trotzdem gescheitert: lokale Treffer
+    // stehen bereits, nur wenn es keine gibt, ist es ein echter Fehler.
+    if (!local.length) resultsEl.innerHTML = `<div class="search-result-item">${t('search.error')}</div>`;
   }
+}
+
+/** Gleiche Orte aus beiden Quellen nur einmal, lokale Treffer zuerst. */
+function _mergeCityResults(local, remote, limit) {
+  const seen = new Set(local.map(c => `${normalize(c.name)}|${c.country}`));
+  const merged = [...local];
+  for (const city of remote) {
+    const key = `${normalize(city.name)}|${city.country}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(city);
+  }
+  return merged.slice(0, limit);
+}
+
+function _renderCityResults(resultsEl, cities) {
+  resultsEl.innerHTML = '';
+  cities.forEach(city => {
+    const item = document.createElement('div');
+    item.className   = 'search-result-item';
+    item.textContent = city.label ?? city.name;
+    item.addEventListener('click', () => {
+      _selectedCity = {
+        name:    city.name,
+        lat:     city.lat,
+        lng:     city.lng,
+        country: city.country
+      };
+      _openDialog(city.name);
+      resultsEl.innerHTML = '';
+    });
+    resultsEl.appendChild(item);
+  });
 }
 
 function _openDialog(cityName) {
@@ -309,10 +358,38 @@ function _closeConfirm() {
 
 // ===== Toast =====
 
-/** Zeigt oder versteckt den Offline-Hinweis unter der Top-Bar. */
-export function setOfflineBanner(visible) {
-  const banner = document.getElementById('offline-banner');
-  if (banner) banner.hidden = !visible;
+/**
+ * Einmaliger Hinweis, dass die App gerade ohne Netz laeuft. Bewusst ein
+ * Popup zum Wegklicken und kein Dauerbanner: das stand vorher im Weg,
+ * besonders bei der Suche.
+ */
+export function showOfflineNotice() {
+  const dialog = document.getElementById('offline-dialog');
+  if (!dialog || dialog.classList.contains('open')) return;
+  openOverlay(dialog);
+}
+
+export function setupOfflineNotice() {
+  const dialog = document.getElementById('offline-dialog');
+  const close  = () => closeOverlay(dialog);
+  document.getElementById('offline-ok')?.addEventListener('click', close);
+  dialog?.addEventListener('click', e => { if (e.target === dialog) close(); });
+}
+
+let _onlineFlashTimer = null;
+
+/** Kurze gruene Rueckmeldung auf der Karte, wenn das Netz zurueck ist. */
+export function showOnlineFlash() {
+  const flash = document.getElementById('online-flash');
+  if (!flash) return;
+  flash.hidden = false;
+  // Zwei Frames warten, sonst ueberspringt der Browser den Uebergang.
+  requestAnimationFrame(() => requestAnimationFrame(() => flash.classList.add('show')));
+  clearTimeout(_onlineFlashTimer);
+  _onlineFlashTimer = setTimeout(() => {
+    flash.classList.remove('show');
+    setTimeout(() => { flash.hidden = true; }, 350);
+  }, 2600);
 }
 
 let _toastTimer = null;

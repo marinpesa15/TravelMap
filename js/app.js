@@ -16,7 +16,7 @@ import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=21';
+} from './countries.js?v=22';
 import { initMap } from './map.js?v=19';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=24';
 import {
@@ -24,14 +24,14 @@ import {
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
-  showViewBanner, hideViewBanner, setOfflineBanner,
+  showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=36';
+} from './ui.js?v=37';
 import { initTheme, reloadMapStyle } from './theme.js?v=20';
 import { isOnline, onNetChange } from './net-status.js?v=1';
 import { setupSettings } from './settings.js?v=12';
-import { t, getLang, applyTranslations } from './i18n.js?v=6';
+import { t, getLang, applyTranslations } from './i18n.js?v=7';
 import { staggerIn } from './anim.js?v=2';
 import { startUpdateCheck } from './version.js?v=7';
 
@@ -803,11 +803,13 @@ function _closeMobileSearchOverlay() {
 // sammelt Schreibvorgaenge, bis wieder Netz da ist. Nur die Karte bleibt
 // leer, weil Mapbox seine Kacheln vom Server holt.
 function _initNetStatus() {
-  setOfflineBanner(!isOnline());
+  setupOfflineNotice();
+  if (!isOnline()) showOfflineNotice();
   onNetChange(online => {
-    setOfflineBanner(!online);
+    if (!online) { showOfflineNotice(); return; }
+    showOnlineFlash();
     // Mapbox versucht ein gescheitertes Style nicht von selbst erneut.
-    if (online && _map && !_map.isStyleLoaded()) reloadMapStyle(_map);
+    if (_map && !_map.isStyleLoaded()) reloadMapStyle(_map);
   });
 }
 

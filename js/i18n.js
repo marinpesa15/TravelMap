@@ -156,7 +156,9 @@ const translations = {
     'consent.decline': 'Decline',
     // Login page
     'auth.tagline': 'Track your travels on the world map',
-    'offline.banner': 'No connection. You can keep using the app, your changes sync once you are back online.',
+    'offline.message': 'No connection. You can keep using the app: search, add and edit places. Everything syncs once you are back online.',
+    'offline.ok': 'Got it',
+    'online.flash': 'Back online, syncing your changes',
     'toast.needsNetwork': 'This needs a connection. Please try again once you are back online.',
     'toast.offlineMap': 'The map needs a connection. Your places stay in the list.',
     'auth.signin': 'Sign in with Google',
@@ -317,7 +319,9 @@ const translations = {
     'consent.decline': 'Ablehnen',
     // Login page
     'auth.tagline': 'Verfolge deine Reisen auf der Weltkarte',
-    'offline.banner': 'Kein Netz. Du kannst alles weiter nutzen, deine Änderungen werden synchronisiert, sobald du wieder online bist.',
+    'offline.message': 'Kein Netz. Du kannst alles weiter nutzen: suchen, eintragen und ändern. Sobald du wieder online bist, wird alles synchronisiert.',
+    'offline.ok': 'Verstanden',
+    'online.flash': 'Wieder online, deine Änderungen werden übertragen',
     'toast.needsNetwork': 'Dafür brauchst du eine Verbindung. Versuch es noch einmal, sobald du online bist.',
     'toast.offlineMap': 'Die Karte braucht eine Verbindung. Deine Orte bleiben in der Liste.',
     'auth.signin': 'Mit Google anmelden',

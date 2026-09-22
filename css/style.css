@@ -1162,19 +1162,32 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 .delete-actions button { min-width: 120px; }
 
 /* ===== Offline-Hinweis =====
-   Sitzt unter der Top-Bar und erklaert, dass die App weiterlaeuft und nur
-   die Synchronisierung wartet. Ohne Netz ist auch die Karte leer. */
-.offline-banner {
-  position: absolute; top: 68px; left: 50%; transform: translateX(-50%);
-  z-index: 26; max-width: min(92%, 420px);
-  padding: 9px 16px;
-  background: var(--bg-input); border: 1px solid var(--bd-input);
+   Das Popup teilt sich die Optik mit dem Bestaetigungsdialog. Der gruene
+   Blitz auf der Karte meldet die Rueckkehr und verschwindet von selbst. */
+#offline-dialog {
+  position: fixed; inset: 0; z-index: 63;
+  display: none; align-items: center; justify-content: center;
+  background: var(--bg-overlay); backdrop-filter: blur(6px);
+}
+#offline-dialog.open { display: flex; }
+.online-flash {
+  position: absolute; top: 68px; left: 50%;
+  transform: translate(-50%, -6px);
+  z-index: 26; display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-input); border: 1px solid rgba(52,211,153,0.5);
   border-radius: 12px; backdrop-filter: blur(16px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  color: var(--tx-input); font-size: 0.78rem; line-height: 1.35;
-  text-align: center;
+  color: var(--tx-input); font-size: 0.78rem; white-space: nowrap;
+  opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.offline-banner[hidden] { display: none; }
+.online-flash.show { opacity: 1; transform: translate(-50%, 0); }
+.online-flash[hidden] { display: none; }
+.online-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,0.8);
+  flex-shrink: 0;
+}
 
 /* ===== Safe Area (iOS-App) =====
    In der nativen App reicht die Webview unter Statusleiste und Home-Indikator.
@@ -1202,7 +1215,7 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
     padding-top: calc(20px + env(safe-area-inset-top));
   }
 
-  .offline-banner { top: calc(64px + env(safe-area-inset-top)); }
+  .online-flash { top: calc(64px + env(safe-area-inset-top)); max-width: 92%; white-space: normal; text-align: center; }
 
   /* Gleiche Hoehe und Form fuer alles in der Top-Bar. Das Banner braucht die
      Regeln hier unten, weil seine Grunddefinition weiter oben im Stylesheet
