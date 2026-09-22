@@ -613,22 +613,37 @@ body {
   }
   #sidebar.open { transform: translateX(0); }
 
+  /* Drawer-Kopf unter die Statusleiste, Fuss ueber den Home-Indikator.
+     Der Kopf bleibt beim Scrollen stehen, sonst schiebt er sich in der App
+     unter die Uhr. Eigener Blur, weil --bg-sidebar durchscheinend ist. */
+  .sidebar-header {
+    position: sticky; top: 0; z-index: 1;
+    padding-top: calc(18px + env(safe-area-inset-top));
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(16px);
+  }
+
+  /* Vollflaechige Suche startet ebenfalls unter der Statusleiste */
+  .mobile-search-overlay {
+    padding-top: calc(20px + env(safe-area-inset-top));
+  }
+
   /* Sidebar footer: pad above home indicator */
   .sidebar-footer {
     padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
 
   /* Show hamburger, hide on desktop */
-  .btn-menu { display: flex; }
+  .btn-menu { display: flex; top: calc(14px + env(safe-area-inset-top)); }
 
   /* Map takes full screen */
   .map-area { width: 100%; }
 
   /* Shift search bar right to avoid hamburger overlap */
-  .top-right-bar { left: 64px; right: 12px; top: 14px; }
+  .top-right-bar { left: 64px; right: 12px; top: calc(14px + env(safe-area-inset-top)); }
 
   /* Banner slots into top bar area — search is hidden when banner is active */
-  .view-banner { top: 14px; left: 64px; right: 130px; max-width: none; overflow: hidden; }
+  .view-banner { top: calc(14px + env(safe-area-inset-top)); left: 64px; right: 130px; max-width: none; overflow: hidden; }
   .view-banner-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .search-wrap { flex: 1; min-width: 0; }
   #city-search { min-width: 0; width: 100%; }
@@ -648,6 +663,11 @@ body {
   .map-legend {
     bottom: max(80px, calc(60px + env(safe-area-inset-bottom)));
     left: 14px;
+  }
+
+  /* Mapbox-Logo und Attribution ueber den Home-Indikator */
+  .mapboxgl-ctrl-bottom-left {
+    margin-bottom: env(safe-area-inset-bottom) !important;
   }
 
   /* Mapbox navigation control: push up above browser chrome */
