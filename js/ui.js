@@ -1,7 +1,7 @@
 import { MAPBOX_TOKEN } from './constants.js?v=12';
-import { searchCountries } from './countries.js?v=22';
-import { t, getLang } from './i18n.js?v=7';
-import { searchLocalCities } from './places.js?v=1';
+import { searchCountries } from './countries.js?v=23';
+import { t, getLang } from './i18n.js?v=8';
+import { searchLocalCities } from './places.js?v=2';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import {
