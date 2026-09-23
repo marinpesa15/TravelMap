@@ -1,7 +1,7 @@
 import { t, getLang, setLang } from './i18n.js?v=8';
 import { getTheme, setTheme } from './theme.js?v=20';
 import { signOutUser } from './auth.js?v=23';
-import { APP_VERSION } from './version.js?v=8';
+import { APP_VERSION } from './version.js?v=9';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
 import { collectDeletionSummary, deleteAccount } from './account.js?v=5';
 import { auth } from './config.js?v=3';
