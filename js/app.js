@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=26';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=10';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=11';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
@@ -27,13 +27,13 @@ import {
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=38';
+} from './ui.js?v=39';
 import { initTheme, reloadMapStyle } from './theme.js?v=20';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=13';
+import { setupSettings } from './settings.js?v=14';
 import { t, getLang, applyTranslations } from './i18n.js?v=8';
 import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=8';
+import { startUpdateCheck } from './version.js?v=9';
 
 let _uid            = null;
 let _userData       = null;

@@ -4,6 +4,7 @@ import { t, getLang } from './i18n.js?v=8';
 import { searchLocalCities } from './places.js?v=2';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
+import { isNative } from './platform.js?v=1';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -417,7 +418,11 @@ export function showToast(message) {
 export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onDeleteFriend) {
   // Wire copy-invite button
   document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
-    const link = `${window.location.origin}/map.html?token=${inviteToken}`;
+    // In the iOS app the origin is capacitor://localhost, which nobody else
+    // can open. Invites there point at the public site instead; in the
+    // browser the current origin keeps local test servers working.
+    const origin = isNative() ? 'https://travel.marinpesa.dev' : window.location.origin;
+    const link = `${origin}/map.html?token=${inviteToken}`;
     navigator.clipboard.writeText(link).then(() => {
       showToast(t('toast.inviteCopied'));
     }).catch(() => {
