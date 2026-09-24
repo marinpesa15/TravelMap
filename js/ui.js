@@ -558,6 +558,8 @@ let _groupModalTargetGroup   = null;
  * onViewGroup(group): called when user clicks a group row
  * onAddMembers(groupId, friendUids): called when adding members to existing group
  */
+// friends: a function returning the current friend list. The create button
+// is wired once, and a list captured here would stay empty for new accounts.
 export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, onViewGroup, onLeaveGroup, onAddMembers, onRemoveMember) {
   _groupModalCreateCb       = onCreateGroup;
   _groupModalAddMemberCb    = onAddMembers;
@@ -565,7 +567,7 @@ export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, o
   _groupModalUid            = currentUid;
 
   document.getElementById('btn-create-group')?.addEventListener('click', () => {
-    _openGroupModal(friends, 'create');
+    _openGroupModal(friends(), 'create');
   });
 
   document.getElementById('group-modal-cancel')?.addEventListener('click', _closeGroupModal);
@@ -588,7 +590,7 @@ export function setupGroupsSidebar(groups, friends, currentUid, onCreateGroup, o
     _closeGroupModal();
   });
 
-  renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, onAddMembers, friends);
+  renderGroupsList(groups, currentUid, onViewGroup, onLeaveGroup, onAddMembers, friends());
 }
 
 function _openGroupModal(friends, mode = 'create', group = null, allMembers = []) {

@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=26';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=13';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=14';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
@@ -27,7 +27,7 @@ import {
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=41';
+} from './ui.js?v=42';
 import { initTheme, reloadMapStyle } from './theme.js?v=20';
 import { isOnline, onNetChange } from './net-status.js?v=1';
 import { setupSettings } from './settings.js?v=14';
@@ -101,13 +101,17 @@ function _hideSplash(now = false) {
 // Safety net: a stalled init (offline, Mapbox failure) must not stick forever
 setTimeout(() => _hideSplash(true), 8000);
 
-// Nach einem frischen Login blieb in der iOS-App der erste Lesevorgang des
-// Nutzerdokuments manchmal haengen: Splash bis zum Notausgang, keine
-// Einwilligung, keine Karte. Ein Neuladen der Seite hat es immer geloest.
-// Genau das passiert hier automatisch, einmal pro Sitzung und nur mit Netz.
-// Offline bleibt es beim bisherigen Warten auf den Cache.
-const USER_DATA_TIMEOUT_MS = 6000;
+// Nach einem frischen Login blieb der Start in der iOS-App manchmal haengen:
+// Splash bis zum Notausgang oben, danach keine Einwilligung, keine Karte,
+// nichts klickbar. Die App neu zu oeffnen hat es immer geloest. Welcher
+// Schritt haengt, liess sich ohne echtes Geraet nicht festnageln, deshalb
+// ueberwacht dieser Waechter den ganzen Start: Ist die Karte nach
+// START_TIMEOUT_MS nicht da, laedt die Seite einmal pro Sitzung neu. Pausiert,
+// solange die Einwilligung auf den Nutzer wartet. Offline bleibt es beim
+// bisherigen Verhalten.
+const START_TIMEOUT_MS = 10000;
 const RELOAD_FLAG = 'tm-init-reloaded';
+let _startTimer = null;
 
 function _sessionFlag(action) {
   try {
@@ -118,19 +122,21 @@ function _sessionFlag(action) {
   return false;
 }
 
-async function _loadUserDataWatched(uid) {
-  const load = loadUserData(uid);
-  if (!isOnline() || _sessionFlag('get')) return load;
-  const timer = setTimeout(() => {
+function _armStartWatchdog() {
+  clearTimeout(_startTimer);
+  _startTimer = setTimeout(() => {
+    if (!isOnline() || _sessionFlag('get')) return;
     _sessionFlag('set');
     window.location.reload();
-  }, USER_DATA_TIMEOUT_MS);
-  try {
-    return await load;
-  } finally {
-    clearTimeout(timer);
-  }
+  }, START_TIMEOUT_MS);
 }
+
+function _pauseStartWatchdog() {
+  clearTimeout(_startTimer);
+  _startTimer = null;
+}
+
+_armStartWatchdog();
 
 // index.html reads this flag to skip the Firebase bounce for returning users
 function _setSessionHint(on) {
@@ -160,11 +166,14 @@ onAuthChange(async user => {
 async function _init(user) {
   try {
     // ── Consent gate: nothing is written to Firestore before acceptance ──
-    const preData = await _loadUserDataWatched(_uid);   // read-only check
-    _sessionFlag('clear');
+    const preData = await loadUserData(_uid);   // read-only check
     if (!hasConsent(preData)) {
       _hideSplash(true); // consent dialog must not sit under the splash
-      const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
+      _pauseStartWatchdog(); // the user may take their time here
+      const accepted = await requestConsent(() => {
+        _armStartWatchdog();
+        return acceptConsent(_uid, CONSENT_VERSION);
+      });
       if (!accepted) {
         _setSessionHint(false);
         try { await signOutUser(); } catch { /* ignore */ }
@@ -218,6 +227,8 @@ async function _init(user) {
     updateStats(_userData);
 
     // Map + stats are on screen — reveal the app
+    _pauseStartWatchdog();
+    _sessionFlag('clear');
     _hideSplash();
 
     // One-time staggered entrance for the sidebar lists (app start only)
@@ -256,6 +267,11 @@ async function _init(user) {
       } else {
         renderFriendsList(friends, _switchToFriendView, _onDeleteFriend);
       }
+      // The group buttons hand the friend list to their dialogs, so they
+      // need the new list too, not the one from app start
+      if (_groupsSetup) {
+        renderGroupsList(_groups, _uid, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _friends);
+      }
     });
 
     // ── Real-time: groups list ────────────────────────────────────────────
@@ -264,7 +280,7 @@ async function _init(user) {
     _unsubGroups = loadGroups(_uid, groups => {
       _groups = groups;
       if (!_groupsSetup) {
-        setupGroupsSidebar(groups, _friends, _uid, _onCreateGroup, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _onRemoveMember);
+        setupGroupsSidebar(groups, () => _friends, _uid, _onCreateGroup, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _onRemoveMember);
         _groupsSetup = true;
       } else {
         renderGroupsList(groups, _uid, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _friends);
