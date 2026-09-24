@@ -6,6 +6,7 @@ import { openOverlay, closeOverlay } from './anim.js?v=2';
 import { collectDeletionSummary, deleteAccount } from './account.js?v=5';
 import { auth } from './config.js?v=3';
 import { isOnline } from './net-status.js?v=1';
+import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
 
 /** Wires the gear button, settings modal, theme/language switches,
  *  sign-out and version display. Call once after map init. */
@@ -40,6 +41,8 @@ export function setupSettings(map) {
 
   // Sign out
   document.getElementById('settings-signout')?.addEventListener('click', async () => {
+    markLeaving();
+    await shutdownFirestore();
     try { await signOutUser(); } catch { /* ignore */ }
     window.location.href = 'index.html';
   });
@@ -76,12 +79,18 @@ export function setupSettings(map) {
     delStatus.hidden = false;
     delStatus.textContent = t('delete.working');
     try {
+      markLeaving();
       await deleteAccount(uid);
+      // Wie in Lumiq: Firestore beenden, den Cache des geloeschten Kontos
+      // leeren und auch die native Google-Sitzung abmelden
+      await shutdownFirestore({ clearCache: true });
+      try { await signOutUser(); } catch { /* Konto ist ohnehin weg */ }
       localStorage.removeItem('tm-theme');
       localStorage.removeItem('tm-lang');
       localStorage.removeItem('tm-has-session');
       window.location.href = 'index.html';
     } catch (err) {
+      cancelLeaving();
       console.error('Kontoloeschung fehlgeschlagen:', err);
       // Der Auth-Account existiert in jedem Fehlerfall noch, weil er zuletzt
       // faellt. Ein erneuter Versuch ist deshalb gefahrlos.
