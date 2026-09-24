@@ -30,7 +30,8 @@ import {
 } from './ui.js?v=42';
 import { initTheme, reloadMapStyle } from './theme.js?v=20';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=14';
+import { setupSettings } from './settings.js?v=15';
+import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=8';
 import { staggerIn } from './anim.js?v=2';
 import { startUpdateCheck } from './version.js?v=9';
@@ -150,6 +151,10 @@ function _setSessionHint(on) {
 onAuthChange(async user => {
   if (!user) {
     _setSessionHint(false);
+    // Abmelden und Loeschen leiten selbst weiter, nachdem aufgeraeumt ist
+    if (isLeaving()) return;
+    markLeaving();
+    await shutdownFirestore();
     // Preserve invite token across the login redirect
     const params = new URLSearchParams(window.location.search);
     const token  = params.get('token');
@@ -176,6 +181,8 @@ async function _init(user) {
       });
       if (!accepted) {
         _setSessionHint(false);
+        markLeaving();
+        await shutdownFirestore();
         try { await signOutUser(); } catch { /* ignore */ }
         window.location.href = 'index.html';
         return;
