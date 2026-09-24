@@ -416,6 +416,7 @@ export function showToast(message) {
  * onResetToken(): called when user clicks Reset (returns new token promise)
  */
 export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onDeleteFriend) {
+  _reporterUid = uid;
   // Wire invite button: share sheet in the app, clipboard in the browser
   document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
     // In the iOS app the origin is capacitor://localhost, which nobody else
@@ -428,6 +429,51 @@ export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onD
   });
 
   renderFriendsList(friends, onViewFriend, onDeleteFriend);
+}
+
+// ===== Reporting (Guideline 1.2) =====
+
+// Reports go out as a prefilled e-mail, the same address and 24-hour promise
+// as support.html. The strings live here instead of i18n.js; new keys there
+// would force a ?v= bump across every i18n importer.
+const REPORT_EMAIL = 'pesamarin81@gmail.com';
+let _reporterUid = null;
+
+function _reportText(key, vars = {}) {
+  const de = getLang() === 'de';
+  const text = {
+    button:  de ? 'Melden' : 'Report',
+    confirm: de
+      ? '{name} melden? Es öffnet sich eine E-Mail an TravelMap. Beschreib kurz, was passiert ist. Meldungen werden innerhalb von 24 Stunden bearbeitet.'
+      : 'Report {name}? This opens an e-mail to TravelMap. Describe briefly what happened. Reports are handled within 24 hours.',
+    subject: de ? 'Missbrauch melden' : 'Report abuse',
+    body: de
+      ? 'Gemeldete Person: {name} (ID {uid})\n{group}Meine ID: {me}\n\nWas ist passiert?\n'
+      : 'Reported person: {name} (ID {uid})\n{group}My ID: {me}\n\nWhat happened?\n',
+    group: de ? 'Gruppe: {group} (ID {groupId})\n' : 'Group: {group} (ID {groupId})\n',
+  }[key];
+  return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+}
+
+/**
+ * Asks for confirmation, then opens a prefilled report e-mail.
+ * target: { uid, name, group?: { id, name } }
+ */
+function _reportUser(target, reporterUid) {
+  showConfirm(_reportText('confirm', { name: target.name }), _reportText('button'), () => {
+    const group = target.group
+      ? _reportText('group', { group: target.group.name, groupId: target.group.id })
+      : '';
+    const body = _reportText('body', { name: target.name, uid: target.uid, group, me: reporterUid || '' });
+    const subject = _reportText('subject');
+    window.location.href =
+      `mailto:${REPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+}
+
+function _reportButton() {
+  const label = _reportText('button');
+  return `<button class="btn-report-user" title="${label}" aria-label="${label}">🚩</button>`;
 }
 
 function _copyInvite(link) {
@@ -474,11 +520,17 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
     item.innerHTML = `
       ${avatar}
       <span class="social-name">${esc(friend.display_name) || t('friend.fallback')}</span>
+      ${_reportButton()}
       <button class="btn-remove-friend" title="${t('friend.removeTitle')}">✕</button>
     `;
     item.addEventListener('click', e => {
-      if (e.target.closest('.btn-remove-friend')) return;
+      if (e.target.closest('.btn-remove-friend, .btn-report-user')) return;
       onViewFriend(friend);
+    });
+    item.querySelector('.btn-report-user').addEventListener('click', e => {
+      e.stopPropagation();
+      const name = friend.display_name || t('friend.fallback');
+      _reportUser({ uid: friend.uid, name }, _reporterUid);
     });
     item.querySelector('.btn-remove-friend').addEventListener('click', e => {
       e.stopPropagation();
@@ -625,7 +677,8 @@ function _renderGroupMembers(group, friends) {
       : `<div class="social-avatar-placeholder">👤</div>`;
 
     const badge     = uid === group.created_by ? `<span class="group-member-badge" title="${t('group.creator')}">👑</span>` : '';
-    const removable = isCreator && uid !== group.created_by;
+    const removable  = isCreator && uid !== group.created_by;
+    const reportable = uid !== _groupModalUid;
 
     const item = document.createElement('div');
     item.className = 'group-member-item';
@@ -633,8 +686,13 @@ function _renderGroupMembers(group, friends) {
       ${avatar}
       <span class="group-member-name">${esc(name)}</span>
       ${badge}
+      ${reportable ? _reportButton() : ''}
       ${removable ? `<button class="btn-remove-friend" title="${t('group.removeFromGroup')}">✕</button>` : ''}
     `;
+
+    item.querySelector('.btn-report-user')?.addEventListener('click', () => {
+      _reportUser({ uid, name, group: { id: group.id, name: group.name } }, _groupModalUid);
+    });
 
     item.querySelector('.btn-remove-friend')?.addEventListener('click', () => {
       showConfirm(t('confirm.removeMember', { name, group: group.name }), t('dialog.remove'), () => {
