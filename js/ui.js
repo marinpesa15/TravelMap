@@ -416,21 +416,39 @@ export function showToast(message) {
  * onResetToken(): called when user clicks Reset (returns new token promise)
  */
 export function setupFriendsSidebar(uid, inviteToken, friends, onViewFriend, onDeleteFriend) {
-  // Wire copy-invite button
+  // Wire invite button: share sheet in the app, clipboard in the browser
   document.getElementById('btn-copy-invite')?.addEventListener('click', () => {
     // In the iOS app the origin is capacitor://localhost, which nobody else
     // can open. Invites there point at the public site instead; in the
     // browser the current origin keeps local test servers working.
     const origin = isNative() ? 'https://travel.marinpesa.dev' : window.location.origin;
     const link = `${origin}/map.html?token=${inviteToken}`;
-    navigator.clipboard.writeText(link).then(() => {
-      showToast(t('toast.inviteCopied'));
-    }).catch(() => {
-      showToast(t('toast.copyFailed'));
-    });
+    if (isNative()) _shareInvite(link);
+    else _copyInvite(link);
   });
 
   renderFriendsList(friends, onViewFriend, onDeleteFriend);
+}
+
+function _copyInvite(link) {
+  navigator.clipboard.writeText(link).then(() => {
+    showToast(t('toast.inviteCopied'));
+  }).catch(() => {
+    showToast(t('toast.copyFailed'));
+  });
+}
+
+// Opens the iOS share sheet (WhatsApp, Messages, AirDrop, Copy, ...) via
+// @capacitor/share. Only the URL is handed over: extra text next to it makes
+// AirDrop send a note instead of a link that opens in Safari.
+async function _shareInvite(link) {
+  try {
+    await window.Capacitor.nativePromise('Share', 'share', { url: link, title: 'TravelMap' });
+  } catch (err) {
+    // Closing the sheet or tapping twice is not an error worth a toast
+    if (/cancel|in progress/i.test(err?.message || '')) return;
+    _copyInvite(link);
+  }
 }
 
 export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
