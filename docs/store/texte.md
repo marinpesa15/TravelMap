@@ -182,7 +182,7 @@ The app also runs without a connection. It ships with a place list of about 70,0
 USER CONTENT (1.2)
 Users can add photos and place names, but nothing they add is distributed broadly. A map is visible only to friends both sides confirmed through an invite link, and places and photos inside a group only to the members of that group. There is no feed, no public profile, no discovery and no messaging. That is why the age rating questionnaire answers "no" to user-generated content: the content exists, but it is shared privately rather than distributed.
 
-Users can remove a friend, leave a group, or, as the group creator, remove a member at any time, which also removes that person's entries from their view. Abuse can be reported by email and reports are handled within 24 hours. The procedure is documented at https://travel.marinpesa.dev/support.html
+Users can remove a friend, leave a group, or, as the group creator, remove a member at any time, which also removes that person's entries from their view. Every friend and every group member has a report button (flag icon) in the app. It opens a prefilled email to the developer with the reported user's ID, and reports are handled within 24 hours. The procedure is documented at https://travel.marinpesa.dev/support.html
 
 PRIVACY
 Data is stored with Google Firebase (Authentication, Firestore). Privacy policy: https://travel.marinpesa.dev/privacy.html

@@ -928,6 +928,19 @@ body {
 }
 .btn-remove-friend:hover { opacity: 1; background: rgba(239,68,68,0.1); color: #f87171; }
 
+/* ===== Report Button (friends + group members) ===== */
+.btn-report-user {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.75rem; padding: 2px 5px; border-radius: 6px; opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.btn-report-user:hover { opacity: 1; background: rgba(239,68,68,0.1); }
+/* Without a remove button next to it, the report flag takes the right edge */
+.social-item .btn-report-user,
+.group-member-item .btn-report-user { margin-left: auto; }
+.btn-report-user + .btn-remove-friend { margin-left: 0; }
+
 /* ===== Group Add-Member Button ===== */
 .btn-add-member {
   background: none; border: none;
