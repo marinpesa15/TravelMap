@@ -61,10 +61,19 @@
     import { signInWithGoogle, signInWithApple, onAuthChange } from './js/auth.js?v=23';
     import { isNative } from './js/platform.js?v=1';
     import { t, applyTranslations } from './js/i18n.js?v=8';
+    import { db } from './js/config.js?v=3';
+    import { terminate } from './vendor/firebase/10.12.0/firebase-firestore.js';
 
     applyTranslations();
 
-    function goToMap() {
+    // config.js startet Firestore schon hier mit, obwohl diese Seite ihn nie
+    // braucht. Nach einem frischen Login hing in der iOS-App dann der erste
+    // Lesevorgang auf map.html, bis man die App neu oeffnete. Deshalb die
+    // Instanz vor dem Seitenwechsel sauber beenden, hoechstens 1,5 s lang.
+    async function goToMap() {
+      try {
+        await Promise.race([terminate(db), new Promise(r => setTimeout(r, 1500))]);
+      } catch { /* weiterleiten ist wichtiger */ }
       const token = new URLSearchParams(window.location.search).get('token');
       window.location.href = token ? `map.html?token=${encodeURIComponent(token)}` : 'map.html';
     }

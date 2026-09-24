@@ -101,6 +101,37 @@ function _hideSplash(now = false) {
 // Safety net: a stalled init (offline, Mapbox failure) must not stick forever
 setTimeout(() => _hideSplash(true), 8000);
 
+// Nach einem frischen Login blieb in der iOS-App der erste Lesevorgang des
+// Nutzerdokuments manchmal haengen: Splash bis zum Notausgang, keine
+// Einwilligung, keine Karte. Ein Neuladen der Seite hat es immer geloest.
+// Genau das passiert hier automatisch, einmal pro Sitzung und nur mit Netz.
+// Offline bleibt es beim bisherigen Warten auf den Cache.
+const USER_DATA_TIMEOUT_MS = 6000;
+const RELOAD_FLAG = 'tm-init-reloaded';
+
+function _sessionFlag(action) {
+  try {
+    if (action === 'get')    return sessionStorage.getItem(RELOAD_FLAG) === '1';
+    if (action === 'set')    sessionStorage.setItem(RELOAD_FLAG, '1');
+    if (action === 'clear')  sessionStorage.removeItem(RELOAD_FLAG);
+  } catch { /* storage unavailable */ }
+  return false;
+}
+
+async function _loadUserDataWatched(uid) {
+  const load = loadUserData(uid);
+  if (!isOnline() || _sessionFlag('get')) return load;
+  const timer = setTimeout(() => {
+    _sessionFlag('set');
+    window.location.reload();
+  }, USER_DATA_TIMEOUT_MS);
+  try {
+    return await load;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // index.html reads this flag to skip the Firebase bounce for returning users
 function _setSessionHint(on) {
   try {
@@ -129,7 +160,8 @@ onAuthChange(async user => {
 async function _init(user) {
   try {
     // ── Consent gate: nothing is written to Firestore before acceptance ──
-    const preData = await loadUserData(_uid);   // read-only check
+    const preData = await _loadUserDataWatched(_uid);   // read-only check
+    _sessionFlag('clear');
     if (!hasConsent(preData)) {
       _hideSplash(true); // consent dialog must not sit under the splash
       const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
