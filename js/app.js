@@ -30,11 +30,12 @@ import {
 } from './ui.js?v=42';
 import { initTheme, reloadMapStyle } from './theme.js?v=20';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=15';
+import { setupSettings } from './settings.js?v=16';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=8';
 import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=9';
+import { startUpdateCheck } from './version.js?v=10';
+import { installLegalViewer } from './legal-view.js?v=1';
 
 let _uid            = null;
 let _userData       = null;
@@ -81,6 +82,8 @@ function _ensureCountryLayers() {
 
 // Translate static HTML as early as possible (before auth resolves)
 applyTranslations();
+// Nativ oeffnet der Datenschutz-Link sonst ins Leere (target=_blank), siehe legal-view.js.
+installLegalViewer();
 
 // ===== Boot Splash =====
 // The splash covers the booting app until the map is rendered, but stays up
