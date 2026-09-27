@@ -6,7 +6,7 @@ js/constants.js
 .DS_Store
 
 node_modules/
-.firebase/hosting..cache
+.firebase/
 firestore-debug.log
 
 # Firestore emulator logs
