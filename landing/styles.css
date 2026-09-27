@@ -1,0 +1,215 @@
+/* TravelMap landing page. Same night palette as the app (css/style.css,
+   manifest theme_color #0b0d19), same marker colours: visited indigo, lived
+   amber, wishlist emerald. No web fonts: the app runs on the system stack and
+   the privacy policy covers no font CDN, so this page does the same. */
+:root {
+  color-scheme: dark;
+  --night: #0b0d19;
+  --night-deep: #06070f;
+  --card: rgba(255,255,255,0.04);
+  --line: rgba(255,255,255,0.08);
+  --ink: #ffffff;
+  --ink-soft: #b6bcc9;
+  --ink-mute: #6b7280;
+  --indigo: #6366f1;
+  --indigo-soft: #a5b4fc;
+  --amber: #f59e0b;
+  --emerald: #10b981;
+  --sky: #38bdf8;
+  --rose: #fb7185;
+  --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --radius: 22px;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--night);
+  color: var(--ink);
+  font: 17px/1.6 var(--ui);
+  font-feature-settings: "kern", "liga";
+  overflow-x: hidden;
+}
+
+/* Both languages live in the markup. data-lang on <html> picks one. */
+html[data-lang="de"] [lang="en"],
+html[data-lang="en"] [lang="de"] { display: none; }
+
+img { display: block; max-width: 100%; }
+a { color: var(--indigo-soft); }
+
+/* ===== Sky: a globe of graticule lines behind the hero ===== */
+.sky {
+  position: absolute; inset: 0 0 auto 0; height: 120vh; max-height: 1100px;
+  overflow: hidden; pointer-events: none; z-index: 0;
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+}
+.globe {
+  position: absolute; left: 50%; top: -18vw;
+  width: 150vw; height: 150vw; max-width: 1500px; max-height: 1500px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(99,102,241,0.22), rgba(99,102,241,0.06) 34%, transparent 62%),
+    repeating-radial-gradient(circle at 50% 50%, transparent 0 78px, rgba(255,255,255,0.045) 78px 79px),
+    repeating-linear-gradient(90deg, transparent 0 89px, rgba(255,255,255,0.035) 89px 90px),
+    radial-gradient(circle at 50% 50%, #10132a 0%, #0c0f20 55%, var(--night) 100%);
+  box-shadow: 0 0 140px rgba(99,102,241,0.14), inset 0 0 120px rgba(0,0,0,0.6);
+  animation: drift 40s ease-in-out infinite alternate;
+}
+@keyframes drift { from { transform: translateX(-50%) rotate(-1.5deg); } to { transform: translateX(-50%) rotate(1.5deg); } }
+
+.beacon {
+  position: absolute; left: var(--x); top: var(--y);
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--indigo);
+  box-shadow: 0 0 10px rgba(99,102,241,0.7);
+  animation: pulse 3.6s ease-out infinite;
+}
+.beacon::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%;
+  border: 1.5px solid currentColor; color: var(--indigo); opacity: 0;
+  animation: ring 3.6s ease-out infinite; animation-delay: inherit;
+}
+.beacon-lived { background: var(--amber); box-shadow: 0 0 10px rgba(245,158,11,0.7); }
+.beacon-lived::after { color: var(--amber); }
+.beacon-wish { background: transparent; border: 1.5px dashed var(--emerald); box-shadow: none; }
+.beacon-wish::after { color: var(--emerald); }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+@keyframes ring { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(3.2); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .globe, .beacon, .beacon::after { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ===== Header ===== */
+.top {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 68rem; margin: 0 auto; padding: 1.25rem 1.25rem 0;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: .6rem;
+  color: var(--ink); text-decoration: none; font-weight: 700; font-size: 1.15rem; letter-spacing: -.01em;
+}
+.brand img { width: 36px; height: 36px; }
+.langs { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(11,13,25,0.6); backdrop-filter: blur(8px); }
+.langs button {
+  appearance: none; border: 0; border-radius: 999px; padding: 4px 11px; cursor: pointer;
+  background: transparent; color: var(--ink-mute); font: 600 .78rem/1.4 var(--ui); letter-spacing: .04em;
+}
+.langs button[aria-pressed="true"] { background: rgba(99,102,241,0.18); color: #c7d2fe; }
+
+/* ===== Layout ===== */
+main { position: relative; z-index: 1; max-width: 68rem; margin: 0 auto; padding: 0 1.25rem; }
+
+.hero { max-width: 40rem; margin: 0 auto; padding: 4.5rem 0 3rem; text-align: center; }
+.eyebrow {
+  display: inline-block; margin: 0 0 1.1rem; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid rgba(99,102,241,0.35); background: rgba(99,102,241,0.1);
+  color: #c7d2fe; font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+}
+h1 {
+  margin: 0 0 1rem; font-size: clamp(2.2rem, 6.2vw, 3.6rem); line-height: 1.05; font-weight: 800; letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.lead { margin: 0 auto 2rem; max-width: 33rem; color: var(--ink-soft); font-size: 1.08rem; text-wrap: pretty; }
+
+/* Store badge: Apple's SVG is 135x40, scale it up but keep its proportions.
+   On phones it is the main control on the page: wide, high, above the shots. */
+.store { display: inline-block; line-height: 0; border-radius: 12px; transition: transform .15s ease, filter .15s ease; }
+.store img { width: 200px; height: auto; }
+.store:hover, .store:focus-visible { transform: translateY(-1px); filter: brightness(1.08); outline: none; }
+.store:focus-visible { box-shadow: 0 0 0 3px rgba(165,180,252,0.6); }
+.store-note { margin: .9rem 0 0; color: var(--ink-mute); font-size: .86rem; }
+
+/* ===== Screenshots ===== */
+.shots {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
+  margin: 1rem auto 0; padding: 0 0 1rem;
+}
+.shots figure { margin: 0; }
+.shots figure:nth-child(even) { transform: translateY(2.25rem); }
+.shots img {
+  width: 100%; height: auto; border-radius: var(--radius);
+  border: 1px solid var(--line); box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9), 0 0 0 6px rgba(255,255,255,0.02);
+  background: var(--night-deep);
+}
+.shots figcaption { margin-top: .75rem; text-align: center; color: var(--ink-mute); font-size: .84rem; }
+
+/* ===== Features ===== */
+.features { max-width: 52rem; margin: 6rem auto 0; }
+h2 { margin: 0 0 1.75rem; font-size: clamp(1.5rem, 3.4vw, 2.1rem); line-height: 1.15; font-weight: 800; letter-spacing: -.025em; text-wrap: balance; }
+.feature-list {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+}
+.feature-list li { display: flex; gap: .9rem; padding: 1.35rem 1.4rem; background: var(--night); }
+.feature-list li:hover { background: #0e1122; }
+.feature-list h3 { margin: 0 0 .25rem; font-size: 1rem; font-weight: 700; }
+.feature-list p { margin: 0; color: var(--ink-soft); font-size: .93rem; }
+.dot { flex: 0 0 auto; width: 12px; height: 12px; margin-top: .45rem; border-radius: 50%; }
+.dot-visited { background: var(--indigo); box-shadow: 0 0 10px rgba(99,102,241,0.6); }
+.dot-lived { background: var(--amber); box-shadow: 0 0 10px rgba(245,158,11,0.6); }
+.dot-wish { border: 1.5px dashed var(--emerald); box-shadow: 0 0 10px rgba(16,185,129,0.35); }
+.dot-friends { background: var(--rose); box-shadow: 0 0 10px rgba(251,113,133,0.55); }
+.dot-offline { background: var(--sky); box-shadow: 0 0 10px rgba(56,189,248,0.55); }
+
+/* ===== Notice for existing users ===== */
+.notice {
+  max-width: 52rem; margin: 4rem auto 0; padding: 1.75rem 1.75rem 1.9rem;
+  border-radius: var(--radius); border: 1px solid rgba(245,158,11,0.3);
+  background: linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02));
+}
+.notice h2 { font-size: 1.25rem; margin-bottom: .6rem; }
+.notice p { margin: 0 0 .75rem; color: var(--ink-soft); font-size: .97rem; }
+.notice-honest { color: var(--ink-mute) !important; font-size: .9rem !important; }
+.notice-cta {
+  display: inline-block; margin-top: .5rem; padding: 10px 18px; border-radius: 12px;
+  background: var(--indigo); color: #fff; text-decoration: none; font-weight: 600; font-size: .95rem;
+  transition: filter .15s ease;
+}
+.notice-cta:hover { filter: brightness(1.1); }
+
+/* ===== Footer ===== */
+.foot { position: relative; z-index: 1; max-width: 68rem; margin: 5rem auto 0; padding: 2rem 1.25rem 3rem; border-top: 1px solid var(--line); text-align: center; }
+.legal { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1.5rem; }
+.legal a { color: var(--ink-soft); text-decoration: none; font-size: .9rem; }
+.legal a:hover { color: var(--ink); text-decoration: underline; }
+.fine { margin: 1.25rem 0 0; color: var(--ink-mute); font-size: .8rem; }
+
+/* ===== Farewell page (old /map.html bookmarks) ===== */
+body.farewell { display: grid; place-items: center; padding: 1.25rem; }
+.farewell-card { max-width: 30rem; text-align: center; }
+.farewell-card img { margin: 0 auto 1.25rem; }
+.farewell-card h1 { font-size: 1.7rem; }
+.farewell-card p { color: var(--ink-soft); font-size: .97rem; }
+
+/* ===== Narrow viewports ===== */
+@media (max-width: 900px) {
+  .shots { grid-template-columns: repeat(2, 1fr); }
+  .shots figure:nth-child(even) { transform: none; }
+  .feature-list { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .hero { padding-top: 3rem; }
+  .lead { font-size: 1rem; }
+  /* The badge becomes the main control: full width and tall enough to tap without aiming. */
+  .store { display: block; }
+  .store img { width: 100%; max-width: 100%; height: auto; }
+  .shots {
+    display: flex; gap: .9rem; margin-left: -1.25rem; margin-right: -1.25rem; padding: .5rem 1.25rem 1rem;
+    overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .shots::-webkit-scrollbar { display: none; }
+  .shots figure { flex: 0 0 68%; scroll-snap-align: center; }
+  .features { margin-top: 3.5rem; }
+  .notice { padding: 1.4rem 1.25rem 1.5rem; }
+}
