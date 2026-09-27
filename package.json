@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
+    "build:landing": "node scripts/build-landing.mjs",
     "ios:sync": "npm run build:web && cap sync ios",
     "test": "vitest run",
     "test:watch": "vitest",
