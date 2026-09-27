@@ -176,6 +176,10 @@
       </ul>
     </section>
 
+    <!-- Cloudflare proxies travel.marinpesa.dev and would rewrite every mailto
+         into an obfuscated placeholder plus a decoder script. Opt out, as on the
+         Lumiq page: the address is public anyway (imprint). -->
+    <!--email_off-->
     <section class="notice" aria-labelledby="notice-title">
       <h2 id="notice-title">
         <span lang="de">Du hast TravelMap bisher im Browser benutzt?</span>
@@ -211,5 +215,6 @@
     </nav>
     <p class="fine">TravelMap, 2026 Marin Pesa</p>
   </footer>
+  <!--/email_off-->
 </body>
 </html>
