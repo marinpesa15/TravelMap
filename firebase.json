@@ -1,27 +1,13 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "landing",
+    "predeploy": [
+      "node \"$PROJECT_DIR/scripts/build-landing.mjs\""
+    ],
     "ignore": [
       "firebase.json",
-      ".firebaserc",
       "**/.*",
-      "**/.*/**",
-      "README.md",
-      "docs/**",
-      "app-logo.jpeg",
-      "node_modules/**",
-      "tests/**",
-      "package.json",
-      "package-lock.json",
-      "vitest.config.js",
-      "vitest.rules.config.js",
-      "firestore.rules",
-      "firestore.indexes.json",
-      "**/*.log",
-      "scripts/**",
-      "dist/**",
-      "ios/**",
-      "capacitor.config.json"
+      "**/.*/**"
     ],
     "rewrites": [],
     "headers": [
@@ -36,15 +22,6 @@
       },
       {
         "source": "**/*.html",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "/version.json",
         "headers": [
           {
             "key": "Cache-Control",
