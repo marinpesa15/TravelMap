@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de" data-lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>TravelMap, deine Reisen auf einer Weltkarte</title>
+  <meta name="description" content="TravelMap ist eine kostenlose iPhone-App. Trag ein, wo du warst, färbe Länder ein, teile Karten mit Freunden.">
+  <meta name="theme-color" content="#0b0d19">
+  <meta property="og:title" content="TravelMap">
+  <meta property="og:description" content="Deine Reisen auf einer Weltkarte. Kostenlos für iPhone.">
+  <meta property="og:image" content="https://travel.marinpesa.dev/icons/icon-512-v4.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v4.png">
+  <!-- No web app manifest on purpose: the landing page must not install
+       itself to the home screen. That was the web app's job, and it is gone. -->
+  <link rel="stylesheet" href="/styles.css?v=1">
+  <script>
+    // Language: a choice made on this page wins, then the browser's
+    // preference. Without scripts the page stays German.
+    const LANGS = ['de', 'en'];
+    const TITLES = {
+      de: 'TravelMap, deine Reisen auf einer Weltkarte',
+      en: 'TravelMap, your travels on a world map'
+    };
+    function pickLanguage() {
+      try {
+        const saved = localStorage.getItem('tm-landing-lang');
+        if (LANGS.includes(saved)) return saved;
+      } catch (e) { /* storage unavailable */ }
+      const preferred = (navigator.languages || [navigator.language]).find(Boolean) || 'de';
+      return preferred.toLowerCase().startsWith('de') ? 'de' : 'en';
+    }
+    function setLanguage(lang) {
+      document.documentElement.lang = lang;
+      document.documentElement.dataset.lang = lang;
+      document.title = TITLES[lang];
+      for (const button of document.querySelectorAll('[data-set-lang]')) {
+        button.setAttribute('aria-pressed', String(button.dataset.setLang === lang));
+      }
+    }
+    setLanguage(pickLanguage());
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setLanguage(document.documentElement.dataset.lang);
+      for (const button of document.querySelectorAll('[data-set-lang]')) {
+        button.addEventListener('click', () => {
+          setLanguage(button.dataset.setLang);
+          try { localStorage.setItem('tm-landing-lang', button.dataset.setLang); } catch (e) { /* ignore */ }
+        });
+      }
+      // The App Store URL lives once, on the hero badge. Every other store
+      // link on the page copies it from there.
+      const store = document.getElementById('store');
+      for (const link of document.querySelectorAll('[data-store-link]')) link.href = store.href;
+    });
+  </script>
+</head>
+<body>
+  <div class="sky" aria-hidden="true">
+    <div class="globe">
+      <span class="beacon beacon-visited" style="--x:22%; --y:34%"></span>
+      <span class="beacon beacon-visited" style="--x:27%; --y:41%; animation-delay:.7s"></span>
+      <span class="beacon beacon-lived" style="--x:75%; --y:30%; animation-delay:1.4s"></span>
+      <span class="beacon beacon-visited" style="--x:18%; --y:47%; animation-delay:2.1s"></span>
+      <span class="beacon beacon-wish" style="--x:80%; --y:44%; animation-delay:2.8s"></span>
+      <span class="beacon beacon-visited" style="--x:71%; --y:38%; animation-delay:3.5s"></span>
+    </div>
+  </div>
+
+  <header class="top">
+    <a class="brand" href="/">
+      <img src="/icons/logo-mark.png" alt="" width="44" height="44">
+      <span>TravelMap</span>
+    </a>
+    <div class="langs" role="group" aria-label="Sprache / Language">
+      <button type="button" data-set-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">
+        <span lang="de">Kostenlos für iPhone</span>
+        <span lang="en">Free for iPhone</span>
+      </p>
+      <h1>
+        <span lang="de">Deine Reisen auf einer Weltkarte.</span>
+        <span lang="en">Your travels on a world map.</span>
+      </h1>
+      <p class="lead">
+        <span lang="de">Trag ein, wo du warst, und sieh zu, wie sich deine Karte füllt. Städte als Pins, Länder eingefärbt, Freunde und Gruppen auf derselben Karte.</span>
+        <span lang="en">Add the places you have been and watch your map fill up. Cities as pins, countries coloured in, friends and groups on the same map.</span>
+      </p>
+
+      <!-- The one place the App Store URL is written down. -->
+      <a id="store" class="store" href="https://apps.apple.com/de/app/travelmap/id6814927672">
+        <img lang="de" src="/app-store-badge-de.svg" alt="Laden im App Store" width="135" height="40">
+        <img lang="en" src="/app-store-badge-en.svg" alt="Download on the App Store" width="135" height="40">
+      </a>
+      <p class="store-note">
+        <span lang="de">Ab iOS 15. Kein Abo, keine Werbung, kein Tracking.</span>
+        <span lang="en">Requires iOS 15 or later. No subscription, no ads, no tracking.</span>
+      </p>
+    </section>
+
+    <section class="shots" aria-label="Screenshots">
+      <figure>
+        <img src="/img/01-karte.webp" width="660" height="1434" alt="">
+        <figcaption><span lang="de">Städte als Pins</span><span lang="en">Cities as pins</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/img/03-laender.webp" width="660" height="1434" alt="" loading="lazy">
+        <figcaption><span lang="de">Länder eingefärbt</span><span lang="en">Countries coloured in</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/img/02-seitenleiste.webp" width="660" height="1434" alt="" loading="lazy">
+        <figcaption><span lang="de">Zähler, Freunde, Gruppen</span><span lang="en">Counters, friends, groups</span></figcaption>
+      </figure>
+      <figure>
+        <img src="/img/04-gruppe.webp" width="660" height="1434" alt="" loading="lazy">
+        <figcaption><span lang="de">Gemeinsame Gruppenkarte</span><span lang="en">Shared group map</span></figcaption>
+      </figure>
+    </section>
+
+    <section class="features">
+      <h2>
+        <span lang="de">Mehr als eine Karte mit Punkten</span>
+        <span lang="en">More than a map with dots</span>
+      </h2>
+      <ul class="feature-list">
+        <li>
+          <span class="dot dot-visited"></span>
+          <div>
+            <h3><span lang="de">Besuchte Länder einfärben</span><span lang="en">Colour in visited countries</span></h3>
+            <p><span lang="de">Wechsle in die Länderansicht, jedes besuchte Land wird auf der Karte gefüllt.</span><span lang="en">Switch to the country view and every country you have been to is filled in.</span></p>
+          </div>
+        </li>
+        <li>
+          <span class="dot dot-visited"></span>
+          <div>
+            <h3><span lang="de">Städte als Pins</span><span lang="en">Cities as pins</span></h3>
+            <p><span lang="de">Such eine Stadt, setz sie auf die Karte. Das Land dazu wird automatisch mitgezählt.</span><span lang="en">Search a city and put it on the map. Its country is counted automatically.</span></p>
+          </div>
+        </li>
+        <li>
+          <span class="dot dot-lived"></span>
+          <div>
+            <h3><span lang="de">Dort gewohnt</span><span lang="en">Lived there</span></h3>
+            <p><span lang="de">Orte, an denen du gelebt hast, bekommen ihre eigene Markierung.</span><span lang="en">Places you have lived in get a marker of their own.</span></p>
+          </div>
+        </li>
+        <li>
+          <span class="dot dot-wish"></span>
+          <div>
+            <h3><span lang="de">Wunschliste</span><span lang="en">Wishlist</span></h3>
+            <p><span lang="de">Was noch fehlt, kommt auf die Liste und wandert mit einem Tipp zu den besuchten Orten.</span><span lang="en">Whatever is still missing goes on the list and moves to visited with one tap.</span></p>
+          </div>
+        </li>
+        <li>
+          <span class="dot dot-friends"></span>
+          <div>
+            <h3><span lang="de">Freunde und Gruppen</span><span lang="en">Friends and groups</span></h3>
+            <p><span lang="de">Verbinde dich per Einladungslink, schau dir die Karten deiner Freunde an und tragt in Gruppenkarten gemeinsam ein.</span><span lang="en">Connect through an invite link, look at your friends' maps and add places together in group maps.</span></p>
+          </div>
+        </li>
+        <li>
+          <span class="dot dot-offline"></span>
+          <div>
+            <h3><span lang="de">Offline nutzbar</span><span lang="en">Works offline</span></h3>
+            <p><span lang="de">Fast 70.000 Städte sind in der App gespeichert. Suchen und Eintragen klappt auch im Flugmodus.</span><span lang="en">Almost 70,000 cities ship with the app. Searching and adding works in airplane mode too.</span></p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="notice" aria-labelledby="notice-title">
+      <h2 id="notice-title">
+        <span lang="de">Du hast TravelMap bisher im Browser benutzt?</span>
+        <span lang="en">Used TravelMap in the browser until now?</span>
+      </h2>
+      <p>
+        <span lang="de">Die Web-Version gibt es seit dem 27. September 2026 nicht mehr, TravelMap läuft jetzt nur noch als iPhone-App. Deine Karte, deine Freunde und deine Gruppen sind nicht verloren: Melde dich in der App mit demselben Google- oder Apple-Konto an, dann ist alles wieder da.</span>
+        <span lang="en">The web version was retired on 27 September 2026, TravelMap now runs as an iPhone app only. Your map, your friends and your groups are not lost: sign in to the app with the same Google or Apple account and everything is back.</span>
+      </p>
+      <p class="notice-honest">
+        <span lang="de">Eine Android-Version gibt es derzeit nicht. Wenn du kein iPhone hast und an deine Daten möchtest, <a href="mailto:pesamarin81@gmail.com">schreib mir</a>.</span>
+        <span lang="en">There is no Android version at the moment. If you do not have an iPhone and want your data, <a href="mailto:pesamarin81@gmail.com">write to me</a>.</span>
+      </p>
+      <a class="notice-cta" data-store-link href="#">
+        <span lang="de">Zur App im App Store</span>
+        <span lang="en">Get the app on the App Store</span>
+      </a>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <nav class="legal" lang="de" aria-label="Rechtliches">
+      <a href="/privacy.html#privacy">Datenschutz</a>
+      <a href="/privacy.html#imprint">Impressum</a>
+      <a href="/support.html">Support</a>
+      <a href="mailto:pesamarin81@gmail.com">Kontakt</a>
+    </nav>
+    <nav class="legal" lang="en" aria-label="Legal">
+      <a href="/privacy.html#privacy">Privacy</a>
+      <a href="/privacy.html#imprint">Legal notice</a>
+      <a href="/support.html">Support</a>
+      <a href="mailto:pesamarin81@gmail.com">Contact</a>
+    </nav>
+    <p class="fine">TravelMap, 2026 Marin Pesa</p>
+  </footer>
+</body>
+</html>
