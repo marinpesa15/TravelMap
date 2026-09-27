@@ -60,11 +60,14 @@
   <script type="module">
     import { signInWithGoogle, signInWithApple, onAuthChange } from './js/auth.js?v=23';
     import { isNative } from './js/platform.js?v=1';
+    import { installLegalViewer } from './js/legal-view.js?v=1';
     import { t, applyTranslations } from './js/i18n.js?v=8';
     import { db } from './js/config.js?v=3';
     import { terminate } from './vendor/firebase/10.12.0/firebase-firestore.js';
 
     applyTranslations();
+    // Nativ oeffnet der Datenschutz-Link sonst ins Leere (target=_blank).
+    installLegalViewer();
 
     // config.js startet Firestore schon hier mit, obwohl diese Seite ihn nie
     // braucht. Nach einem frischen Login hing in der iOS-App dann der erste
