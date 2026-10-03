@@ -6,11 +6,23 @@
     ],
     "ignore": [
       "firebase.json",
-      "**/.*",
-      "**/.*/**"
+      "**/.DS_Store"
     ],
     "rewrites": [],
     "headers": [
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
+      },
       {
         "source": "/",
         "headers": [

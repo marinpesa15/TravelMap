@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["SQ29WTBDH7.com.marinpesa.travelmap"],
+        "components": [
+          {
+            "/": "/map.html",
+            "?": { "token": "?*" },
+            "comment": "Freunde-Einladungslinks oeffnen die App"
+          }
+        ]
+      }
+    ]
+  }
+}

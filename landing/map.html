@@ -7,11 +7,37 @@
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0b0d19">
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
-  <link rel="stylesheet" href="/styles.css?v=1">
+  <script>
+    // Invite links (map.html?token=...) are Universal Links: on an iPhone with
+    // the app installed, iOS opens the app instead of this page. Everyone else
+    // lands here, so with a token this page becomes the invite fallback and
+    // Safari's Smart App Banner offers "Open" / "View" for the app.
+    (function () {
+      if (!new URLSearchParams(location.search).get('token')) return;
+      document.documentElement.classList.add('invite');
+      var meta = document.createElement('meta');
+      meta.name = 'apple-itunes-app';
+      meta.content = 'app-id=6814927672, app-argument=' + location.href;
+      document.head.appendChild(meta);
+    })();
+  </script>
+  <link rel="stylesheet" href="/styles.css?v=2">
 </head>
 <body class="farewell">
+  <!-- Invite link opened outside the app. -->
+  <main class="farewell-card invite-only">
+    <img src="/icons/logo-mark.png" alt="" width="56" height="56">
+    <h1>Du bist zu TravelMap eingeladen.</h1>
+    <p>Öffne diesen Link auf deinem iPhone mit installierter TravelMap-App, dann werdet ihr direkt Freunde. Noch keine App? Lade sie im App Store, melde dich an und tippe den Link danach noch einmal an.</p>
+    <p lang="en">You have been invited to TravelMap. Open this link on your iPhone with the TravelMap app installed and you become friends right away. No app yet? Get it from the App Store, sign in, then tap the link again.</p>
+    <a class="store" href="https://apps.apple.com/de/app/travelmap/id6814927672">
+      <img lang="de" src="/app-store-badge-de.svg" alt="Laden im App Store" width="135" height="40">
+      <img lang="en" src="/app-store-badge-en.svg" alt="Download on the App Store" width="135" height="40">
+    </a>
+  </main>
+
   <!-- Old bookmarks of the web app land here. Say what happened, point home. -->
-  <main class="farewell-card">
+  <main class="farewell-card farewell-only">
     <img src="/icons/logo-mark.png" alt="" width="56" height="56">
     <h1>TravelMap gibt es jetzt im App Store.</h1>
     <p>Die Web-Version wurde am 27. September 2026 abgeschaltet. Deine Karte ist nicht verloren, melde dich in der iPhone-App mit demselben Konto an.</p>
