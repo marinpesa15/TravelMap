@@ -190,6 +190,9 @@ body.farewell { display: grid; place-items: center; padding: 1.25rem; }
 .farewell-card img { margin: 0 auto 1.25rem; }
 .farewell-card h1 { font-size: 1.7rem; }
 .farewell-card p { color: var(--ink-soft); font-size: .97rem; }
+.farewell-card .store { margin-top: .75rem; }
+/* map.html: with ?token= the page is the invite fallback, without it the farewell note. */
+html.invite .farewell-only, html:not(.invite) .invite-only { display: none; }
 
 /* ===== Narrow viewports ===== */
 @media (max-width: 900px) {
