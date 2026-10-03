@@ -11,7 +11,8 @@ export default defineConfig({
     alias: [
       { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-firestore\.js$/, replacement: stub('firebase-firestore.js') },
       { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-auth\.js$/, replacement: stub('firebase-auth.js') },
-      { find: /^\.\/config\.js(\?v=\d+)?$/, replacement: stub('config.js') }
+      { find: /^\.\/config\.js(\?v=\d+)?$/, replacement: stub('config.js') },
+      { find: /^\.\/constants\.js(\?v=\d+)?$/, replacement: stub('constants.js') }
     ]
   },
   test: {

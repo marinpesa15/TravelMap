@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=26';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=14';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=15';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
@@ -27,15 +27,16 @@ import {
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=42';
+} from './ui.js?v=43';
 import { initTheme, reloadMapStyle } from './theme.js?v=20';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=16';
+import { setupSettings } from './settings.js?v=17';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=8';
 import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=10';
+import { startUpdateCheck } from './version.js?v=11';
 import { installLegalViewer } from './legal-view.js?v=1';
+import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
 let _uid            = null;
 let _userData       = null;
@@ -142,6 +143,23 @@ function _pauseStartWatchdog() {
 
 _armStartWatchdog();
 
+// ===== Einladungslinks aus iOS (Universal Links) =====
+// Der Link landet in der Seiten-URL, dann laeuft derselbe Weg wie im Browser.
+// Vor dem ersten Durchlauf von _handleInviteToken holt der Start ihn selbst
+// aus der URL, danach stossen wir die Verarbeitung direkt an.
+let _inviteReady = false;
+
+function _putInviteTokenInUrl(token) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('token', token);
+  history.replaceState({}, '', url);
+}
+
+watchAppLinks(token => {
+  _putInviteTokenInUrl(token);
+  if (_inviteReady && _userData) _handleInviteToken(_userData);
+});
+
 // index.html reads this flag to skip the Firebase bounce for returning users
 function _setSessionHint(on) {
   try {
@@ -205,6 +223,7 @@ async function _init(user) {
     // Process invite links before the map: friend-adding must not depend on
     // Mapbox/WebGL, which can fail inside in-app browsers (WhatsApp etc.).
     await _handleInviteToken(_userData);
+    _inviteReady = true;
 
     _map = await initMap();
 
@@ -357,7 +376,13 @@ function _showUserProfile(user) {
  */
 async function _handleInviteToken(myData) {
   const params = new URLSearchParams(window.location.search);
-  const token  = params.get('token');
+  let token = params.get('token');
+  // iOS-App, Kaltstart per Einladungslink: der Token steht nicht in der
+  // Seiten-URL, sondern in der Start-URL der App.
+  if (!token) {
+    token = await launchInviteToken();
+    if (token) _putInviteTokenInUrl(token);
+  }
   if (!token) return;
 
   // Strip the token only once the outcome is final — if the session dies
