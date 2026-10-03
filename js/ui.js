@@ -1,4 +1,4 @@
-import { MAPBOX_TOKEN } from './constants.js?v=12';
+import { suggestPlaces, retrievePlace } from './remote-search.js?v=1';
 import { searchCountries } from './countries.js?v=23';
 import { t, getLang } from './i18n.js?v=8';
 import { searchLocalCities } from './places.js?v=2';
@@ -253,21 +253,12 @@ async function _searchCities(query, resultsEl) {
     return;
   }
 
-  // Mit Netz kommt Mapbox dazu: kleine Orte und Schreibweisen, die der
-  // lokale Datensatz nicht kennt. Die lokalen Treffer bleiben vorne.
+  // Mit Netz kommt die Mapbox Search Box dazu: kleine Orte, Nationalparks,
+  // Inseln und Regionen, die der lokale Datensatz nicht kennt. Die lokalen
+  // Treffer bleiben vorne. Vorschlaege kommen ohne Koordinaten, die holt
+  // _renderCityResults beim Klick nach.
   try {
-    const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=place&limit=5&access_token=${MAPBOX_TOKEN}`;
-    const res  = await fetch(url, { signal });
-    const data = await res.json();
-    const remote = (data.features ?? [])
-      .filter(f => f.center)
-      .map(f => ({
-        name:    f.text,
-        lat:     f.center[1],
-        lng:     f.center[0],
-        country: f.context?.find(c => c.id.startsWith('country.'))?.short_code?.toUpperCase() || 'XX',
-        label:   f.place_name
-      }));
+    const remote = await suggestPlaces(query, { lang: getLang(), signal });
     const merged = _mergeCityResults(local, remote, 6);
     if (signal.aborted) return;
     if (!merged.length) {
@@ -302,14 +293,27 @@ function _renderCityResults(resultsEl, cities) {
     const item = document.createElement('div');
     item.className   = 'search-result-item';
     item.textContent = city.label ?? city.name;
-    item.addEventListener('click', () => {
-      _selectedCity = {
-        name:    city.name,
-        lat:     city.lat,
-        lng:     city.lng,
-        country: city.country
-      };
-      _openDialog(city.name);
+    item.addEventListener('click', async () => {
+      let selected = { name: city.name, lat: city.lat, lng: city.lng, country: city.country };
+      // Search-Box-Vorschlaege kennen ihren Punkt noch nicht: erst jetzt
+      // nachladen, so zaehlt Mapbox nur gewaehlte Orte als Sitzung.
+      if (selected.lat == null && city.mapboxId) {
+        item.textContent = t('search.searching');
+        try {
+          const place = await retrievePlace(city.mapboxId);
+          if (!place) throw new Error('no coordinates');
+          selected.lat = place.lat;
+          selected.lng = place.lng;
+          if (selected.country === 'XX') selected.country = place.country;
+        } catch (err) {
+          console.error('[TM] place retrieve failed:', err);
+          item.textContent = city.label ?? city.name;
+          showToast(t('search.error'));
+          return;
+        }
+      }
+      _selectedCity = selected;
+      _openDialog(selected.name);
       resultsEl.innerHTML = '';
     });
     resultsEl.appendChild(item);
