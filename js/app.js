@@ -9,16 +9,16 @@ import {
   acceptConsent
 } from './db.js?v=27';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=16';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=17';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=24';
-import { initMap, whenStyleReady, onMapState, retryMapStyle } from './map.js?v=21';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=25';
+} from './countries.js?v=25';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=22';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=26';
 import {
   updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
@@ -28,10 +28,10 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=44';
-import { initTheme, getTheme } from './theme.js?v=21';
+} from './ui.js?v=45';
+import { initTheme, getTheme } from './theme.js?v=22';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=18';
+import { setupSettings } from './settings.js?v=19';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=9';
 import { staggerIn } from './anim.js?v=2';
@@ -348,6 +348,7 @@ async function _init(user) {
     // Live language switch: retranslate static DOM + re-render dynamic lists
     window.addEventListener('tm-langchanged', () => {
       applyTranslations();
+      setMapLanguage(getLang());
       // Search placeholder depends on view/map mode
       const input = document.getElementById('city-search');
       if (input) {
@@ -919,9 +920,9 @@ function _initNetStatus() {
   setupOfflineNotice();
   if (!isOnline()) showOfflineNotice();
   onNetChange(online => {
-    if (!online) { showOfflineNotice(); return; }
+    if (!online) { showOfflineNotice(); useOfflineMap(); return; }
     showOnlineFlash();
-    // Offline-Karte aktiv? Dann den Server-Style sofort neu versuchen.
+    // Gebuendelte Karte aktiv? Dann die Netzkarte sofort neu versuchen.
     retryMapStyle();
   });
 }

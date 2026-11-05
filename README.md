@@ -1,6 +1,6 @@
 # TravelMap 🗺️
 
-A personal travel tracking web app built with vanilla JS, Mapbox GL JS, and Firebase.
+A personal travel tracking app built with vanilla JS, MapLibre GL JS, and Firebase.
 
 **Live:** https://travelmap-f4e3a.web.app
 
@@ -32,7 +32,8 @@ A personal travel tracking web app built with vanilla JS, Mapbox GL JS, and Fire
 | Layer | Tech |
 |-------|------|
 | Frontend | Vanilla JS (ES modules), no build step |
-| Map | Mapbox GL JS v3.4.0 |
+| Map | MapLibre GL JS 4.7.1 + PMTiles (bundled Natural Earth basemap, optional hosted OSM basemap) |
+| Place search | Mapbox Search Box API (online), bundled `data/places.json` (offline) |
 | Auth | Firebase Authentication (Google) |
 | Database | Firestore |
 | Hosting | Firebase Hosting |
@@ -64,7 +65,7 @@ TravelMap/
 │   ├── theme.js        # Dark/light theme API
 │   ├── version.js      # APP_VERSION
 │   ├── config.js       # Firebase config (gitignored)
-│   └── constants.js    # Mapbox token (gitignored)
+│   └── constants.js    # Mapbox token for search, optional BASEMAP_REMOTE_URL (gitignored)
 ├── firestore.rules     # Locked-down security rules
 └── firebase.json       # Hosting config (no-cache headers)
 ```
@@ -73,9 +74,24 @@ TravelMap/
 
 1. Clone the repo
 2. Create `js/config.js` with your Firebase config (see `js/config.example.js`)
-3. Create `js/constants.js` with your Mapbox token (see `js/constants.example.js`)
+3. Create `js/constants.js` with your Mapbox token for the place search (see `js/constants.example.js`)
 4. Fill in your name/address/email in `privacy.html` (search for `[DEIN`)
 5. `firebase use <your-project>` and `firebase deploy`
+
+## Basemap
+
+The map works without a connection. `data/basemap.pmtiles` (16 MB, zoom 0-7,
+Natural Earth in the Protomaps basemap schema) ships inside the app together
+with the style (`vendor/protomaps-basemaps`), fonts and sprites
+(`vendor/basemap-assets`). Rebuild it with
+`npm run build:basemap:ne -- <natural-earth-geojson-dir>`.
+
+For street-level detail, build an OpenStreetMap extract from the Protomaps
+planet build with `npm run build:basemap -- <maxzoom>` (needs
+`brew install pmtiles`). Either bundle it in place of the Natural Earth file
+(zoom 7-8 stays under 150 MB) or host it somewhere with HTTP range support
+and set `BASEMAP_REMOTE_URL` in `js/constants.js`. The app then uses the
+hosted map when reachable and falls back to the bundled one offline.
 
 ## Marker Colors
 

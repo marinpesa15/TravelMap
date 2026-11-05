@@ -10,7 +10,7 @@
 // Ablauf: `suggest` liefert Vorschlaege ohne Koordinaten, erst `retrieve`
 // mit der Mapbox-ID gibt den Punkt. Beide Aufrufe teilen sich ein
 // session_token, Mapbox rechnet so pro Suchsitzung ab, nicht pro Tastendruck.
-import { MAPBOX_TOKEN } from './constants.js?v=12';
+import { MAPBOX_TOKEN } from './constants.js?v=13';
 
 const BASE = 'https://api.mapbox.com/search/searchbox/v1';
 

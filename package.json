@@ -8,12 +8,18 @@
     "ios:sync": "npm run build:web && cap sync ios",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rules": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" npx -y firebase-tools emulators:exec --only firestore --project travelmap-f4e3a \"vitest run --config vitest.rules.config.js\""
+    "test:rules": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" npx -y firebase-tools emulators:exec --only firestore --project travelmap-f4e3a \"vitest run --config vitest.rules.config.js\"",
+    "build:basemap:ne": "node scripts/build-basemap-ne.mjs",
+    "build:basemap": "scripts/build-basemap.sh"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",
+    "@protomaps/basemaps": "^5.7.2",
     "firebase": "^10.14.1",
-    "vitest": "^2.1.8"
+    "geojson-vt": "^4.0.2",
+    "pmtiles": "^3.2.1",
+    "vitest": "^2.1.8",
+    "vt-pbf": "^3.1.3"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.5.2",

@@ -34,10 +34,16 @@ const _loadGeoJSON = loadCountriesGeoJSON;
 
 // ── Map layer setup ───────────────────────────────────────────────────────────
 
+// Die Laenderflaechen gehoeren unter Grenzen und Beschriftungen. Im
+// Protomaps-Style heisst die erste Grenzebene boundaries_country, im alten
+// Mapbox-Style country-label; ohne beides kommen sie obenauf.
+const ANCHOR_LAYERS = ['boundaries_country', 'country-label'];
+
 function _addLayer(map, def) {
   if (map.getLayer(def.id)) return; // already exists
+  const anchor = ANCHOR_LAYERS.find(id => map.getLayer(id));
   try {
-    map.addLayer(def, 'country-label');
+    map.addLayer(def, anchor);
   } catch {
     try { map.addLayer(def); } catch { /* ignore duplicate */ }
   }

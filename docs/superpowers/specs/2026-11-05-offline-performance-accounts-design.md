@@ -187,25 +187,30 @@ Paket 1 bis 3 lassen sich in einer Version ausliefern. Paket 4 ist die Vorausset
 | 1 Avatar-Komponente | umgesetzt, inklusive Bild-Cache in IndexedDB | `js/avatar.js`, Einsatz in `js/ui.js`, `js/markers.js`, `js/app.js` |
 | 2 Start umbauen | umgesetzt | `loadUserDataFast` und nicht blockierender Profilabgleich in `js/db.js`; Karte startet beim Skriptstart, Splash 800 ms, Watchdog ohne Reload bei langsamer Karte, `performance.mark`-Log in `js/app.js` |
 | 3 Apple-Hinweis, Relay-Dialog | umgesetzt | `index.html` (Hinweis über dem Apple-Button), `_maybeShowRelayHint` in `js/app.js`, Dialog in `map.html` |
-| 4 Offline-Karte | umgesetzt, ohne Bibliothekswechsel | `js/fallback-style.js` baut ein Style aus `data/countries.geojson`; `js/map.js` holt den Mapbox-Style selbst per `fetch`, zeigt nach 2,5 s oder bei Fehler die Offline-Karte und versucht den Server mit Backoff (2, 4, 8, 16, 32 s) erneut |
+| 4 Karte offline, MapLibre + PMTiles | umgesetzt | `js/map.js` mit MapLibre GL 4.7.1 und pmtiles 3.2.1; `data/basemap.pmtiles` (Natural Earth, Zoom 0 bis 7, 16 MB) im Bundle; Style aus `vendor/protomaps-basemaps`, Fonts und Sprites in `vendor/basemap-assets`; optionale Netzkarte über `BASEMAP_REMOTE_URL`; `js/fallback-style.js` bleibt als letzte Stufe, falls die Datei fehlt |
 | 5 Anmeldemethoden | umgesetzt für den Normalfall | `linkProvider` in `js/auth.js`, Abschnitt "Anmeldemethoden" in den Einstellungen. Konfliktfall (`auth/credential-already-in-use`) wird erklärt: leeres Konto löschen, mit dem anderen anmelden, Methode dort hinzufügen |
-| 6 MapLibre, PMTiles, Tile-Cache | offen | Wartet auf die Entscheidung zur Bundle-Größe. Die Offline-Karte aus Paket 4 deckt "nie mehr schwarz" ab |
-| Cloud Function zur Kontozusammenführung | offen | Der Weg über "leeres Konto löschen, dann verknüpfen" braucht sie für die sechs Bestandsfälle nicht |
+| 6 Protomaps-Extrakt mit Straßen | Skript vorhanden, Lauf beim Nutzer | `scripts/build-basemap.sh` zieht einen Ausschnitt aus dem Planet-Build (braucht `pmtiles`-CLI und Netz zu build.protomaps.com, aus der Entwicklungsumgebung nicht erreichbar) |
+| Cloud Function zur Kontozusammenführung | bewusst weggelassen | Der Weg über "leeres Konto löschen, dann verknüpfen" reicht |
 
-### Abweichungen vom Konzept
+### So funktioniert die Karte jetzt
 
-- **Bibliothek bleibt Mapbox GL JS.** Der Wechsel auf MapLibre bringt erst mit einer eigenen Kachelquelle (PMTiles) Nutzen. Ohne Gerätetest und ohne Mapbox-Token in dieser Umgebung wäre der Tausch ein Risiko für die Online-Karte, die der Kern der App ist. Die Offline-Karte funktioniert mit Mapbox GL genauso, weil sie nur eine lokale GeoJSON-Quelle braucht.
-- **Style-JSON holt die App selbst.** `map.setStyle(url)` baut bei Mapbox per Diff um und feuert dann kein `style.load`; eigene Ebenen (Länderflächen) verschwinden stumm. Mit `fetch` plus `setStyle(json, { diff: false })` bleibt die sichtbare Karte stehen, bis der neue Style vollständig da ist, und `style.load` kommt zuverlässig.
-- **Theme-Wechsel offline:** Ist ein Server-Style geladen, bleibt er in der alten Farbe stehen (besser als die grobe Karte). Der neue wird nachgeladen, sobald Netz da ist.
+- **Bibliothek:** MapLibre GL JS statt Mapbox GL JS. Kein Token, keine Nutzungsbedingungen zum Zwischenspeichern. `maplibregl.Marker`, `addLayer`, `setStyle` wie vorher. Mapbox bleibt nur für die Online-Ortssuche (`js/remote-search.js`).
+- **Daten:** `data/basemap.pmtiles` wird beim Start einmal komplett geladen (16 MB aus dem Bundle) und aus dem Speicher bedient, weil Range-Anfragen an `capacitor://localhost` nicht verlässlich sind. Land, Ozean, Seen, Landes- und Regionsgrenzen, Länder-, Regions- und Stadtnamen (Deutsch und Englisch), Autobahnen, Siedlungsflächen. Ab Zoom 8 zeichnet MapLibre die Zoom-7-Kacheln vergrößert.
+- **Schema:** `scripts/build-basemap-ne.mjs` wandelt Natural Earth in das Protomaps-Basemap-Schema v4 (`earth`, `water`, `landcover`, `boundaries`, `places`, `roads` mit `kind`, `min_zoom`, `population_rank`, `name:de`). Dadurch gilt derselbe Style auch für einen Protomaps-Extrakt aus OpenStreetMap.
+- **Style:** `@protomaps/basemaps` 5.7.2 erzeugt die Ebenen zur Laufzeit, Farben für dunkel und hell an die App angepasst (`FLAVOR_OVERRIDES` in `js/map.js`). Sprache folgt der App-Sprache. Fonts ohne Leerzeichen im Pfad (`NotoSansRegular` statt `Noto Sans Regular`).
+- **Netzkarte, optional:** Ist `BASEMAP_REMOTE_URL` gesetzt, prüft die App beim Start und bei Netzrückkehr den PMTiles-Kopf (16 KB, Timeout 4 s). Erreichbar: Netzkarte. Nicht erreichbar oder Netz weg: gebündelte Karte, Zustand `fallback`, Hinweis auf der Karte, neuer Versuch mit 2, 4, 8, 16, 32 s. Ohne gesetzte URL gibt es nur die gebündelte Karte und keinen Hinweis.
 
 ### Geprüft
 
-- `npm test`: 124 Tests grün, davon neu: `tests/avatar.test.js`, `tests/fallback-style.test.js`, `tests/start-data.test.js`.
-- Headless Chromium mit echtem Mapbox GL 3.4.0 und blockiertem `api.mapbox.com`: Offline-Karte nach 200 ms, Pins sitzen, hell und dunkel. Mit simuliertem Server-Style: Wechsel Offline → Server, Theme online, Theme offline, automatischer Retry nach Netzrückkehr. Langsames Netz (6 s): Offline-Karte nach 2,5 s, Server-Style bei 6 s. Schnelles Netz: kein Zwischenschritt.
-- Freundesliste, Kartenhinweis und Relay-Dialog gerendert und per Screenshot geprüft.
+- `npm test`: alle Tests grün, neu: `tests/avatar.test.js`, `tests/fallback-style.test.js`, `tests/start-data.test.js`, `tests/basemap.test.js`.
+- Headless Chromium mit MapLibre, jede fremde Adresse blockiert: Weltkarte, Europa auf Deutsch, hell auf Englisch, Zoom 9 über Split. Null externe Anfragen, keine Konsolenfehler.
+- Simulierte Netzkarte mit Range-Antworten: Start auf Netzkarte, Netzverlust → gebündelte Karte, erneuter Versuch offline bleibt lokal, Netzrückkehr → Netzkarte.
+- Freundesliste, Kartenhinweis, Relay-Dialog per Screenshot.
 
 ### Noch zu prüfen auf dem Gerät
 
-- Startzeiten mit Network Link Conditioner ("3G", "Very Bad Network"). Das Log `[TM] start script@…ms auth@…ms data-cache@…ms map@…ms render@…ms` zeigt, wo die Zeit bleibt.
+- Startzeiten mit Network Link Conditioner. Das Log `[TM] start script@…ms auth@…ms data-cache@…ms map@…ms render@…ms` zeigt, wo die Zeit bleibt.
+- Laden der 16-MB-Datei in WKWebView (erwartet unter 200 ms) und `DecompressionStream` für gzip-Kacheln (iOS 16.4 und neuer).
 - Google-Avatare im Bild-Cache: ob `lh3.googleusercontent.com` CORS für `capacitor://localhost` erlaubt. Wenn nicht, bleibt es beim Platzhalter plus Bild online, ohne Cache.
-- Apple-Verknüpfung über das Capacitor-Plugin (`linkWithCredential` mit Apple-Credential und Nonce).
+- Apple-Verknüpfung über das Capacitor-Plugin.
+- Datenschutztext: die Karte lädt nichts mehr von Mapbox, nur die Ortssuche. `privacy.html` und `docs/store/texte.md` nennen Mapbox noch für die Karte.

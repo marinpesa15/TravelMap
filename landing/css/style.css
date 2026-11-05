@@ -651,13 +651,13 @@ body {
     left: 14px;
   }
 
-  /* Mapbox-Logo und Attribution ueber den Home-Indikator */
-  .mapboxgl-ctrl-bottom-left {
+  /* Attribution ueber den Home-Indikator */
+  .maplibregl-ctrl-bottom-left {
     margin-bottom: env(safe-area-inset-bottom) !important;
   }
 
-  /* Mapbox navigation control: push up above browser chrome */
-  .mapboxgl-ctrl-bottom-right {
+  /* Navigation control: push up above browser chrome */
+  .maplibregl-ctrl-bottom-right {
     margin-bottom: max(60px, calc(50px + env(safe-area-inset-bottom))) !important;
   }
 

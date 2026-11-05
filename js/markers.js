@@ -89,7 +89,7 @@ function _addMarker(map, city, type, onRemove, isGroup = false) {
 
   // Beacons and avatar pins point at the spot with their foot — anchor bottom
   const anchor = (isGroupVisited || !isGroup) ? 'bottom' : 'center';
-  const marker = new mapboxgl.Marker({ element: el, anchor })
+  const marker = new maplibregl.Marker({ element: el, anchor })
     .setLngLat([city.lng, city.lat])
     .addTo(map);
   _activeMarkers.push({ marker, name: city.name, type });

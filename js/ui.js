@@ -1,5 +1,5 @@
-import { suggestPlaces, retrievePlace } from './remote-search.js?v=1';
-import { searchCountries } from './countries.js?v=24';
+import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
+import { searchCountries } from './countries.js?v=25';
 import { t, getLang } from './i18n.js?v=9';
 import { searchLocalCities } from './places.js?v=3';
 import { normalize } from './place-search.js?v=1';
