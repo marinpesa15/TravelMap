@@ -6,7 +6,7 @@ import {
   writeBatch, query, where
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { db, auth } from './config.js?v=3';
-import { reauthenticate, revokeAppleSignIn } from './auth.js?v=23';
+import { reauthenticate, revokeAppleSignIn } from './auth.js?v=24';
 
 // Firestore erlaubt hoechstens 500 Operationen pro Batch.
 const BATCH_LIMIT = 500;

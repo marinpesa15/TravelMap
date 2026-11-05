@@ -75,6 +75,49 @@ export async function loadUserData(uid) {
   return snap.exists() ? snap.data() : EMPTY_DATA();
 }
 
+/**
+ * Erster Stand fuer den App-Start, so schnell wie moeglich.
+ *
+ * getDoc geht zuerst zum Server und faellt erst auf den Cache zurueck, wenn
+ * Firestore sich nach rund zehn Sekunden als offline einstuft. Bei schwachem
+ * Netz wartete der ganze Start darauf. Hier liefert der erste Schnappschuss
+ * aus dem lokalen Cache das Ergebnis, der Server kommt ueber den normalen
+ * Listener (subscribeUserData) nach.
+ *
+ * Ein "existiert nicht" aus dem Cache ist nicht verlaesslich: der Cache kann
+ * leer sein, obwohl der Server das Dokument hat. Dann wird auf den Server
+ * gewartet; nur seine Antwort darf ein Konto als neu einstufen.
+ *
+ * @returns {Promise<{ data: object|null, fromCache: boolean } | null>}
+ *   data=null: Server bestaetigt, dass es kein Dokument gibt (neues Konto).
+ *   null: weder Cache noch Server haben innerhalb timeoutMs geantwortet.
+ */
+export function loadUserDataFast(uid, { timeoutMs = 10000 } = {}) {
+  return new Promise(resolve => {
+    let done = false;
+    let unsub = () => {};
+    const finish = value => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      unsub();
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    unsub = onSnapshot(userRef(uid), { includeMetadataChanges: true }, snap => {
+      const fromCache = snap.metadata?.fromCache === true;
+      if (snap.exists())  { finish({ data: snap.data(), fromCache }); return; }
+      if (!fromCache)     { finish({ data: null, fromCache: false }); }
+    }, err => {
+      console.error('[TM] user data listener failed:', err);
+      finish(null);
+    });
+    // Firestore kann den ersten Schnappschuss synchron liefern, dann ist
+    // unsub schon vor der Zuweisung gelaufen und muss nachgeholt werden.
+    if (done) unsub();
+  });
+}
+
 /** Persists the privacy consent on the user doc (creates it if missing). */
 export async function acceptConsent(uid, version) {
   await write(setDoc(userRef(uid), {
@@ -94,34 +137,43 @@ async function ensureDoc(uid) {
  * Returns the resulting user-doc data — callers can use it directly
  * instead of re-reading the doc.
  */
-export async function initUserProfile(uid, user) {
-  const ref      = userRef(uid);
-  const snap     = await getDoc(ref);
-  const existing = snap.exists() ? snap.data() : null;
+export async function initUserProfile(uid, user, existing) {
+  const ref = userRef(uid);
+  // Der Start gibt den schon geladenen Stand mit (loadUserDataFast), das
+  // spart den zweiten Server-Roundtrip. undefined heisst: selbst lesen.
+  if (existing === undefined) {
+    const snap = await getDoc(ref);
+    existing = snap.exists() ? snap.data() : null;
+  }
   const profileFields = {
     display_name: user.displayName || '',
     avatar_url:   user.photoURL   || ''
   };
+
+  // Die Abgleiche hier sind idempotent und fuer die Anzeige nicht noetig:
+  // der lokale Cache ist sofort aktuell, die Server-Bestaetigung darf
+  // spaeter kommen. Wer online darauf wartet, haengt bei schwachem Netz.
+  const sync = promise => write(promise).catch(err => console.error('[TM] profile sync failed:', err));
 
   let token = existing?.invite_token ?? null;
   let data;
   if (!existing) {
     token = crypto.randomUUID();
     data  = { ...EMPTY_DATA(), ...profileFields, invite_token: token };
-    await write(setDoc(ref, data));
+    sync(setDoc(ref, data));
   } else if (!token) {
     token = crypto.randomUUID();
-    await write(updateDoc(ref, { ...profileFields, invite_token: token }));
+    sync(updateDoc(ref, { ...profileFields, invite_token: token }));
     data = { ...existing, ...profileFields, invite_token: token };
   } else {
     const changed = existing.display_name !== profileFields.display_name
                  || existing.avatar_url   !== profileFields.avatar_url;
-    if (changed) await write(updateDoc(ref, profileFields));
+    if (changed) sync(updateDoc(ref, profileFields));
     data = { ...existing, ...profileFields };
   }
   // Keep the invite-lookup doc in sync — also lazily migrates existing users
   // whose token so far only lives in their user doc.
-  await write(setDoc(inviteRef(token), { uid, ...profileFields }));
+  sync(setDoc(inviteRef(token), { uid, ...profileFields }));
   return data;
 }
 

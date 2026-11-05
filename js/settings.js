@@ -1,9 +1,10 @@
-import { t, getLang, setLang } from './i18n.js?v=8';
-import { getTheme, setTheme } from './theme.js?v=20';
-import { signOutUser } from './auth.js?v=23';
-import { APP_VERSION } from './version.js?v=11';
+import { t, getLang, setLang } from './i18n.js?v=9';
+import { getTheme, setTheme } from './theme.js?v=21';
+import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=24';
+import { isNative } from './platform.js?v=1';
+import { APP_VERSION } from './version.js?v=12';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { collectDeletionSummary, deleteAccount } from './account.js?v=5';
+import { collectDeletionSummary, deleteAccount } from './account.js?v=6';
 import { auth } from './config.js?v=3';
 import { isOnline } from './net-status.js?v=1';
 import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
@@ -18,6 +19,7 @@ export function setupSettings(map) {
 
   document.getElementById('btn-settings')?.addEventListener('click', () => {
     _syncSelections();
+    _renderProviders();
     openOverlay(modal);
   });
   document.getElementById('settings-close')?.addEventListener('click', _close);
@@ -98,6 +100,74 @@ export function setupSettings(map) {
       delConfirm.disabled = false;
     }
   });
+
+  // ===== Anmeldemethoden =====
+  // Google und Apple auf einem Konto. Wer sich bei Apple mit verborgener
+  // E-Mail angemeldet hat, bekam ein zweites Konto; hier laesst sich der
+  // jeweils andere Anbieter nachtraeglich anhaengen (js/auth.js).
+  const PROVIDERS = [
+    { id: 'google.com', name: 'Google' },
+    { id: 'apple.com',  name: 'Apple', nativeOnly: true }
+  ];
+  const linkStatus = document.getElementById('settings-link-status');
+
+  function _renderProviders() {
+    const host = document.getElementById('settings-providers');
+    if (!host) return;
+    const linked = new Set(linkedProviders());
+    host.innerHTML = '';
+    if (linkStatus) linkStatus.hidden = true;
+    PROVIDERS.forEach(({ id, name, nativeOnly }) => {
+      if (nativeOnly && !isNative()) return;
+      const row = document.createElement('div');
+      row.className = 'settings-provider';
+      const label = document.createElement('span');
+      label.className = 'settings-provider-name';
+      label.textContent = name;
+      row.appendChild(label);
+      if (linked.has(id)) {
+        const ok = document.createElement('span');
+        ok.className = 'settings-provider-linked';
+        ok.textContent = `✓ ${t('settings.linked')}`;
+        row.appendChild(ok);
+      } else {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'settings-provider-add';
+        btn.textContent = t('settings.link');
+        btn.addEventListener('click', () => _link(id, btn));
+        row.appendChild(btn);
+      }
+      host.appendChild(row);
+    });
+  }
+
+  async function _link(providerId, btn) {
+    if (!linkStatus) return;
+    if (!isOnline()) {
+      linkStatus.hidden = false;
+      linkStatus.textContent = t('toast.needsNetwork');
+      return;
+    }
+    btn.disabled = true;
+    linkStatus.hidden = true;
+    try {
+      await linkProvider(providerId);
+      _renderProviders();
+      linkStatus.hidden = false;
+      linkStatus.textContent = t('link.done');
+    } catch (err) {
+      const code = String(err?.code ?? '');
+      btn.disabled = false;
+      if (code === 'auth/provider-already-linked') { _renderProviders(); return; }
+      // Abbruch im Anbieter-Dialog ist kein Fehler
+      if (/cancel|closed-by-user|user-cancelled|1001/i.test(code + ' ' + (err?.message ?? ''))) return;
+      console.error('[TM] link provider failed:', err);
+      linkStatus.hidden = false;
+      linkStatus.textContent = code === 'auth/credential-already-in-use' || code === 'auth/email-already-in-use'
+        ? t('link.inUse') : t('link.failed');
+    }
+  }
 
   function _close() {
     closeOverlay(modal);

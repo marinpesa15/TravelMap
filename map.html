@@ -208,15 +208,15 @@
           <div id="search-results"></div>
         </div>
         <div class="user-pill" id="user-pill">
-          <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
-          <!-- Platzhalter, wenn der Anbieter kein Foto liefert (Apple) -->
-          <svg id="user-avatar-fallback" class="user-avatar user-avatar-fallback" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-            <circle cx="12" cy="9" r="3.4"/>
-            <path d="M5.5 19.2c0-3.3 2.9-5.2 6.5-5.2s6.5 1.9 6.5 5.2"/>
-          </svg>
+          <span id="user-avatar" class="user-avatar-host"></span>
           <span id="user-name" class="user-name">...</span>
         </div>
+      </div>
+
+      <!-- Kartenzustand: laedt noch, oder Offline-Karte (js/map.js) -->
+      <div id="map-hint" class="map-hint" hidden>
+        <span id="map-hint-text"></span>
+        <button id="map-hint-retry" class="map-hint-retry" data-i18n="map.retry" hidden>Retry</button>
       </div>
 
       <!-- Kurze gruene Rueckmeldung, wenn das Netz zurueck ist (js/app.js) -->
@@ -317,6 +317,11 @@
         <div class="radio-opt" data-lang="de">Deutsch</div>
       </div>
       <div class="settings-divider"></div>
+      <!-- Google und Apple auf einem Konto, siehe linkProvider in js/auth.js -->
+      <p class="dialog-label" data-i18n="settings.signin">Sign-in methods</p>
+      <div class="settings-providers" id="settings-providers"></div>
+      <p id="settings-link-status" class="delete-status" hidden></p>
+      <div class="settings-divider"></div>
       <div class="settings-links">
         <a href="privacy.html#privacy" target="_blank" rel="noopener" data-i18n="settings.privacy">Privacy Policy</a>
         <a href="privacy.html#imprint" target="_blank" rel="noopener" data-i18n="settings.imprint">Legal Notice</a>
@@ -373,6 +378,18 @@
     </div>
   </div>
 
+  <!-- Apple-Login mit verborgener E-Mail hat ein neues Konto angelegt (js/app.js) -->
+  <div id="relay-dialog">
+    <div class="confirm-card">
+      <h3 class="relay-title" data-i18n="relay.title">New account created</h3>
+      <p data-i18n="relay.body">You signed in with Apple and hid your email.</p>
+      <div class="dialog-actions">
+        <button class="btn-cancel" id="relay-later" data-i18n="relay.later">Later</button>
+        <button class="btn-add" id="relay-settings" data-i18n="relay.settings">Open settings</button>
+      </div>
+    </div>
+  </div>
+
   <div id="confirm-dialog">
     <div class="confirm-card">
       <p id="confirm-message" data-i18n="confirm.default">Are you sure?</p>
@@ -412,6 +429,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=57"></script>
+  <script type="module" src="js/app.js?v=58"></script>
 </body>
 </html>

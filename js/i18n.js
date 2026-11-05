@@ -165,7 +165,24 @@ const translations = {
     'auth.signinApple': 'Sign in with Apple',
     'auth.error': 'Sign in failed. Please try again.',
     'auth.privacyNotice': 'By signing in you accept our',
-    'auth.privacyLink': 'Privacy Policy'
+    'auth.privacyLink': 'Privacy Policy',
+    'auth.appleHint': 'Signed in with Google before? Choose "Share My Email" in the Apple dialog, otherwise a second, empty account is created.',
+    // Map state (js/map.js)
+    'map.loading': 'Loading map…',
+    'map.offline': 'Offline map. Details appear once you are back online.',
+    'map.retry': 'Retry',
+    // Apple sign-in with hidden email created a fresh account
+    'relay.title': 'New account created',
+    'relay.body': 'You signed in with Apple and hid your email. If you already used TravelMap with Google, this is a second, empty account. To bring both together: delete this account in Settings, sign in with Google and add Apple as a sign-in method there.',
+    'relay.later': 'Later',
+    'relay.settings': 'Open settings',
+    // Sign-in methods in settings
+    'settings.signin': 'Sign-in methods',
+    'settings.linked': 'Linked',
+    'settings.link': 'Add',
+    'link.done': 'Sign-in method added.',
+    'link.inUse': 'There is already a TravelMap account for this sign-in. If this account here is the empty one: delete it, sign in with the other one and add the method there.',
+    'link.failed': 'Could not add the sign-in method. Please try again.'
   },
   de: {
     // Sidebar
@@ -328,7 +345,24 @@ const translations = {
     'auth.signinApple': 'Mit Apple anmelden',
     'auth.error': 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
     'auth.privacyNotice': 'Mit der Anmeldung akzeptierst du unsere',
-    'auth.privacyLink': 'Datenschutzerklärung'
+    'auth.privacyLink': 'Datenschutzerklärung',
+    'auth.appleHint': 'Schon mal mit Google angemeldet? Wähle im Apple-Dialog "E-Mail teilen", sonst entsteht ein zweites, leeres Konto.',
+    // Kartenzustand (js/map.js)
+    'map.loading': 'Karte lädt…',
+    'map.offline': 'Offline-Karte. Details erscheinen, sobald du wieder online bist.',
+    'map.retry': 'Erneut versuchen',
+    // Apple-Login mit verborgener E-Mail hat ein neues Konto angelegt
+    'relay.title': 'Neues Konto angelegt',
+    'relay.body': 'Du hast dich mit Apple angemeldet und deine E-Mail verborgen. Wenn du TravelMap schon mit Google genutzt hast, ist das hier ein zweites, leeres Konto. So führst du beides zusammen: dieses Konto in den Einstellungen löschen, mit Google anmelden und dort Apple als Anmeldung hinzufügen.',
+    'relay.later': 'Später',
+    'relay.settings': 'Einstellungen öffnen',
+    // Anmeldemethoden in den Einstellungen
+    'settings.signin': 'Anmeldemethoden',
+    'settings.linked': 'Verbunden',
+    'settings.link': 'Hinzufügen',
+    'link.done': 'Anmeldemethode hinzugefügt.',
+    'link.inUse': 'Für diese Anmeldung gibt es schon ein TravelMap-Konto. Wenn dieses Konto hier das leere ist: löschen, mit dem anderen anmelden und die Methode dort hinzufügen.',
+    'link.failed': 'Die Anmeldemethode konnte nicht hinzugefügt werden. Bitte erneut versuchen.'
   }
 };
 

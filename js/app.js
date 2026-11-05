@@ -1,41 +1,43 @@
-import { onAuthChange, signOutUser } from './auth.js?v=23';
+import { onAuthChange, signOutUser } from './auth.js?v=24';
 import {
-  loadUserData, initUserProfile, getUserByToken,
+  loadUserDataFast, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
   addCityToGroup, removeCityFromGroup, updateGroupCityPhoto,
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=26';
+} from './db.js?v=27';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=15';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=16';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=23';
-import { initMap } from './map.js?v=19';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=24';
+} from './countries.js?v=24';
+import { initMap, whenStyleReady, onMapState, retryMapStyle } from './map.js?v=21';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=25';
 import {
   updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
+  showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=43';
-import { initTheme, reloadMapStyle } from './theme.js?v=20';
+} from './ui.js?v=44';
+import { initTheme, getTheme } from './theme.js?v=21';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=17';
+import { setupSettings } from './settings.js?v=18';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
-import { t, getLang, applyTranslations } from './i18n.js?v=8';
+import { t, getLang, applyTranslations } from './i18n.js?v=9';
 import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=11';
-import { installLegalViewer } from './legal-view.js?v=1';
+import { startUpdateCheck } from './version.js?v=12';
+import { installLegalViewer } from './legal-view.js?v=2';
+import { avatarEl } from './avatar.js?v=1';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
 let _uid            = null;
@@ -69,6 +71,7 @@ let _countryClickSetup    = false;
 function _ensureCountryLayers() {
   if (_countryLayersPromise) return _countryLayersPromise;
   _countryLayersPromise = (async () => {
+    await whenStyleReady(_map); // sonst "Style is not done loading"
     await initCountryLayers(_map);
     if (!_countryClickSetup) {
       setupCountryMapClick(_map, _onCountryMapClick);
@@ -83,6 +86,20 @@ function _ensureCountryLayers() {
 
 // Translate static HTML as early as possible (before auth resolves)
 applyTranslations();
+
+// ===== Startzeiten =====
+// Marken je Schritt, einmal nach dem Start ins Log. Damit laesst sich auf
+// dem Geraet mit gedrosseltem Netz sehen, wo die Sekunden bleiben.
+const _marks = [];
+function _mark(name) {
+  _marks.push(`${name}@${Math.round(performance.now())}ms`);
+}
+_mark('script');
+
+// Die Karte haengt nicht am Nutzer, also startet sie sofort und laeuft
+// parallel zu Auth und Firestore. Frueher kam sie erst nach zwei
+// Server-Roundtrips dran, bei schwachem Netz addierte sich alles.
+const _mapReady = initMap({ theme: getTheme() }).then(map => { _mark('map'); return map; });
 // Nativ oeffnet der Datenschutz-Link sonst ins Leere (target=_blank), siehe legal-view.js.
 installLegalViewer();
 
@@ -93,7 +110,7 @@ installLegalViewer();
 // now=true to skip the wait — nothing may sit hidden under the splash. Removal
 // runs on every exit path so it can never trap the user; timers, not the
 // transition promise — see closeOverlay in anim.js.
-const SPLASH_MIN_MS = 2600;
+const SPLASH_MIN_MS = 800;
 function _hideSplash(now = false) {
   const el = document.getElementById('app-splash');
   if (!el) return;
@@ -107,16 +124,12 @@ function _hideSplash(now = false) {
 setTimeout(() => _hideSplash(true), 8000);
 
 // Nach einem frischen Login blieb der Start in der iOS-App manchmal haengen:
-// Splash bis zum Notausgang oben, danach keine Einwilligung, keine Karte,
-// nichts klickbar. Die App neu zu oeffnen hat es immer geloest. Welcher
-// Schritt haengt, liess sich ohne echtes Geraet nicht festnageln, deshalb
-// ueberwacht dieser Waechter den ganzen Start: Ist die Karte nach
-// START_TIMEOUT_MS nicht da, laedt die Seite einmal pro Sitzung neu. Pausiert,
-// solange die Einwilligung auf den Nutzer wartet. Offline bleibt es beim
-// bisherigen Verhalten.
-const START_TIMEOUT_MS = 10000;
+// der erste Firestore-Lesevorgang kam nie zurueck, erst ein Neustart half.
+// Dafuer gibt es einmal pro Sitzung einen Reload, aber nur, wenn Firestore
+// weder Cache noch Server liefert (siehe loadUserDataFast). Eine langsam
+// ladende Karte loest keinen Reload mehr aus: der brach frueher bei
+// schwachem Netz alle laufenden Anfragen ab und verdoppelte die Wartezeit.
 const RELOAD_FLAG = 'tm-init-reloaded';
-let _startTimer = null;
 
 function _sessionFlag(action) {
   try {
@@ -126,22 +139,6 @@ function _sessionFlag(action) {
   } catch { /* storage unavailable */ }
   return false;
 }
-
-function _armStartWatchdog() {
-  clearTimeout(_startTimer);
-  _startTimer = setTimeout(() => {
-    if (!isOnline() || _sessionFlag('get')) return;
-    _sessionFlag('set');
-    window.location.reload();
-  }, START_TIMEOUT_MS);
-}
-
-function _pauseStartWatchdog() {
-  clearTimeout(_startTimer);
-  _startTimer = null;
-}
-
-_armStartWatchdog();
 
 // ===== Einladungslinks aus iOS (Universal Links) =====
 // Der Link landet in der Seiten-URL, dann laeuft derselbe Weg wie im Browser.
@@ -191,15 +188,26 @@ onAuthChange(async user => {
 
 async function _init(user) {
   try {
+    _mark('auth');
+    // Erster Stand aus dem Cache, der Server kommt ueber den Listener nach.
+    const loaded = await loadUserDataFast(_uid);
+    if (!loaded) {
+      // Weder Cache noch Server: das ist der bekannte Haenger nach einem
+      // frischen Login. Einmal neu laden, danach ehrlich scheitern.
+      if (isOnline() && !_sessionFlag('get')) {
+        _sessionFlag('set');
+        window.location.reload();
+        return;
+      }
+      throw new Error('user data unavailable');
+    }
+    _mark(loaded.fromCache ? 'data-cache' : 'data-server');
+    const preData = loaded.data;
+
     // ── Consent gate: nothing is written to Firestore before acceptance ──
-    const preData = await loadUserData(_uid);   // read-only check
     if (!hasConsent(preData)) {
       _hideSplash(true); // consent dialog must not sit under the splash
-      _pauseStartWatchdog(); // the user may take their time here
-      const accepted = await requestConsent(() => {
-        _armStartWatchdog();
-        return acceptConsent(_uid, CONSENT_VERSION);
-      });
+      const accepted = await requestConsent(() => acceptConsent(_uid, CONSENT_VERSION));
       if (!accepted) {
         _setSessionHint(false);
         markLeaving();
@@ -210,8 +218,9 @@ async function _init(user) {
       }
     }
 
-    // initUserProfile returns the fresh doc data — saves a redundant read
-    _userData = await initUserProfile(_uid, user);
+    // Profilabgleich auf dem geladenen Stand, ohne zweiten Roundtrip. Die
+    // Schreibvorgaenge laufen im Hintergrund.
+    _userData = await initUserProfile(_uid, user, preData);
 
     // Self-heal: aeltere Versionen konnten eine Stadt in beiden Listen
     // ablegen. Nur schreiben, wenn der geladene Stand wirklich Doppel hat;
@@ -225,11 +234,13 @@ async function _init(user) {
     await _handleInviteToken(_userData);
     _inviteReady = true;
 
-    _map = await initMap();
+    // Die Karte laeuft seit Skriptstart; hier hoechstens noch kurz warten.
+    _map = await _mapReady;
 
     _showUserProfile(user);
-    // Style reloads (theme toggle) wipe all custom sources + layers — re-init
-    // lazily, and only when the countries view actually needs them.
+    // Style reloads (theme toggle, Offline-Karte, Server-Style nach Offline)
+    // wipe all custom sources + layers — re-init lazily, and only when the
+    // countries view actually needs them.
     _map.on('style.load', () => {
       _countryLayersPromise = null; // style reload wiped sources + layers
       if (_mapMode !== 'countries') return;
@@ -242,8 +253,11 @@ async function _init(user) {
         showCountryLayers(_map);
       }).catch(err => console.error('[TM] country layer re-init failed:', err));
     });
+    // Kartenzustand an die Oberflaeche: "laedt", Offline-Karte oder nichts
+    setupMapHint(retryMapStyle);
+    onMapState(showMapHint);
 
-    initTheme(_map);
+    initTheme();
     setupSettings(_map);
     _initMobileSidebar();
     _initNetStatus();
@@ -254,11 +268,14 @@ async function _init(user) {
 
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
+    _mark('render');
 
     // Map + stats are on screen — reveal the app
-    _pauseStartWatchdog();
     _sessionFlag('clear');
     _hideSplash();
+    console.info('[TM] start', _marks.join(' '));
+
+    _maybeShowRelayHint(user, preData);
 
     // One-time staggered entrance for the sidebar lists (app start only)
     staggerIn('.collection-nav .nav-item, #recent-logs .recent-log-item');
@@ -353,19 +370,32 @@ async function _init(user) {
   }
 }
 
+// ===== Apple-Login mit verborgener E-Mail =====
+// Apple gibt dann eine Relay-Adresse heraus. Firebase kennt sie nicht und
+// legt ein neues Konto an, obwohl die Person vielleicht laengst eines mit
+// Google hat. Die App kann das nicht verhindern, aber beim ersten Start
+// sagen, was passiert ist und wie beide Konten zusammenkommen.
+function _maybeShowRelayHint(user, preData) {
+  if (preData !== null) return; // Konto gab es schon
+  const email = user.email || (user.providerData ?? []).find(p => p.email)?.email || '';
+  if (!/@privaterelay\.appleid\.com$/i.test(email)) return;
+  const key = `tm-relay-hint-${user.uid}`;
+  try {
+    if (localStorage.getItem(key) === '1') return;
+    localStorage.setItem(key, '1');
+  } catch { /* storage unavailable */ }
+  showRelayHint(() => document.getElementById('btn-settings')?.click());
+}
+
 // ===== User Profile =====
 function _showUserProfile(user) {
-  const avatarEl = document.getElementById('user-avatar');
-  const nameEl   = document.getElementById('user-name');
-  // Apple gibt kein Foto heraus. Dann tritt das neutrale Symbol an die
-  // Stelle des Bildes, damit der Button ueberall gleich gross bleibt.
-  const fallbackEl = document.getElementById('user-avatar-fallback');
-  const hasPhoto   = Boolean(user.photoURL);
-  if (avatarEl) {
-    if (hasPhoto) avatarEl.src = user.photoURL;
-    avatarEl.style.display = hasPhoto ? '' : 'none';
-  }
-  if (fallbackEl) fallbackEl.style.display = hasPhoto ? 'none' : 'block';
+  const host   = document.getElementById('user-avatar');
+  const nameEl = document.getElementById('user-name');
+  // Apple gibt kein Foto heraus, Google nur online: der Kreis mit der
+  // Initiale steht immer, das Bild kommt dazu, wenn es laedt (js/avatar.js).
+  host?.replaceChildren(avatarEl({
+    name: user.displayName || user.email, url: user.photoURL, seed: user.uid, className: 'user-avatar'
+  }));
   if (nameEl) {
     nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
   }
@@ -883,16 +913,16 @@ function _closeMobileSearchOverlay() {
 
 // ===== Netzzustand =====
 // Offline laeuft die App weiter: Firestore liest aus dem lokalen Cache und
-// sammelt Schreibvorgaenge, bis wieder Netz da ist. Nur die Karte bleibt
-// leer, weil Mapbox seine Kacheln vom Server holt.
+// sammelt Schreibvorgaenge, bis wieder Netz da ist. Die Karte zeigt
+// solange die Offline-Karte aus js/fallback-style.js.
 function _initNetStatus() {
   setupOfflineNotice();
   if (!isOnline()) showOfflineNotice();
   onNetChange(online => {
     if (!online) { showOfflineNotice(); return; }
     showOnlineFlash();
-    // Mapbox versucht ein gescheitertes Style nicht von selbst erneut.
-    if (_map && !_map.isStyleLoaded()) reloadMapStyle(_map);
+    // Offline-Karte aktiv? Dann den Server-Style sofort neu versuchen.
+    retryMapStyle();
   });
 }
 

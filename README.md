@@ -53,11 +53,13 @@ TravelMap/
 │   ├── friends.js      # Friendships (invite links)
 │   ├── groups.js       # Group CRUD + membership
 │   ├── countries.js    # Countries mode (GeoJSON fills, search)
-│   ├── map.js          # Mapbox map init
+│   ├── map.js          # Map init, style fetch with retry, offline fallback state
+│   ├── fallback-style.js # Offline map style built from the bundled countries GeoJSON
 │   ├── markers.js      # City marker rendering
+│   ├── avatar.js       # Avatar with initials placeholder + local image cache
 │   ├── ui.js           # Stats, search, dialogs, toasts, sidebar lists
 │   ├── i18n.js         # EN/DE translations, t(), data-i18n
-│   ├── settings.js     # Settings modal (theme, language, sign-out)
+│   ├── settings.js     # Settings modal (theme, language, sign-in methods, sign-out)
 │   ├── consent.js      # GDPR consent banner + version
 │   ├── theme.js        # Dark/light theme API
 │   ├── version.js      # APP_VERSION

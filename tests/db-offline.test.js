@@ -3,7 +3,7 @@
 // Genau das haengt sonst die App auf, siehe js/offline-write.js.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { __state, __reset } from './stubs/firebase-firestore.js';
-import { addVisitedCity, addWishlistCity, addVisitedCountry } from '../js/db.js?v=26';
+import { addVisitedCity, addWishlistCity, addVisitedCountry } from '../js/db.js?v=27';
 
 const SEED = () => ({
   visited_countries: [], wishlist_countries: [],

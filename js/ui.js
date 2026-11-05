@@ -1,10 +1,11 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=1';
-import { searchCountries } from './countries.js?v=23';
-import { t, getLang } from './i18n.js?v=8';
-import { searchLocalCities } from './places.js?v=2';
+import { searchCountries } from './countries.js?v=24';
+import { t, getLang } from './i18n.js?v=9';
+import { searchLocalCities } from './places.js?v=3';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
+import { avatarEl } from './avatar.js?v=1';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -17,11 +18,6 @@ function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[ch]));
-}
-
-// Avatar URLs are written by other users — only allow http(s).
-function safeUrl(url) {
-  return /^https?:\/\//i.test(url ?? '') ? url : '';
 }
 
 // ===== Stats & Sidebar =====
@@ -397,6 +393,52 @@ export function showOnlineFlash() {
   }, 2600);
 }
 
+// ===== Kartenzustand =====
+// Kleiner Hinweis auf der Karte: "laedt" erst nach kurzer Frist, damit ein
+// schneller Start nicht flackert; die Offline-Karte mit Knopf zum Nachladen.
+let _mapHintTimer = null;
+const MAP_HINT_DELAY_MS = 2500;
+
+export function showMapHint(state) {
+  const el   = document.getElementById('map-hint');
+  const text = document.getElementById('map-hint-text');
+  const btn  = document.getElementById('map-hint-retry');
+  if (!el || !text) return;
+  clearTimeout(_mapHintTimer);
+  if (state === 'ready') { el.hidden = true; return; }
+  if (state === 'fallback') {
+    text.textContent = t('map.offline');
+    if (btn) btn.hidden = false;
+    el.hidden = false;
+    return;
+  }
+  _mapHintTimer = setTimeout(() => {
+    text.textContent = t('map.loading');
+    if (btn) btn.hidden = true;
+    el.hidden = false;
+  }, MAP_HINT_DELAY_MS);
+}
+
+export function setupMapHint(onRetry) {
+  document.getElementById('map-hint-retry')?.addEventListener('click', onRetry);
+}
+
+/**
+ * Hinweis nach einem Apple-Login mit verborgener E-Mail, der ein frisches
+ * Konto angelegt hat (js/app.js). onSettings oeffnet die Einstellungen.
+ */
+export function showRelayHint(onSettings) {
+  const dialog = document.getElementById('relay-dialog');
+  if (!dialog) return;
+  const close = () => closeOverlay(dialog);
+  document.getElementById('relay-later')?.addEventListener('click', close, { once: true });
+  document.getElementById('relay-settings')?.addEventListener('click', () => {
+    close();
+    onSettings?.();
+  }, { once: true });
+  openOverlay(dialog);
+}
+
 let _toastTimer = null;
 
 export function showToast(message) {
@@ -516,17 +558,14 @@ export function renderFriendsList(friends, onViewFriend, onDeleteFriend) {
     item.className = 'social-item';
     item.dataset.uid = friend.uid;
 
-    const avatarUrl = safeUrl(friend.avatar_url);
-    const avatar = avatarUrl
-      ? `<img class="social-avatar" src="${esc(avatarUrl)}" alt="" loading="lazy">`
-      : `<div class="social-avatar-placeholder">👤</div>`;
-
     item.innerHTML = `
-      ${avatar}
       <span class="social-name">${esc(friend.display_name) || t('friend.fallback')}</span>
       ${_reportButton()}
       <button class="btn-remove-friend" title="${t('friend.removeTitle')}">✕</button>
     `;
+    item.prepend(avatarEl({
+      name: friend.display_name, url: friend.avatar_url, seed: friend.uid, className: 'social-avatar'
+    }));
     item.addEventListener('click', e => {
       if (e.target.closest('.btn-remove-friend, .btn-report-user')) return;
       onViewFriend(friend);
@@ -677,11 +716,6 @@ function _renderGroupMembers(group, friends) {
     const name   = uid === _groupModalUid ? t('group.you')
                  : (friend?.display_name || t('group.member'));
 
-    const avatarUrl = safeUrl(friend?.avatar_url);
-    const avatar = avatarUrl
-      ? `<img class="social-avatar" src="${esc(avatarUrl)}" alt="" loading="lazy">`
-      : `<div class="social-avatar-placeholder">👤</div>`;
-
     const badge     = uid === group.created_by ? `<span class="group-member-badge" title="${t('group.creator')}">👑</span>` : '';
     const removable  = isCreator && uid !== group.created_by;
     const reportable = uid !== _groupModalUid;
@@ -689,12 +723,14 @@ function _renderGroupMembers(group, friends) {
     const item = document.createElement('div');
     item.className = 'group-member-item';
     item.innerHTML = `
-      ${avatar}
       <span class="group-member-name">${esc(name)}</span>
       ${badge}
       ${reportable ? _reportButton() : ''}
       ${removable ? `<button class="btn-remove-friend" title="${t('group.removeFromGroup')}">✕</button>` : ''}
     `;
+    item.prepend(avatarEl({
+      name: friend?.display_name, url: friend?.avatar_url, seed: uid, className: 'social-avatar'
+    }));
 
     item.querySelector('.btn-report-user')?.addEventListener('click', () => {
       _reportUser({ uid, name, group: { id: group.id, name: group.name } }, _groupModalUid);

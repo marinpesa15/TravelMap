@@ -6,6 +6,8 @@ export const signOut = async () => {};
 export const onAuthStateChanged = () => () => {};
 export class OAuthProvider { credential() { return {}; } }
 export const signInWithCredential = async () => ({});
+export const linkWithCredential = async () => ({ user: { providerData: [] } });
+export const linkWithPopup = async () => ({});
 export const reauthenticateWithCredential = async () => ({});
 export const revokeAccessToken = async () => {};
 export const updateProfile = async () => {};

@@ -6,7 +6,10 @@ export const __state = {
   doc: null,            // Inhalt des gelesenen Dokuments, null = existiert nicht
   transactionError: null, // Fehler, den runTransaction werfen soll
   ackWrites: true,      // false = Schreibversprechen bleibt offen (offline)
-  writes: []            // ['update'|'set', data] je Schreibvorgang
+  writes: [],           // ['update'|'set', data] je Schreibvorgang
+  // Schnappschuesse, die onSnapshot nacheinander liefert:
+  // { exists, data, fromCache } oder { error }. Leer = Listener schweigt.
+  snapshots: []
 };
 
 export function __reset(doc = null) {
@@ -14,6 +17,7 @@ export function __reset(doc = null) {
   __state.transactionError = null;
   __state.ackWrites = true;
   __state.writes = [];
+  __state.snapshots = [];
 }
 
 const record = (kind, data) => {
@@ -34,7 +38,30 @@ export const getDocs = async () => ({ docs: [] });
 export const deleteDoc = async () => {};
 export const updateDoc = (ref, data) => record('update', data);
 export const setDoc = (ref, data) => record('set', data);
-export const onSnapshot = () => () => {};
+// onSnapshot(ref, cb) oder onSnapshot(ref, options, cb, errCb). Liefert die
+// vorbereiteten Schnappschuesse asynchron, einen pro Makrotask.
+export const onSnapshot = (ref, a, b, c) => {
+  const cb    = typeof a === 'function' ? a : b;
+  const errCb = typeof a === 'function' ? b : c;
+  let active = true;
+  const queue = [...__state.snapshots];
+  const next = () => {
+    if (!active || !queue.length) return;
+    const item = queue.shift();
+    setTimeout(() => {
+      if (!active) return;
+      if (item.error) errCb?.(item.error);
+      else cb({
+        exists:   () => item.exists !== false,
+        data:     () => item.data,
+        metadata: { fromCache: item.fromCache === true, hasPendingWrites: false }
+      });
+      next();
+    }, 0);
+  };
+  next();
+  return () => { active = false; };
+};
 export const writeBatch = () => ({ delete: () => {}, commit: async () => {} });
 export const query = () => ({});
 export const where = () => ({});

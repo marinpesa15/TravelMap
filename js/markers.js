@@ -1,4 +1,5 @@
 import { dropIn } from './anim.js?v=2';
+import { avatarEl } from './avatar.js?v=1';
 
 const _activeMarkers = [];
 
@@ -158,36 +159,14 @@ function _createGroupVisitedMarkerEl(city, onRemove) {
   wrap.className = 'group-pin-visited';
   wrap.title     = city.name;
 
-  const photoURL    = city.addedBy?.photoURL    || '';
-  const displayName = city.addedBy?.displayName || '?';
-  const initial     = displayName.trim()[0]?.toUpperCase() || '?';
-
-  if (photoURL) {
-    // Avatar image — falls back to initial div on error
-    const img = document.createElement('img');
-    img.src   = photoURL;
-    img.alt   = displayName;
-    img.className = 'group-pin-img';
-
-    const fallback = document.createElement('div');
-    fallback.className   = 'group-pin-fallback';
-    fallback.textContent = initial;
-    fallback.style.display = 'none';
-
-    img.addEventListener('error', () => {
-      img.style.display      = 'none';
-      fallback.style.display = 'flex';
-    });
-
-    wrap.appendChild(img);
-    wrap.appendChild(fallback);
-  } else {
-    // No photo URL — show initial directly
-    const fallback = document.createElement('div');
-    fallback.className   = 'group-pin-fallback';
-    fallback.textContent = initial;
-    wrap.appendChild(fallback);
-  }
+  // Platzhalter mit Initiale zuerst, das Foto legt sich darueber, sobald
+  // es geladen ist (js/avatar.js). So steht offline nie ein kaputtes Bild.
+  wrap.appendChild(avatarEl({
+    name:      city.addedBy?.displayName,
+    url:       city.addedBy?.photoURL,
+    seed:      city.addedBy?.uid ?? city.addedBy?.displayName,
+    className: 'group-pin-img'
+  }));
 
   if (onRemove) {
     wrap.addEventListener('click', (e) => {

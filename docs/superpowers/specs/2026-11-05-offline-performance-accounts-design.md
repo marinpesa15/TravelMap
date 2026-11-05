@@ -177,3 +177,35 @@ Vier Punkte aus der Liste treffen und stecken alle in Problem 2: Skeleton statt 
 | 6 | PMTiles-Basiskarte und Tile-Cache | Problem 3, Schritt 2 und 3 | groß |
 
 Paket 1 bis 3 lassen sich in einer Version ausliefern. Paket 4 ist die Voraussetzung für 6 und sollte vor der Entscheidung über die Bundle-Größe stehen.
+
+---
+
+## Umsetzungsstand (05.11.2026, Branch `claude/map-loading-offline-mode-80w75j`)
+
+| Paket | Stand | Wo |
+|---|---|---|
+| 1 Avatar-Komponente | umgesetzt, inklusive Bild-Cache in IndexedDB | `js/avatar.js`, Einsatz in `js/ui.js`, `js/markers.js`, `js/app.js` |
+| 2 Start umbauen | umgesetzt | `loadUserDataFast` und nicht blockierender Profilabgleich in `js/db.js`; Karte startet beim Skriptstart, Splash 800 ms, Watchdog ohne Reload bei langsamer Karte, `performance.mark`-Log in `js/app.js` |
+| 3 Apple-Hinweis, Relay-Dialog | umgesetzt | `index.html` (Hinweis über dem Apple-Button), `_maybeShowRelayHint` in `js/app.js`, Dialog in `map.html` |
+| 4 Offline-Karte | umgesetzt, ohne Bibliothekswechsel | `js/fallback-style.js` baut ein Style aus `data/countries.geojson`; `js/map.js` holt den Mapbox-Style selbst per `fetch`, zeigt nach 2,5 s oder bei Fehler die Offline-Karte und versucht den Server mit Backoff (2, 4, 8, 16, 32 s) erneut |
+| 5 Anmeldemethoden | umgesetzt für den Normalfall | `linkProvider` in `js/auth.js`, Abschnitt "Anmeldemethoden" in den Einstellungen. Konfliktfall (`auth/credential-already-in-use`) wird erklärt: leeres Konto löschen, mit dem anderen anmelden, Methode dort hinzufügen |
+| 6 MapLibre, PMTiles, Tile-Cache | offen | Wartet auf die Entscheidung zur Bundle-Größe. Die Offline-Karte aus Paket 4 deckt "nie mehr schwarz" ab |
+| Cloud Function zur Kontozusammenführung | offen | Der Weg über "leeres Konto löschen, dann verknüpfen" braucht sie für die sechs Bestandsfälle nicht |
+
+### Abweichungen vom Konzept
+
+- **Bibliothek bleibt Mapbox GL JS.** Der Wechsel auf MapLibre bringt erst mit einer eigenen Kachelquelle (PMTiles) Nutzen. Ohne Gerätetest und ohne Mapbox-Token in dieser Umgebung wäre der Tausch ein Risiko für die Online-Karte, die der Kern der App ist. Die Offline-Karte funktioniert mit Mapbox GL genauso, weil sie nur eine lokale GeoJSON-Quelle braucht.
+- **Style-JSON holt die App selbst.** `map.setStyle(url)` baut bei Mapbox per Diff um und feuert dann kein `style.load`; eigene Ebenen (Länderflächen) verschwinden stumm. Mit `fetch` plus `setStyle(json, { diff: false })` bleibt die sichtbare Karte stehen, bis der neue Style vollständig da ist, und `style.load` kommt zuverlässig.
+- **Theme-Wechsel offline:** Ist ein Server-Style geladen, bleibt er in der alten Farbe stehen (besser als die grobe Karte). Der neue wird nachgeladen, sobald Netz da ist.
+
+### Geprüft
+
+- `npm test`: 124 Tests grün, davon neu: `tests/avatar.test.js`, `tests/fallback-style.test.js`, `tests/start-data.test.js`.
+- Headless Chromium mit echtem Mapbox GL 3.4.0 und blockiertem `api.mapbox.com`: Offline-Karte nach 200 ms, Pins sitzen, hell und dunkel. Mit simuliertem Server-Style: Wechsel Offline → Server, Theme online, Theme offline, automatischer Retry nach Netzrückkehr. Langsames Netz (6 s): Offline-Karte nach 2,5 s, Server-Style bei 6 s. Schnelles Netz: kein Zwischenschritt.
+- Freundesliste, Kartenhinweis und Relay-Dialog gerendert und per Screenshot geprüft.
+
+### Noch zu prüfen auf dem Gerät
+
+- Startzeiten mit Network Link Conditioner ("3G", "Very Bad Network"). Das Log `[TM] start script@…ms auth@…ms data-cache@…ms map@…ms render@…ms` zeigt, wo die Zeit bleibt.
+- Google-Avatare im Bild-Cache: ob `lh3.googleusercontent.com` CORS für `capacitor://localhost` erlaubt. Wenn nicht, bleibt es beim Platzhalter plus Bild online, ohne Cache.
+- Apple-Verknüpfung über das Capacitor-Plugin (`linkWithCredential` mit Apple-Credential und Nonce).

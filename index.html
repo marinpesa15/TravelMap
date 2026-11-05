@@ -48,6 +48,8 @@
         </svg>
         <span data-i18n="auth.signinApple">Sign in with Apple</span>
       </button>
+      <!-- Nur mit Apple-Button: "E-Mail verbergen" legt sonst ein zweites Konto an -->
+      <p class="auth-hint auth-hidden" id="apple-hint" data-i18n="auth.appleHint">Signed in with Google before? Choose "Share My Email" in the Apple dialog, otherwise a second, empty account is created.</p>
       <p class="auth-error" id="auth-error"></p>
       <p class="auth-privacy">
         <span data-i18n="auth.privacyNotice">By signing in you accept our</span>
@@ -58,11 +60,11 @@
   </div>
 
   <script type="module">
-    import { signInWithGoogle, signInWithApple, onAuthChange } from './js/auth.js?v=23';
+    import { signInWithGoogle, signInWithApple, onAuthChange } from './js/auth.js?v=24';
     import { isNative } from './js/platform.js?v=1';
-    import { installLegalViewer } from './js/legal-view.js?v=1';
+    import { installLegalViewer } from './js/legal-view.js?v=2';
     import { watchAppLinks, launchInviteToken } from './js/app-links.js?v=1';
-    import { t, applyTranslations } from './js/i18n.js?v=8';
+    import { t, applyTranslations } from './js/i18n.js?v=9';
     import { db } from './js/config.js?v=3';
     import { terminate } from './vendor/firebase/10.12.0/firebase-firestore.js';
 
@@ -125,6 +127,7 @@
     if (isNative()) {
       const appleBtn = document.getElementById('btn-signin-apple');
       appleBtn.classList.remove('auth-hidden');
+      document.getElementById('apple-hint').classList.remove('auth-hidden');
       appleBtn.addEventListener('click', () => runSignIn(signInWithApple));
     }
   </script>

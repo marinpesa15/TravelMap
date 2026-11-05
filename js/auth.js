@@ -3,6 +3,8 @@ import {
   OAuthProvider,
   signInWithPopup,
   signInWithCredential,
+  linkWithCredential,
+  linkWithPopup,
   reauthenticateWithPopup,
   reauthenticateWithCredential,
   revokeAccessToken,
@@ -77,6 +79,41 @@ export async function signInWithApple() {
     await updateProfile(result.user, { displayName });
   }
   return result;
+}
+
+/** Anbieter-IDs, die am aktuellen Konto haengen, z.B. ['google.com', 'apple.com']. */
+export function linkedProviders() {
+  return (auth.currentUser?.providerData ?? []).map(p => p.providerId);
+}
+
+/**
+ * Haengt einen zweiten Anbieter an das aktuelle Konto, damit Google und
+ * Apple auf derselben uid landen. Firebase meldet
+ * 'auth/credential-already-in-use', wenn der Anbieter schon ein eigenes
+ * Konto hat; das zeigt die Oberflaeche dem Nutzer, zusammenfuehren kann
+ * die App nicht.
+ *
+ * Apple gibt kein Foto und den Namen nur beim allerersten Login heraus:
+ * fehlt beides am Konto, kommt es vom neu verknuepften Anbieter.
+ */
+export async function linkProvider(providerId) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('not-signed-in');
+  if (!isNative()) {
+    await linkWithPopup(user, providerId === 'apple.com' ? new OAuthProvider('apple.com') : provider);
+    return;
+  }
+  const { credential, displayName } = await nativeCredential(providerId);
+  const result = await linkWithCredential(user, credential);
+  const linked  = result.user;
+  const fromProvider = linked.providerData.find(p => p.providerId === providerId);
+  const updates = {};
+  if (!linked.photoURL && fromProvider?.photoURL) updates.photoURL = fromProvider.photoURL;
+  if (!linked.displayName) {
+    const name = displayName || fromProvider?.displayName;
+    if (name) updates.displayName = name;
+  }
+  if (Object.keys(updates).length) await updateProfile(linked, updates);
 }
 
 /** Returns Promise<void>. */

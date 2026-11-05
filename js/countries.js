@@ -1,4 +1,4 @@
-import { searchLocalCountries } from './places.js?v=2';
+import { searchLocalCountries } from './places.js?v=3';
 
 const LAYER_VISITED  = 'tm-visited';
 const LAYER_WISHLIST = 'tm-wishlist';
@@ -14,13 +14,23 @@ let _geojsonData = null;
 
 // ── GeoJSON loader ────────────────────────────────────────────────────────────
 
-async function _loadGeoJSON() {
-  if (_geojsonData) return _geojsonData;
-  const resp = await fetch(GEOJSON_URL);
-  if (!resp.ok) throw new Error(`GeoJSON fetch failed: ${resp.status}`);
-  _geojsonData = await resp.json();
-  return _geojsonData;
+let _geojsonPromise = null;
+
+/** Die gebuendelten Laendergrenzen, einmal geladen und dann geteilt
+ *  (Laender-Ebenen hier, Offline-Karte in js/map.js). */
+export function loadCountriesGeoJSON() {
+  if (_geojsonData) return Promise.resolve(_geojsonData);
+  if (_geojsonPromise) return _geojsonPromise;
+  _geojsonPromise = (async () => {
+    const resp = await fetch(GEOJSON_URL);
+    if (!resp.ok) throw new Error(`GeoJSON fetch failed: ${resp.status}`);
+    _geojsonData = await resp.json();
+    return _geojsonData;
+  })().catch(err => { _geojsonPromise = null; throw err; });
+  return _geojsonPromise;
 }
+
+const _loadGeoJSON = loadCountriesGeoJSON;
 
 // ── Map layer setup ───────────────────────────────────────────────────────────
 
