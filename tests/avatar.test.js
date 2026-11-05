@@ -1,6 +1,6 @@
 // Initialen und Farbe fuer den Avatar-Platzhalter, siehe js/avatar.js.
 import { describe, it, expect } from 'vitest';
-import { initials, avatarColor } from '../js/avatar.js?v=1';
+import { initials, avatarColor, safeAvatarUrl } from '../js/avatar.js?v=2';
 
 describe('initials', () => {
   it('nimmt Vor- und Nachnamen', () => {
@@ -48,5 +48,24 @@ describe('avatarColor', () => {
   it('verteilt verschiedene Seeds auf mehrere Farben', () => {
     const colors = new Set(Array.from({ length: 40 }, (_, i) => avatarColor(`user-${i}`)));
     expect(colors.size).toBeGreaterThan(3);
+  });
+});
+
+describe('safeAvatarUrl', () => {
+  it('laesst http(s) und Bild-Daten-URLs durch', () => {
+    expect(safeAvatarUrl('https://lh3.googleusercontent.com/a.png')).toBe('https://lh3.googleusercontent.com/a.png');
+    expect(safeAvatarUrl('http://example.com/a.jpg')).toBe('http://example.com/a.jpg');
+    // Gruppenfotos aus dem Foto-Dialog liegen als JPEG-Daten-URL in Firestore
+    expect(safeAvatarUrl('data:image/jpeg;base64,/9j/4AAQ')).toBe('data:image/jpeg;base64,/9j/4AAQ');
+    expect(safeAvatarUrl('data:image/png;base64,iVBOR')).toBe('data:image/png;base64,iVBOR');
+  });
+
+  it('blockt alles andere', () => {
+    expect(safeAvatarUrl('javascript:alert(1)')).toBe('');
+    expect(safeAvatarUrl('data:text/html;base64,PHNjcmlwdD4=')).toBe('');
+    expect(safeAvatarUrl('data:image/svg+xml;base64,PHN2Zz4=')).toBe('');
+    expect(safeAvatarUrl('file:///etc/passwd')).toBe('');
+    expect(safeAvatarUrl('')).toBe('');
+    expect(safeAvatarUrl(null)).toBe('');
   });
 });

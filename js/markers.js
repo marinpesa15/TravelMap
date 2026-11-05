@@ -1,5 +1,5 @@
 import { dropIn } from './anim.js?v=2';
-import { avatarEl } from './avatar.js?v=1';
+import { avatarEl } from './avatar.js?v=2';
 
 const _activeMarkers = [];
 

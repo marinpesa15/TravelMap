@@ -41,9 +41,14 @@ export function avatarColor(seed) {
   return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 
-// Avatar-URLs schreiben andere Nutzer, deshalb nur http(s).
-function safeUrl(url) {
-  return /^https?:\/\//i.test(url ?? '') ? url : '';
+// Avatar-URLs schreiben andere Nutzer, deshalb nur http(s) und Bilder als
+// Daten-URL. Letztere kommen vom Foto-Dialog der Gruppen (js/ui.js), der
+// das gewaehlte Bild als JPEG-Daten-URL in Firestore ablegt.
+export function safeAvatarUrl(url) {
+  const u = String(url ?? '');
+  if (/^https?:\/\//i.test(u)) return u;
+  if (/^data:image\/(jpeg|jpg|png|gif|webp);base64,/i.test(u)) return u;
+  return '';
 }
 
 /**
@@ -64,28 +69,33 @@ export function avatarEl({ name, url, seed, className = '' } = {}) {
   text.textContent = initials(name);
   el.appendChild(text);
 
-  const src = safeUrl(url);
+  const src = safeAvatarUrl(url);
   if (src) attachImage(el, src);
   return el;
 }
 
 /**
- * Legt das Bild ueber den Platzhalter. Erst aus dem lokalen Cache (auch
- * offline), dann frisch vom Netz. Ein Fehler entfernt das Bild wieder.
+ * Legt das Bild ueber den Platzhalter. Zuerst direkt von der Quelle (online
+ * der schnellste Weg, der Browser-Cache hilft mit). Scheitert das, etwa
+ * offline, kommt die Kopie aus IndexedDB. Scheitert auch die, bleibt der
+ * Kreis mit den Initialen.
  */
 function attachImage(el, src) {
   const img = document.createElement('img');
   img.alt = '';
-  img.loading = 'lazy';
   img.decoding = 'async';
+  let triedCache = false;
   img.addEventListener('load', () => img.classList.add('loaded'));
-  img.addEventListener('error', () => img.remove());
-  el.appendChild(img);
-
-  readCachedAvatar(src).then(cached => {
-    img.src = cached ?? src;
-    if (!cached) cacheAvatar(src);
+  img.addEventListener('error', async () => {
+    if (triedCache) { img.remove(); return; }
+    triedCache = true;
+    const cached = await readCachedAvatar(src);
+    if (cached) img.src = cached;
+    else img.remove();
   });
+  el.appendChild(img);
+  img.src = src;
+  if (/^https?:/i.test(src)) cacheAvatar(src);
 }
 
 // ===== Lokaler Bild-Cache =====
@@ -146,9 +156,17 @@ async function readCachedAvatar(src) {
   return url;
 }
 
+// Pro Sitzung und Adresse nur ein Versuch, und keiner, wenn die Kopie
+// schon frisch genug ist.
+const _cacheAttempted = new Set();
+
 async function cacheAvatar(src) {
+  if (_cacheAttempted.has(src)) return;
+  _cacheAttempted.add(src);
   const db = await openDb();
   if (!db) return;
+  const existing = await idbGet(db, src);
+  if (existing?.blob && Date.now() - existing.at < MAX_AGE_MS / 2) return;
   try {
     const res = await fetch(src, { mode: 'cors' });
     if (!res.ok) return;

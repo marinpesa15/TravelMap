@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=27';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=17';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=18';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
@@ -18,7 +18,7 @@ import {
   setupCountryMapClick
 } from './countries.js?v=25';
 import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=22';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=26';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=27';
 import {
   updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
@@ -28,7 +28,7 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=45';
+} from './ui.js?v=46';
 import { initTheme, getTheme } from './theme.js?v=22';
 import { isOnline, onNetChange } from './net-status.js?v=1';
 import { setupSettings } from './settings.js?v=19';
@@ -37,7 +37,7 @@ import { t, getLang, applyTranslations } from './i18n.js?v=9';
 import { staggerIn } from './anim.js?v=2';
 import { startUpdateCheck } from './version.js?v=13';
 import { installLegalViewer } from './legal-view.js?v=2';
-import { avatarEl } from './avatar.js?v=1';
+import { avatarEl } from './avatar.js?v=2';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
 let _uid            = null;

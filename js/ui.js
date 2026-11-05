@@ -5,7 +5,7 @@ import { searchLocalCities } from './places.js?v=3';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
-import { avatarEl } from './avatar.js?v=1';
+import { avatarEl } from './avatar.js?v=2';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
