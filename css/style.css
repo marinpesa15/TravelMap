@@ -1192,6 +1192,7 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 .settings-provider {
   display: flex; align-items: center; gap: 10px; padding: 8px 10px;
   border: 1px solid var(--bd-dialog); border-radius: 9px; font-size: 0.82rem;
+  color: var(--tx-primary); /* sonst erbt der Text die Seitenfarbe, im Dunkeln schwarz */
 }
 .settings-provider-name { flex: 1; font-weight: 600; }
 .settings-provider-linked { font-size: 0.74rem; color: #34d399; }
