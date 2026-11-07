@@ -31,11 +31,11 @@ import {
 } from './ui.js?v=46';
 import { initTheme, getTheme } from './theme.js?v=22';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=19';
+import { setupSettings } from './settings.js?v=20';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
 import { t, getLang, applyTranslations } from './i18n.js?v=9';
 import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=13';
+import { startUpdateCheck } from './version.js?v=14';
 import { installLegalViewer } from './legal-view.js?v=2';
 import { avatarEl } from './avatar.js?v=2';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';

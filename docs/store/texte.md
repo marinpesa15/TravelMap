@@ -132,7 +132,7 @@ Das Feld **Version** auf der Vertriebsseite muss zur hochgeladenen Binärdatei
 passen. Die trägt `1.4.1` (Xcode: MARKETING_VERSION), dort steht aktuell noch
 `1.0`. Entweder das Feld auf `1.4.1` setzen oder die App vor dem Archivieren auf
 `1.0` zurückdrehen. Empfehlung: `1.4.1`, dann passen App, Website und
-`version.json` zusammen.
+`landing/app-version.json` zusammen.
 
 ---
 

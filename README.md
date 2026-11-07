@@ -63,7 +63,8 @@ TravelMap/
 │   ├── settings.js     # Settings modal (theme, language, sign-in methods, sign-out)
 │   ├── consent.js      # GDPR consent banner + version
 │   ├── theme.js        # Dark/light theme API
-│   ├── version.js      # APP_VERSION
+│   ├── version.js      # APP_VERSION + update popup
+│   ├── update-logic.js # Version compare: optional vs. required update
 │   ├── config.js       # Firebase config (gitignored)
 │   └── constants.js    # Mapbox token for search, optional BASEMAP_REMOTE_URL (gitignored)
 ├── firestore.rules     # Locked-down security rules
@@ -103,6 +104,28 @@ hosted map when reachable and falls back to the bundled one offline.
 
 ## Releases
 
-Bump `APP_VERSION` in `js/version.js` (shown in the settings modal).
+Bump `APP_VERSION` in `js/version.js` (shown in the settings modal) together
+with `MARKETING_VERSION` in the Xcode project.
+
+### Update prompt
+
+On every start and every return to the foreground the app fetches
+`https://travel.marinpesa.dev/app-version.json` (source: `landing/app-version.json`,
+deployed with Firebase Hosting) and compares it with `APP_VERSION`:
+
+```json
+{ "latest": "1.7.0", "minimum": "1.6.0", "notes": { "de": "…", "en": "…" } }
+```
+
+| Situation | Popup |
+|-----------|-------|
+| `APP_VERSION` < `latest`, same major | **Optional**: "Überspringen" or "Aktualisieren" |
+| `APP_VERSION` < `minimum` | **Required**: only "Aktualisieren", no way past it |
+| major of `latest` > major of `APP_VERSION` | **Required** |
+| up to date / offline | nothing |
+
+Small update: raise only `latest`. Big update: raise `minimum` to the same value.
+Change the file only **after** the build is live in the App Store, then
+`firebase deploy --only hosting`. "Aktualisieren" opens the App Store page.
 Bump `CONSENT_VERSION` in `js/consent.js` only when the privacy policy
 changes materially — every user will be asked for consent again.

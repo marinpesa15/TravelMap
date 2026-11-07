@@ -86,7 +86,7 @@ walk('');
 
 // js/config.js and js/constants.js are gitignored, so a fresh clone lacks
 // them. Without them the app shell loads but nothing works; fail loudly.
-const required = ['index.html', 'map.html', 'version.json', 'js/config.js', 'js/constants.js'];
+const required = ['index.html', 'map.html', 'js/config.js', 'js/constants.js'];
 const missing = required.filter(f => !copied.includes(f));
 if (missing.length) {
   throw new Error(`dist/ is missing ${missing.join(', ')} (copy js/*.example.js and fill in real values)`);

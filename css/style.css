@@ -1111,12 +1111,23 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 }
 .update-card h3 { font-size: 1.05rem; color: var(--tx-primary); margin-bottom: 8px; }
 .update-card p  { font-size: 0.84rem; color: var(--tx-secondary); line-height: 1.5; margin-bottom: 18px; }
+.update-card .update-notes {
+  text-align: left; white-space: pre-line;
+  background: var(--bg-input);
+  border-radius: 10px; padding: 10px 12px; margin-top: -6px;
+}
+.update-actions { display: flex; gap: 10px; }
 .update-card button {
-  width: 100%; padding: 11px 14px;
-  background: #6366f1; color: white; border: none; cursor: pointer;
+  flex: 1; padding: 11px 14px; cursor: pointer;
   border-radius: 10px; font-size: 0.88rem; font-weight: 600;
 }
-.update-card button:hover { background: #575ae8; }
+.update-card .update-primary { background: #6366f1; color: white; border: none; }
+.update-card .update-primary:hover { background: #575ae8; }
+.update-card .update-secondary {
+  background: transparent; color: var(--tx-secondary);
+  border: 1px solid var(--bd-dialog);
+}
+.update-card .update-secondary:hover { color: var(--tx-primary); }
 
 /* ===== Account deletion ===== */
 #delete-modal {
