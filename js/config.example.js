@@ -9,6 +9,8 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
+import { getStorage } from '../vendor/firebase/10.12.0/firebase-storage.js';
+import { getFunctions } from '../vendor/firebase/10.12.0/firebase-functions.js';
 import { isNative } from './platform.js?v=1';
 
 const firebaseConfig = {
@@ -35,3 +37,7 @@ export const auth = isNative()
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
+
+export const storage = getStorage(app);
+// Gleiche Region wie die Cloud Functions (europe-west1).
+export const functions = getFunctions(app, 'europe-west1');

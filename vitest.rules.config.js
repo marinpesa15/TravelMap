@@ -14,6 +14,8 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-firestore\.js$/, replacement: 'firebase/firestore' },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-storage\.js$/, replacement: 'firebase/storage' },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-functions\.js$/, replacement: 'firebase/functions' },
       { find: /^\.\/config\.js(\?v=\d+)?$/, replacement: stub('config-emulator.js') }
     ]
   },

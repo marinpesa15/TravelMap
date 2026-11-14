@@ -2,7 +2,7 @@ import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction,
   arrayUnion, arrayRemove, serverTimestamp
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db } from './config.js?v=3';
+import { db } from './config.js?v=4';
 import { isOnline } from './net-status.js?v=1';
 import { isOfflineError, settleWrite } from './offline-write.js?v=1';
 import {

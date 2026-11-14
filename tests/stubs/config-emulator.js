@@ -4,3 +4,5 @@
 export let db = null;
 export const auth = { currentUser: null };
 export function useDb(instance) { db = instance; }
+export const storage = {};
+export const functions = {};

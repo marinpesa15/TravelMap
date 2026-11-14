@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=24';
+import { onAuthChange, signOutUser } from './auth.js?v=25';
 import {
   loadUserDataFast, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -7,11 +7,11 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=27';
+} from './db.js?v=28';
 import { planDedupeCities } from './city-logic.js?v=3';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=19';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=22';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
@@ -31,9 +31,9 @@ import {
 } from './ui.js?v=47';
 import { initTheme, getTheme } from './theme.js?v=23';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=21';
+import { setupSettings } from './settings.js?v=22';
 import { initHub, openPanel, closePanel } from './hub.js?v=1';
-import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
+import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
 import { t, getLang, applyTranslations } from './i18n.js?v=10';
 import { startUpdateCheck } from './version.js?v=15';
 import { installLegalViewer } from './legal-view.js?v=3';

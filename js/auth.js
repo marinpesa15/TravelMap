@@ -12,7 +12,7 @@ import {
   signOut,
   onAuthStateChanged
 } from '../vendor/firebase/10.12.0/firebase-auth.js';
-import { auth } from './config.js?v=3';
+import { auth } from './config.js?v=4';
 import { isNative } from './platform.js?v=1';
 
 const provider = new GoogleAuthProvider();

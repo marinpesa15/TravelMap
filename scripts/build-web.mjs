@@ -36,6 +36,7 @@ const BUNDLE_IGNORE = [
   'vitest.config.js',
   'vitest.rules.config.js',
   'firestore.rules',
+  'storage.rules',
   'firestore.indexes.json',
   '**/*.log',
   'scripts/**',
