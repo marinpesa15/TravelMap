@@ -97,6 +97,15 @@ describe('stories: Validierung (Besitzer)', () => {
       date: '2026-01-01', voice: 'v.m4a', song: { id: 's' }, created_at: new Date()
     }));
   });
+  it('song: null und vollstaendige Map sind gueltig', async () => {
+    await assertSucceeds(put({ ...base, song: null }));
+    await assertSucceeds(put({ ...base, song: { id: 's', title: 'T', artist: 'A', cover_url: 'https://i.scdn.co/x' } }));
+  });
+  it('song mit unbekanntem Schluessel oder zu langer cover_url wird abgelehnt', async () => {
+    await assertFails(put({ ...base, song: { id: 's', extra: 'x' } }));
+    await assertFails(put({ ...base, song: { id: 's', cover_url: 'h'.repeat(501) } }));
+    await assertFails(put({ ...base, song: 'text' }));
+  });
   it('11 Fotos werden abgelehnt', async () => {
     await assertFails(put({ ...base, photos: Array(11).fill('p.jpg') }));
   });

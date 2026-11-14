@@ -1,4 +1,4 @@
-import { t, getLang, setLang } from './i18n.js?v=15';
+import { t, getLang, setLang } from './i18n.js?v=16';
 import { getTheme, setTheme } from './theme.js?v=26';
 import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=25';
 import { isNative } from './platform.js?v=1';

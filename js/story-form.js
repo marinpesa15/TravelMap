@@ -1,7 +1,6 @@
-// Story-Formular (Sheet #story-form): Datum, Fotos, Text, Sprachnotiz, Freigabe. Die Zeile
-// #story-song-row ist Platz fuer den Song (Aufgabe 9).
+// Story-Formular (Sheet #story-form): Datum, Fotos, Text, Sprachnotiz, Song, Freigabe.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t } from './i18n.js?v=15';
+import { t } from './i18n.js?v=16';
 import { showToast } from './ui.js?v=50';
 import { toJpegBlob } from './image.js?v=1';
 import { blobUrl } from './storage.js?v=1';
@@ -9,6 +8,7 @@ import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
 import { saveStoryWithMedia } from './story-save.js?v=4';
 import { settleWrite } from './offline-write.js?v=1';
 import { isOnline } from './net-status.js?v=1';
+import { searchSongs, safeCover } from './songs.js?v=1';
 import { canRecord, createRecorder, createPlayer } from './voice.js?v=1';
 
 const $ = id => document.getElementById(id);
@@ -24,7 +24,7 @@ function millisToDate(x) {
 }
 
 let state = null; // { uid, city, story, onSaved, photos: [{ path?, blob?, url }], voice, song, saving, busy,
-//                 canVoice, rec, seconds, player, voiceUrl, playing }
+//                 canVoice, rec, seconds, player, voiceUrl, playing, songTimer, songSeq }
 
 function releasePhoto(p) {
   if (p.blob) URL.revokeObjectURL(p.url);
@@ -158,6 +158,99 @@ async function stopRecording(s) {
   if (state === s) renderVoice();
 }
 
+const songCover = url => {
+  const img = document.createElement('img');
+  img.className = 'story-song-cover';
+  img.alt = '';
+  const src = safeCover(url);
+  if (src) img.src = src;
+  return img;
+};
+
+function songLines(song) {
+  const box = document.createElement('span');
+  box.className = 'story-song-text';
+  const title = document.createElement('span');
+  title.className = 'story-song-title';
+  title.textContent = song.title;
+  const artist = document.createElement('span');
+  artist.className = 'story-song-artist';
+  artist.textContent = song.artist;
+  box.append(title, artist);
+  return box;
+}
+
+function pickSong(s, song) {
+  s.song = { id: String(song.id ?? ''), title: String(song.title ?? ''), artist: String(song.artist ?? ''), cover_url: String(song.cover_url ?? '') };
+  renderSong();
+}
+
+// Suchfeld (oder Chip) bauen; das Eingabefeld bleibt beim Tippen bestehen, nur die Trefferliste wechselt
+function renderSong() {
+  const s = state;
+  const row = $('story-song-row');
+  clearTimeout(s.songTimer);
+  s.songSeq++;
+  const label = document.createElement('span');
+  label.className = 'story-row-label';
+  label.textContent = t('song.title');
+  if (s.song) {
+    const chip = document.createElement('div');
+    chip.className = 'story-song-chip';
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'story-song-remove';
+    x.textContent = '✕';
+    x.setAttribute('aria-label', t('song.remove'));
+    x.onclick = () => { if (!s.saving) { s.song = null; renderSong(); } };
+    chip.append(songCover(s.song.cover_url), songLines(s.song), x);
+    row.replaceChildren(label, chip);
+    return;
+  }
+  const input = document.createElement('input');
+  input.type = 'search';
+  input.className = 'story-song-input';
+  input.placeholder = t('song.search');
+  input.maxLength = 100;
+  const list = document.createElement('div');
+  list.className = 'story-song-list';
+  const note = text => {
+    const p = document.createElement('p');
+    p.className = 'story-song-note';
+    p.textContent = text;
+    list.replaceChildren(p);
+  };
+  async function run() {
+    const q = input.value.trim();
+    const seq = ++s.songSeq;
+    if (!q) { list.replaceChildren(); return; }
+    let songs;
+    try {
+      if (!isOnline()) throw new Error('offline');
+      songs = await searchSongs(q);
+    } catch {
+      if (state === s && s.songSeq === seq) note(t('song.searchFailed'));
+      return;
+    }
+    if (state !== s || s.songSeq !== seq) return; // neuere Suche oder Formular zu
+    if (!songs.length) { note(t('song.noResults')); return; }
+    list.replaceChildren(...songs.map(song => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'story-song-item';
+      b.append(songCover(song.cover_url), songLines(song));
+      b.onclick = () => pickSong(s, song);
+      return b;
+    }));
+  }
+  input.addEventListener('input', () => {
+    clearTimeout(s.songTimer);
+    s.songSeq++; // laufende Suche verwerfen
+    s.songTimer = setTimeout(run, 300);
+  });
+  row.replaceChildren(label, input, list);
+}
+
 function updateCounter() {
   const n = $('story-text').value.length;
   const el = $('story-counter');
@@ -193,7 +286,7 @@ function close() {
   const s = state;
   state = null;
   s?.photos.forEach(releasePhoto);
-  if (s) { s.rec?.cancel(); releaseVoice(s); }
+  if (s) { s.rec?.cancel(); releaseVoice(s); clearTimeout(s.songTimer); }
   closeOverlay(sheet);
 }
 
@@ -267,12 +360,14 @@ export function openStoryForm({ uid, city, story = null, onSaved }) {
     state.photos.forEach(releasePhoto);
     state.rec?.cancel();
     releaseVoice(state);
+    clearTimeout(state.songTimer);
   }
   state = {
     uid, city, story, onSaved, saving: false, busy: false,
     photos: (story?.photos ?? []).map(p => ({ path: p.path, url: '' })),
-    voice: null, song: story?.song ?? null, canVoice: canRecord(), rec: null, seconds: 0
+    voice: null, song: story?.song ?? null, canVoice: canRecord(), rec: null, seconds: 0, songSeq: 0
   };
+  renderSong();
   setVoice(state, story?.voice ?? null);
   $('story-form-title').textContent = t(story ? 'story.edit' : 'story.new');
   $('story-city').textContent = [city.name, city.country].filter(Boolean).join(', ');

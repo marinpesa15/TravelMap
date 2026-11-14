@@ -1,13 +1,14 @@
 // Story-Viewer (Vollbild #story-viewer): Seiten wie eine Insta-Story, Tippen links/rechts
 // blaettert, Wischen nach unten schliesst. Kein automatisches Weiterblaettern.
-// #viewer-voice zeigt die Sprachnotiz-Pille, #viewer-song ist Platz fuer den Song (Aufgabe 9).
+// #viewer-voice zeigt die Sprachnotiz-Pille, #viewer-song die Song-Pille mit Spotify-Sheet.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t, getLang } from './i18n.js?v=15';
+import { t, getLang } from './i18n.js?v=16';
 import { showConfirm } from './ui.js?v=50';
 import { blobUrl } from './storage.js?v=1';
 import { storyPages } from './story-logic.js?v=1';
 import { step } from './viewer-logic.js?v=1';
 import { createPlayer } from './voice.js?v=1';
+import { embedUrl, openUrl, safeCover } from './songs.js?v=1';
 
 const $ = id => document.getElementById(id);
 
@@ -53,6 +54,49 @@ function renderVoice(s, story) {
   }).catch(() => {});
 }
 
+// Sheet schliessen und iframe entfernen: ohne Tipp (oder danach) besteht keine Verbindung zu Spotify
+function closeSong() {
+  $('viewer-song-sheet').hidden = true;
+  $('viewer-song-embed').replaceChildren();
+}
+
+function openSong(song) {
+  const frame = document.createElement('iframe');
+  frame.src = embedUrl(song.id);
+  frame.height = '152';
+  frame.allow = 'encrypted-media';
+  frame.title = song.title;
+  $('viewer-song-embed').replaceChildren(frame);
+  $('viewer-song-open').onclick = () => window.open(openUrl(song.id), '_blank');
+  $('viewer-song-sheet').hidden = false;
+}
+
+// Pille mit Cover und Titel, Daten kommen von aussen: nur textContent und https-Cover
+function renderSong(story) {
+  closeSong();
+  const host = $('viewer-song');
+  const song = story.song;
+  if (!song?.id) { host.replaceChildren(); return; }
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'viewer-pill viewer-song-pill';
+  btn.setAttribute('aria-label', t('song.play', { title: song.title ?? '' }));
+  const cover = safeCover(song.cover_url);
+  if (cover) {
+    const img = document.createElement('img');
+    img.className = 'viewer-song-cover';
+    img.alt = '';
+    img.src = cover;
+    btn.append(img);
+  }
+  const title = document.createElement('span');
+  title.className = 'viewer-song-title';
+  title.textContent = song.title ?? '';
+  btn.append(title);
+  btn.onclick = () => openSong(song);
+  host.replaceChildren(btn);
+}
+
 function render() {
   const s = state;
   const story = s.stories[s.pos.story];
@@ -69,6 +113,7 @@ function render() {
   $('viewer-date').textContent = formatDate(story.date);
   $('viewer-menu').hidden = true;
   renderVoice(s, story);
+  renderSong(story);
 
   const img = $('viewer-photo');
   const isPhoto = page.kind === 'photo';
@@ -108,6 +153,7 @@ function close() {
   if (!state) return;
   state = null;
   stopVoice();
+  closeSong();
   closeOverlay($('story-viewer'));
 }
 
@@ -125,6 +171,7 @@ function wire() {
   $('viewer-prev').onclick = () => go(-1);
   $('viewer-next').onclick = () => go(1);
   $('viewer-close').onclick = close;
+  $('viewer-song-sheet').onclick = e => { if (e.target === e.currentTarget) closeSong(); };
   $('viewer-menu-btn').onclick = () => { $('viewer-menu').hidden = !$('viewer-menu').hidden; };
   $('viewer-edit').onclick = () => act(state?.onEdit);
   $('viewer-add').onclick = () => act(state?.onAdd);

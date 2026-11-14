@@ -2,6 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Song einer Story: null oder Map mit hoechstens id, title, artist, cover_url (Strings).
+    function songOk(song) {
+      return song == null || (
+        song is map
+        && song.keys().hasOnly(['id', 'title', 'artist', 'cover_url'])
+        && song.get('id', '') is string
+        && song.get('title', '') is string
+        && song.get('artist', '') is string
+        && song.get('cover_url', '') is string
+        && song.get('cover_url', '').size() <= 500
+      );
+    }
+
     // Invite lookup: token → { uid, display_name, avatar_url }.
     // Tokens are unguessable UUIDs; get-only (no list, so no enumeration).
     // Only the owning user can create/overwrite/delete their invite doc.
@@ -115,7 +128,8 @@ service cloud.firestore {
           && request.resource.data.get('text', '').size() <= 2000
           && request.resource.data.get('photos', []) is list
           && request.resource.data.get('photos', []).size() <= 10
-          && request.resource.data.shared is bool;
+          && request.resource.data.shared is bool
+          && songOk(request.resource.data.get('song', null));
       }
     }
 

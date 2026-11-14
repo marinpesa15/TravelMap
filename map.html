@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#0b0d19">
   <link rel="stylesheet" href="css/style.css?v=48">
   <link rel="stylesheet" href="css/hub.css?v=2">
-  <link rel="stylesheet" href="css/stories.css?v=3">
+  <link rel="stylesheet" href="css/stories.css?v=4">
   <link href="vendor/maplibre-gl/4.7.1/maplibre-gl.css" rel="stylesheet">
   <script defer src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
   <script defer src="vendor/pmtiles/3.2.1/pmtiles.js"></script>
@@ -355,8 +355,7 @@
       </div>
       <!-- Task 8 fuellt diese Zeile (Sprachnotiz) und blendet sie ein -->
       <div class="story-row" id="story-voice-row" hidden></div>
-      <!-- Task 9 fuellt diese Zeile (Song) und blendet sie ein -->
-      <div class="story-row" id="story-song-row" hidden></div>
+      <div class="story-row story-song-row" id="story-song-row"></div>
       <label class="story-row story-switch-row">
         <span class="story-row-label" data-i18n="story.shared">Visible to friends</span>
         <input type="checkbox" id="story-shared" class="story-switch">
@@ -397,8 +396,14 @@
         <div class="viewer-pills">
           <!-- Aufgabe 8: Sprachnotiz-Pille -->
           <div id="viewer-voice"></div>
-          <!-- Aufgabe 9: Song-Pille -->
           <div id="viewer-song"></div>
+        </div>
+      </div>
+      <!-- Song-Sheet: das Embed-iframe entsteht erst beim Tippen auf die Pille -->
+      <div class="viewer-song-sheet" id="viewer-song-sheet" hidden>
+        <div class="viewer-song-card">
+          <div id="viewer-song-embed"></div>
+          <button type="button" class="viewer-song-open" id="viewer-song-open" data-i18n="song.open">Open in Spotify</button>
         </div>
       </div>
     </div>
@@ -529,6 +534,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=69"></script>
+  <script type="module" src="js/app.js?v=70"></script>
 </body>
 </html>
