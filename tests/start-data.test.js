@@ -4,6 +4,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { __state, __reset } from './stubs/firebase-firestore.js';
 import { loadUserDataFast, initUserProfile } from '../js/db.js?v=27';
+import { auth } from './stubs/config.js';
+import { changeAvatar, profileIo } from '../js/profile.js?v=1';
 
 const DOC = { visited_cities: [{ name: 'Split' }], invite_token: 'tok', display_name: 'Ana', avatar_url: '' };
 
@@ -93,5 +95,29 @@ describe('initUserProfile', () => {
     __state.doc = DOC;
     const data = await initUserProfile('u1', user);
     expect(data.invite_token).toBe('tok');
+  });
+});
+
+describe('initUserProfile nach changeAvatar', () => {
+  it('ueberschreibt avatar_url beim Neustart nicht mit einem aelteren Wert', async () => {
+    auth.currentUser = { uid: 'u1', displayName: 'Ana', photoURL: 'https://example.test/old.jpg' };
+    const io = {
+      ...profileIo,
+      toJpegBlob: async () => new Blob(['x']),
+      uploadBlob: async () => {},
+      publicUrl: async () => 'https://example.test/avatar.jpg?alt=media',
+      loadUser: async () => DOC,
+      loadFriendUids: async () => [],
+      setUserAvatar: async () => {},
+      setInviteAvatar: async () => {}
+    };
+    const url = await changeAvatar({}, { io });
+    expect(auth.currentUser.photoURL).toBe(url);
+
+    // Neustart: das User-Doc hat die neue URL, der Auth-User ebenfalls
+    __reset();
+    const data = await initUserProfile('u1', auth.currentUser, { ...DOC, avatar_url: url });
+    expect(data.avatar_url).toBe(url);
+    expect(__state.writes.filter(([k, d]) => k === 'update' && 'avatar_url' in d)).toEqual([]);
   });
 });

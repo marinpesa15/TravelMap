@@ -1,11 +1,12 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=26';
-import { t, getLang } from './i18n.js?v=10';
-import { searchLocalCities } from './places.js?v=4';
+import { searchCountries } from './countries.js?v=27';
+import { t, getLang } from './i18n.js?v=11';
+import { searchLocalCities } from './places.js?v=5';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
 import { avatarEl } from './avatar.js?v=2';
+import { toJpegBlob } from './image.js?v=1';
 import { buildPlaceList } from './places-list-logic.js?v=1';
 import {
   openOverlay, closeOverlay, popoverIn,
@@ -899,33 +900,14 @@ export function hideViewBanner() {
 
 // ===== Group Photo Dialog =====
 
-/**
- * Compresses an image file to a square JPEG thumbnail (Base64).
- * @param {File} file
- * @param {number} size — output px (default 120)
- * @returns {Promise<string>} Base64 data URL
- */
-async function _compressImage(file, size = 240) {
+/** Square 240 px JPEG of the chosen file as Base64 data URL (stored in Firestore). */
+async function _groupPhotoDataUrl(file) {
+  const blob = await toJpegBlob(file, { max: 240, square: true, quality: 0.88 });
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = reject;
-    reader.onload = e => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        // Centre-crop to square
-        const min = Math.min(img.width, img.height);
-        const sx  = (img.width  - min) / 2;
-        const sy  = (img.height - min) / 2;
-        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-        resolve(canvas.toDataURL('image/jpeg', 0.88));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
   });
 }
 
@@ -953,7 +935,7 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
     const file = input.files[0];
     if (!file) return;
     try {
-      _chosenURL  = await _compressImage(file);
+      _chosenURL  = await _groupPhotoDataUrl(file);
       preview.src = _chosenURL;
     } catch {
       showToast(t('toast.imageFailed'));

@@ -128,6 +128,10 @@ const translations = {
     'toast.selectPerson': 'Select at least one person.',
     'toast.enterGroupName': 'Please enter a group name.',
     'toast.imageFailed': 'Could not load image.',
+    'toast.notAnImage': 'That file is not an image.',
+    'toast.avatarFailed': 'Could not update your profile picture.',
+    'profile.changePhoto': 'Change profile picture',
+    'profile.removePhoto': 'Remove picture',
     'toast.consentFailed': 'Could not save your consent. Please try again.',
     // Confirm messages
     'confirm.removeFriend': 'Remove {name} from your friends?',
@@ -314,6 +318,10 @@ const translations = {
     'toast.selectPerson': 'Wähle mindestens eine Person aus.',
     'toast.enterGroupName': 'Bitte gib einen Gruppennamen ein.',
     'toast.imageFailed': 'Bild konnte nicht geladen werden.',
+    'toast.notAnImage': 'Diese Datei ist kein Bild.',
+    'toast.avatarFailed': 'Profilbild konnte nicht geändert werden.',
+    'profile.changePhoto': 'Profilbild ändern',
+    'profile.removePhoto': 'Bild entfernen',
     'toast.consentFailed': 'Zustimmung konnte nicht gespeichert werden. Bitte erneut versuchen.',
     // Confirm messages
     'confirm.removeFriend': '{name} aus deinen Freunden entfernen?',

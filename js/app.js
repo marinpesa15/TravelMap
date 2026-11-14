@@ -9,15 +9,15 @@ import {
   acceptConsent
 } from './db.js?v=28';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=19';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=20';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=22';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=26';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=23';
+} from './countries.js?v=27';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=24';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=28';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
@@ -28,16 +28,18 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=47';
-import { initTheme, getTheme } from './theme.js?v=23';
+} from './ui.js?v=48';
+import { initTheme, getTheme } from './theme.js?v=24';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=22';
+import { setupSettings } from './settings.js?v=23';
 import { initHub, openPanel, closePanel } from './hub.js?v=1';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
-import { t, getLang, applyTranslations } from './i18n.js?v=10';
-import { startUpdateCheck } from './version.js?v=15';
-import { installLegalViewer } from './legal-view.js?v=3';
+import { t, getLang, applyTranslations } from './i18n.js?v=11';
+import { startUpdateCheck } from './version.js?v=16';
+import { installLegalViewer } from './legal-view.js?v=4';
 import { avatarEl } from './avatar.js?v=2';
+import { initProfilePicture } from './profile.js?v=1';
+import { auth } from './config.js?v=4';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
 let _uid            = null;
@@ -260,6 +262,7 @@ async function _init(user) {
     initTheme();
     setupSettings(_map);
     initHub({ onAdd: _onHubAdd, onPlace: _flyToPlace });
+    initProfilePicture({ onChange: () => _showUserProfile(auth.currentUser), toast: showToast, t });
     _initNetStatus();
     _setupFilterNav();
     _initMapModeTabs();
@@ -392,6 +395,8 @@ function _showUserProfile(user) {
   });
   document.getElementById('user-avatar')?.replaceChildren(avatar('user-avatar'));
   document.getElementById('profile-avatar')?.replaceChildren(avatar('profile-avatar'));
+  const removeBtn = document.getElementById('profile-avatar-remove');
+  if (removeBtn) removeBtn.hidden = !user.photoURL;
   const nameEl = document.getElementById('profile-name');
   if (nameEl) nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
 }

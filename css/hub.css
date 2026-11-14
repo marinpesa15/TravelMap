@@ -162,6 +162,22 @@ body.banner-mode #hub-stats { display: none; }
 /* ----- Profil ----- */
 .profile-head { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; }
 #profile-avatar { display: flex; }
+.profile-avatar-wrap { position: relative; }
+.profile-avatar-btn { position: relative; display: block; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+.profile-avatar-badge {
+  position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-fill); color: var(--accent-ink); border: 2px solid var(--bg-card, #080b11);
+}
+.profile-avatar-badge svg { width: 16px; height: 16px; }
+.profile-avatar-ring {
+  position: absolute; inset: -4px; border-radius: 50%; border: 3px solid transparent;
+  border-top-color: var(--accent); opacity: 0; pointer-events: none;
+}
+.profile-avatar-btn.busy .profile-avatar-ring { opacity: 1; animation: profile-avatar-spin 0.9s linear infinite; }
+@keyframes profile-avatar-spin { to { transform: rotate(360deg); } }
+.profile-avatar-remove { border: 0; background: none; color: var(--tx-secondary, inherit); font: inherit; font-size: 0.85rem; padding: 4px 8px; cursor: pointer; }
+.profile-avatar-remove[hidden] { display: none; }
 .profile-avatar { width: 96px; height: 96px; border-radius: 50%; }
 .profile-avatar .avatar-initials { font-size: 34px; }
 #profile-name { font-size: 1.5rem; font-weight: 700; color: var(--tx-primary); }

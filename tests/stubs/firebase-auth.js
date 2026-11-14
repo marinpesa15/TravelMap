@@ -10,4 +10,4 @@ export const linkWithCredential = async () => ({ user: { providerData: [] } });
 export const linkWithPopup = async () => ({});
 export const reauthenticateWithCredential = async () => ({});
 export const revokeAccessToken = async () => {};
-export const updateProfile = async () => {};
+export const updateProfile = async (user, profile) => { Object.assign(user, profile); };
