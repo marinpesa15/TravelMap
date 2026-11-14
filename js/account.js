@@ -6,7 +6,7 @@
 // Konto fehlt die Berechtigung, die eigenen Reste zu loeschen.
 import { planGroupChange } from './account-logic.js?v=1';
 import { storyPaths } from './story-logic.js?v=1';
-import { firestoreIo } from './account-io.js?v=9';
+import { firestoreIo } from './account-io.js?v=10';
 
 /** Zahlen fuer die Warnung, bevor irgendetwas veraendert wird. */
 export async function collectDeletionSummary(uid, { io = firestoreIo } = {}) {

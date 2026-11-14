@@ -25,4 +25,15 @@ describe('buildPlaceList', () => {
     expect(buildPlaceList({}, 'all')).toEqual([]);
     expect(buildPlaceList(null, 'all')).toEqual([]);
   });
+  it('zeigt im Laender-Modus die Laender statt der Staedte', () => {
+    const d = { ...data, visited_countries: ['PT', 'AT'], wishlist_countries: ['ZA'] };
+    expect(buildPlaceList(d, 'all', new Set(), 'countries'))
+      .toEqual([
+        { name: 'AT', country: '', type: 'visited', lived: false, hasStory: false },
+        { name: 'PT', country: '', type: 'visited', lived: false, hasStory: false },
+        { name: 'ZA', country: '', type: 'wishlist', lived: false, hasStory: false }
+      ]);
+    expect(buildPlaceList(d, 'wishlist', new Set(), 'countries').map(p => p.name)).toEqual(['ZA']);
+    expect(buildPlaceList({}, 'all', new Set(), 'countries')).toEqual([]);
+  });
 });

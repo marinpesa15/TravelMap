@@ -1,7 +1,7 @@
 import {
   doc, collection, getDocs, setDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db } from './config.js?v=4';
+import { db } from './config.js?v=5';
 
 function _col(uid) {
   return collection(db, 'users', uid, 'stories');

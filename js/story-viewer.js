@@ -2,15 +2,30 @@
 // blaettert, Wischen nach unten schliesst. Kein automatisches Weiterblaettern.
 // #viewer-voice zeigt die Sprachnotiz-Pille, #viewer-song die Song-Pille mit Spotify-Sheet.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t, getLang } from './i18n.js?v=18';
-import { showConfirm } from './ui.js?v=51';
-import { blobUrl } from './storage.js?v=1';
+import { t, getLang } from './i18n.js?v=19';
+import { showConfirm } from './ui.js?v=52';
+import { blobUrl } from './storage.js?v=2';
 import { storyPages } from './story-logic.js?v=1';
 import { step } from './viewer-logic.js?v=1';
 import { createPlayer } from './voice.js?v=1';
-import { embedUrl, openUrl, safeCover } from './songs.js?v=1';
+import { embedUrl, openUrl, safeCover } from './songs.js?v=2';
 
 const $ = id => document.getElementById(id);
+const LONG_TEXT = 200; // ab hier kleinere Schrift auf der Textseite
+
+// Textseite und Bildtext liegen ueber den Tippzonen, damit sie scrollen. Ein Tipp
+// (kein Scrollen, das loest keinen click aus) blaettert wie die Tippzonen: linke 35 % zurueck, rechte vor.
+function tapSide(e) {
+  const x = e.clientX / window.innerWidth;
+  if (x < 0.35) go(-1);
+  else if (x > 0.65) go(1);
+}
+
+// Scrollt der Finger gerade gescrollten Text zurueck nach oben, ist das kein Wischen zum Schliessen
+const scrolledText = el => {
+  const box = el?.closest?.('.viewer-textpage, .viewer-caption');
+  return !!box && box.scrollTop > 0;
+};
 
 let state = null; // { stories, pos, own, unavailable, onEdit, onDelete, onAdd, onRemoveCity }
 
@@ -69,6 +84,7 @@ function openSong(song) {
   $('viewer-song-embed').replaceChildren(frame);
   $('viewer-song-open').onclick = () => window.open(openUrl(song.id), '_blank');
   $('viewer-song-sheet').hidden = false;
+  $('viewer-song-close').focus();
 }
 
 // Pille mit Cover und Titel, Daten kommen von aussen: nur textContent und https-Cover
@@ -119,6 +135,8 @@ function render() {
   const isPhoto = page.kind === 'photo';
   $('viewer-textpage').hidden = isPhoto;
   $('viewer-textpage').textContent = isPhoto ? '' : story.text ?? '';
+  $('viewer-textpage').classList.toggle('long', (story.text ?? '').length > LONG_TEXT);
+  $('viewer-textpage').scrollTop = $('viewer-caption').scrollTop = 0;
   $('viewer-caption').textContent = isPhoto ? story.text ?? '' : '';
   $('viewer-unavailable').hidden = true;
   img.hidden = true;
@@ -172,6 +190,9 @@ function wire() {
   $('viewer-next').onclick = () => go(1);
   $('viewer-close').onclick = close;
   $('viewer-song-sheet').onclick = e => { if (e.target === e.currentTarget) closeSong(); };
+  $('viewer-song-close').onclick = closeSong;
+  $('viewer-textpage').onclick = tapSide;
+  $('viewer-caption').onclick = tapSide;
   $('viewer-menu-btn').onclick = () => { $('viewer-menu').hidden = !$('viewer-menu').hidden; };
   $('viewer-edit').onclick = () => act(state?.onEdit);
   $('viewer-add').onclick = () => act(state?.onAdd);
@@ -189,7 +210,7 @@ function wire() {
   let start = null;
   stage.addEventListener('touchstart', e => {
     const p = e.touches[0];
-    start = e.touches.length === 1 ? { x: p.clientX, y: p.clientY } : null;
+    start = e.touches.length === 1 && !scrolledText(e.target) ? { x: p.clientX, y: p.clientY } : null;
   }, { passive: true });
   stage.addEventListener('touchend', e => {
     if (!start) return;

@@ -1,7 +1,7 @@
 // Duenner Wrapper um Firebase Storage. Story-Medien laufen nie ueber
 // getDownloadURL (das ergaebe eine dauerhaft teilbare URL), sondern ueber
 // getBlob, damit die Storage-Rules bei jedem Abruf greifen.
-import { storage } from './config.js?v=4';
+import { storage } from './config.js?v=5';
 import { ref, uploadBytes, getBlob, deleteObject, getDownloadURL } from '../vendor/firebase/10.12.0/firebase-storage.js';
 
 const urls = new Map(); // pfad -> Promise<objectURL>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fitSize, squareCrop } from '../js/image-logic.js';
+import { fitSize, squareCrop, nextQuality } from '../js/image-logic.js';
 
 describe('fitSize', () => {
   it('verkleinert die lange Kante auf max und haelt das Seitenverhaeltnis', () => {
@@ -17,5 +17,15 @@ describe('squareCrop', () => {
   it('schneidet mittig', () => {
     expect(squareCrop(4000, 3000)).toEqual({ sx: 500, sy: 0, size: 3000 });
     expect(squareCrop(3000, 4000)).toEqual({ sx: 0, sy: 500, size: 3000 });
+  });
+});
+describe('nextQuality', () => {
+  it('geht die Leiter 0.85, 0.7, 0.55 hinunter und gibt dann auf', () => {
+    expect(nextQuality(0.85)).toBe(0.7);
+    expect(nextQuality(0.7)).toBe(0.55);
+    expect(nextQuality(0.55)).toBeNull();
+  });
+  it('setzt bei hoeherer Startqualitaet oben an', () => {
+    expect(nextQuality(0.88)).toBe(0.85);
   });
 });

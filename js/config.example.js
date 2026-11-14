@@ -39,5 +39,8 @@ export const db = initializeFirestore(app, {
 });
 
 export const storage = getStorage(app);
+// Standard sind etwa 10 Minuten Wiederholung: bricht das Netz ab, haengt das Story-Formular so lange.
+storage.maxUploadRetryTime = 30000;
+storage.maxOperationRetryTime = 30000;
 // Gleiche Region wie die Cloud Functions (europe-west1).
 export const functions = getFunctions(app, 'europe-west1');

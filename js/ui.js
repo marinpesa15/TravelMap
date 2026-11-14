@@ -1,13 +1,13 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=30';
-import { t, getLang } from './i18n.js?v=18';
-import { searchLocalCities } from './places.js?v=8';
+import { searchCountries } from './countries.js?v=31';
+import { t, getLang } from './i18n.js?v=19';
+import { searchLocalCities } from './places.js?v=9';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
 import { avatarEl } from './avatar.js?v=2';
-import { toJpegBlob } from './image.js?v=1';
-import { buildPlaceList } from './places-list-logic.js?v=1';
+import { toJpegBlob } from './image.js?v=2';
+import { buildPlaceList } from './places-list-logic.js?v=2';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -90,14 +90,14 @@ function _animateNewPlace(containerEl, filter, firstName) {
 
 const PIN_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>';
 
-/** Fuellt die Liste im Orte-Sheet. storyCities: Set der Stadtnamen mit Story. */
-export function renderPlacesList(userData, filter, storyCities = new Set()) {
+/** Fuellt die Liste im Orte-Sheet. storyCities: Set der Stadtnamen mit Story, mode: 'cities' | 'countries'. */
+export function renderPlacesList(userData, filter, storyCities = new Set(), mode = 'cities') {
   const el = document.getElementById('places-list');
   if (!el) return;
-  const places = buildPlaceList(userData, filter, storyCities);
+  const places = buildPlaceList(userData, filter, storyCities, mode);
 
   if (places.length === 0) {
-    el.innerHTML = `<p class="places-empty">${t('empty.noCities')}</p>`;
+    el.innerHTML = `<p class="places-empty">${t(mode === 'countries' ? 'empty.noCountries' : 'empty.noCities')}</p>`;
     _lastPlaceKey = null;
     return;
   }
@@ -116,13 +116,13 @@ export function renderPlacesList(userData, filter, storyCities = new Set()) {
     <button type="button" class="${cls}" data-name="${esc(p.name)}">
       <span class="place-icon">${PIN_SVG}</span>
       <span class="place-text">
-        <span class="place-name">${esc(p.name)}</span>
+        <span class="place-name">${esc(mode === 'countries' ? countryName(p.name) : p.name)}</span>
         <span class="place-meta">${esc(meta)}</span>
       </span>
     </button>`;
   }).join('');
 
-  _animateNewPlace(el, filter, places[0].name);
+  _animateNewPlace(el, `${mode}-${filter}`, places[0].name);
 }
 
 // ===== City Remove Popup =====

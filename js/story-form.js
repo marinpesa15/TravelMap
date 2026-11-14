@@ -1,14 +1,13 @@
 // Story-Formular (Sheet #story-form): Datum, Fotos, Text, Sprachnotiz, Song, Freigabe.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t } from './i18n.js?v=18';
-import { showToast } from './ui.js?v=51';
-import { toJpegBlob } from './image.js?v=1';
-import { blobUrl } from './storage.js?v=1';
+import { t } from './i18n.js?v=19';
+import { showToast } from './ui.js?v=52';
+import { toJpegBlob } from './image.js?v=2';
+import { blobUrl } from './storage.js?v=2';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
-import { saveStoryWithMedia } from './story-save.js?v=4';
-import { settleWrite } from './offline-write.js?v=1';
+import { saveStoryWithMedia } from './story-save.js?v=5';
 import { isOnline } from './net-status.js?v=1';
-import { searchSongs, safeCover } from './songs.js?v=1';
+import { searchSongs, safeCover } from './songs.js?v=2';
 import { canRecord, createRecorder, createPlayer } from './voice.js?v=1';
 
 const $ = id => document.getElementById(id);
@@ -50,7 +49,14 @@ function renderPhotos() {
     tile.appendChild(x);
     strip.insertBefore(tile, $('story-photo-add'));
   });
-  $('story-photo-add').hidden = state.photos.length >= LIMITS.photos;
+  if (state.busy) {
+    const tile = document.createElement('div');
+    tile.className = 'story-photo story-photo-loading';
+    tile.setAttribute('role', 'status');
+    tile.setAttribute('aria-label', t('story.convertingPhotos'));
+    strip.insertBefore(tile, $('story-photo-add'));
+  }
+  $('story-photo-add').hidden = state.busy || state.photos.length >= LIMITS.photos;
 }
 
 const mmss = n => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
@@ -261,7 +267,9 @@ function updateCounter() {
 async function addFiles(files) {
   const s = state;
   s.busy = true;
-  let tooMany = false, notImage = false, failed = false;
+  $('story-save').disabled = true; // Speichern erst, wenn alle Fotos umgewandelt sind
+  renderPhotos();
+  let tooMany = false, notImage = false, tooLarge = false, failed = false;
   for (const file of files) {
     if (s.photos.length >= LIMITS.photos) { tooMany = true; break; }
     try {
@@ -269,14 +277,18 @@ async function addFiles(files) {
       if (state !== s) return; // Formular wurde waehrenddessen geschlossen
       s.photos.push({ blob, url: URL.createObjectURL(blob) });
     } catch (e) {
-      if (e?.message === 'not-an-image') notImage = true; else failed = true;
+      if (e?.message === 'not-an-image') notImage = true;
+      else if (e?.message === 'too-large') tooLarge = true;
+      else failed = true;
     }
   }
   if (state !== s) return;
   s.busy = false;
+  $('story-save').disabled = false;
   renderPhotos();
   if (tooMany) showToast(t('story.tooManyPhotos'));
   if (notImage) showToast(t('toast.notAnImage'));
+  else if (tooLarge) showToast(t('toast.imageTooLarge'));
   else if (failed) showToast(t('toast.imageFailed'));
 }
 
@@ -310,8 +322,7 @@ async function save() {
   const invalid = validateDraft(draft);
   if (invalid) { showToast(t(invalid === 'empty' ? 'story.empty' : 'story.saveFailed')); return; }
   const hasMedia = draft.photos.length || draft.voice || (s.story && storyPaths(s.story).length);
-  const online = isOnline();
-  if (!online && hasMedia) { showToast(t('story.needsConnection')); return; }
+  if (!isOnline() && hasMedia) { showToast(t('story.needsConnection')); return; }
 
   const btn = $('story-save');
   s.saving = true;
@@ -319,11 +330,10 @@ async function save() {
   $('story-cancel').disabled = $('story-grabber').disabled = true;
   btn.textContent = t('story.saving');
   try {
-    // Offline wartet saveStory ewig auf den Server, der lokale Stand ist aber sofort da
-    const id = await settleWrite(
-      saveStoryWithMedia(s.uid, draft, { existing: s.story }),
-      { online, onError: () => showToast(t('story.saveFailed')) }
-    );
+    // Loest nach den Uploads auf, ohne auf die Server-Bestaetigung zu warten
+    const id = await saveStoryWithMedia(s.uid, draft, {
+      existing: s.story, onWriteError: () => showToast(t('story.saveFailed'))
+    });
     if (state !== s) return;
     s.saving = false;
     close();

@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { saveStoryWithMedia, deleteStoryWithMedia } from '../js/story-save.js';
 
 const B = { size: 1 };
+const flush = () => new Promise(r => setTimeout(r, 0));
 const draft = over => ({ city: 'Wien', country: 'Oesterreich', date: null, text: '', photos: [], voice: null, song: null, shared: false, ...over });
 
-function fakeIo({ failUploadAt = -1, failSave = false } = {}) {
+function fakeIo({ failUploadAt = -1, failSave = false, hangSave = false, hangDeleteDoc = false } = {}) {
   const io = {
     calls: [],
     saved: undefined,
@@ -16,10 +17,14 @@ function fakeIo({ failUploadAt = -1, failSave = false } = {}) {
     deleteFile: async path => { io.calls.push(['delete', path]); },
     saveStory: async (uid, id, data) => {
       io.calls.push(['save', id]);
+      if (hangSave) return new Promise(() => {});
       if (failSave) throw new Error('save-failed');
       io.saved = data;
     },
-    deleteStoryDoc: async (uid, id) => { io.calls.push(['deleteDoc', id]); }
+    deleteStoryDoc: async (uid, id) => {
+      io.calls.push(['deleteDoc', id]);
+      if (hangDeleteDoc) return new Promise(() => {});
+    }
   };
   return io;
 }
@@ -41,15 +46,23 @@ describe('saveStoryWithMedia', () => {
     expect(io.calls.map(c => c[0])).toEqual(['upload', 'upload', 'delete']);
     expect(io.saved).toBeUndefined();
   });
-  it('raeumt auch auf, wenn das Speichern des Dokuments scheitert', async () => {
+  it('raeumt auch auf, wenn das Speichern des Dokuments scheitert, und meldet den Fehler', async () => {
     const io = fakeIo({ failSave: true });
-    await expect(saveStoryWithMedia('u1', draft({ photos: [{ blob: B }] }), { io })).rejects.toThrow();
+    const failed = new Promise(resolve => saveStoryWithMedia('u1', draft({ photos: [{ blob: B }] }), { io, onWriteError: resolve }));
+    expect((await failed).message).toBe('save-failed');
     expect(io.calls.at(-1)[0]).toBe('delete');
+  });
+  it('wartet nach den Uploads nicht auf die Server-Bestaetigung', async () => {
+    const io = fakeIo({ hangSave: true });
+    const id = await saveStoryWithMedia('u1', draft({ photos: [{ blob: B }] }), { io });
+    expect(id).toBe('new1');
+    expect(io.calls.map(c => c[0])).toEqual(['upload', 'save']);
   });
   it('loescht beim Bearbeiten entfernte Dateien erst nach dem Speichern', async () => {
     const io = fakeIo();
     const existing = { id: 's1', city: 'Wien', photos: [{ path: 'a' }, { path: 'b' }], voice: null };
     await saveStoryWithMedia('u1', draft({ photos: [{ path: 'a' }] }), { existing, io });
+    await flush();
     expect(io.calls).toEqual([['save', 's1'], ['delete', 'b']]);
   });
   it('vergibt beim Bearbeiten nie einen bestehenden Pfad neu', async () => {
@@ -62,7 +75,7 @@ describe('saveStoryWithMedia', () => {
     const io = fakeIo({ failSave: true });
     const old = 'users/u1/stories/s1/voice.m4a';
     const existing = { id: 's1', city: 'Wien', photos: [], voice: { path: old, seconds: 5 } };
-    await expect(saveStoryWithMedia('u1', draft({ voice: { blob: B, seconds: 7 } }), { existing, io })).rejects.toThrow();
+    await new Promise(resolve => saveStoryWithMedia('u1', draft({ voice: { blob: B, seconds: 7 } }), { existing, io, onWriteError: resolve }));
     const uploads = io.calls.filter(c => c[0] === 'upload').map(c => c[1]);
     expect(uploads).toEqual(['users/u1/stories/s1/voice-1.m4a']);
     expect(io.calls.filter(c => c[0] === 'delete').map(c => c[1])).toEqual(['users/u1/stories/s1/voice-1.m4a']);
@@ -71,6 +84,7 @@ describe('saveStoryWithMedia', () => {
     const io = fakeIo();
     const existing = { id: 's1', city: 'Wien', photos: [], voice: { path: 'users/u1/stories/s1/voice.m4a', seconds: 5 } };
     await saveStoryWithMedia('u1', draft({ voice: { blob: B, seconds: 7 } }), { existing, io });
+    await flush();
     expect(io.saved.voice).toEqual({ path: 'users/u1/stories/s1/voice-1.m4a', seconds: 7 });
     expect(io.calls.map(c => c[0])).toEqual(['upload', 'save', 'delete']);
     expect(io.calls.at(-1)[1]).toBe('users/u1/stories/s1/voice.m4a');
@@ -87,5 +101,10 @@ describe('deleteStoryWithMedia', () => {
     const io = fakeIo();
     await deleteStoryWithMedia('u1', { id: 's1', photos: [{ path: 'a' }], voice: { path: 'v' } }, { io });
     expect(io.calls).toEqual([['delete', 'a'], ['delete', 'v'], ['deleteDoc', 's1']]);
+  });
+  it('wartet offline bei Stories ohne Dateien nicht auf das Loeschen des Dokuments', async () => {
+    const io = fakeIo({ hangDeleteDoc: true });
+    await deleteStoryWithMedia('u1', { id: 's1', photos: [], voice: null }, { io, online: false });
+    expect(io.calls).toEqual([['deleteDoc', 's1']]);
   });
 });

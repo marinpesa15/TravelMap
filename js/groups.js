@@ -2,7 +2,7 @@ import {
   doc, collection, addDoc, onSnapshot, updateDoc, deleteDoc,
   query, where, serverTimestamp, arrayRemove, arrayUnion
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db } from './config.js?v=4';
+import { db } from './config.js?v=5';
 
 /**
  * Creates a new group.

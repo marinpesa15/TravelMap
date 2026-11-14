@@ -1,16 +1,18 @@
 // Bild -> JPEG-Blob. createImageBitmap dekodiert auf iOS auch HEIC.
-import { fitSize, squareCrop } from './image-logic.js?v=1';
+import { fitSize, squareCrop, nextQuality, MAX_JPEG_BYTES } from './image-logic.js?v=2';
 
 /**
  * @param {File} file
  * @param {{ max: number, square?: boolean, quality?: number }} opts
  *   square: mittiger Ausschnitt, Kantenlaenge max (nie hochskaliert)
- * @returns {Promise<Blob>} wirft Error('not-an-image'), wenn nicht dekodierbar
+ * @returns {Promise<Blob>} wirft Error('not-an-image'), wenn nicht dekodierbar,
+ *   Error('too-large'), wenn der JPEG auch bei niedrigster Qualitaet ueber 1 MB bleibt
  */
 export async function toJpegBlob(file, { max, square = false, quality = 0.85 }) {
   let bitmap;
   try {
-    bitmap = await createImageBitmap(file);
+    // Ohne die Option drehen aeltere WebKit-Versionen Hochformatfotos nicht nach EXIF
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   } catch {
     throw new Error('not-an-image');
   }
@@ -26,7 +28,13 @@ export async function toJpegBlob(file, { max, square = false, quality = 0.85 }) 
       canvas.width = w; canvas.height = h;
       ctx.drawImage(bitmap, 0, 0, w, h);
     }
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    const encode = q => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', q));
+    let blob = await encode(quality);
+    while (blob && blob.size > MAX_JPEG_BYTES) {
+      quality = nextQuality(quality);
+      if (quality == null) throw new Error('too-large');
+      blob = await encode(quality);
+    }
     if (!blob) throw new Error('not-an-image');
     return blob;
   } finally {

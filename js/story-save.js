@@ -1,9 +1,12 @@
-// Story speichern: erst Medien hochladen, dann das Dokument schreiben. Scheitert
-// etwas, werden die neu hochgeladenen Dateien wieder geloescht. Entfernte Dateien
-// einer bearbeiteten Story fallen erst nach dem erfolgreichen Speichern weg.
+// Story speichern: erst Medien hochladen, dann das Dokument schreiben. Auf die
+// Server-Bestaetigung des Dokuments wird nie gewartet: bricht die Verbindung mitten im
+// Speichern ab, kaeme sie nie, und das Formular bliebe gesperrt. Scheitert der Upload oder
+// spaeter das Schreiben, werden die neu hochgeladenen Dateien wieder geloescht. Entfernte
+// Dateien einer bearbeiteten Story fallen erst nach der Bestaetigung weg.
 import { validateDraft, storagePath, storyPaths } from './story-logic.js?v=1';
-import { uploadBlob, deleteFile } from './storage.js?v=1';
-import { newStoryId, saveStory, deleteStoryDoc } from './stories-db.js?v=3';
+import { uploadBlob, deleteFile } from './storage.js?v=2';
+import { newStoryId, saveStory, deleteStoryDoc } from './stories-db.js?v=4';
+import { settleWrite } from './offline-write.js?v=1';
 
 const defaultIo = { uploadBlob, deleteFile, saveStory, deleteStoryDoc, newStoryId };
 
@@ -23,17 +26,25 @@ function freeVoicePath(uid, storyId, existing) {
   return `users/${uid}/stories/${storyId}/voice-${n}.m4a`;
 }
 
-export async function saveStoryWithMedia(uid, draft, { existing = null, io = defaultIo } = {}) {
+/**
+ * Loest auf, sobald die Medien oben sind und das Dokument in der Warteschlange steht.
+ * onWriteError: das Dokument wurde spaeter abgelehnt (Dateien sind dann schon aufgeraeumt).
+ */
+export async function saveStoryWithMedia(uid, draft, { existing = null, io = defaultIo, onWriteError = () => {} } = {}) {
   const error = validateDraft(draft);
   if (error) throw new Error(error);
 
   const storyId = existing?.id ?? io.newStoryId(uid);
   const uploaded = [];
+  const cleanUp = async () => {
+    for (const path of uploaded) await io.deleteFile(path).catch(() => {});
+  };
   const upload = async (path, blob, type) => {
     await io.uploadBlob(path, blob, type);
     uploaded.push(path);
   };
 
+  let data;
   try {
     let index = nextPhotoIndex(existing);
     const photos = [];
@@ -56,25 +67,35 @@ export async function saveStoryWithMedia(uid, draft, { existing = null, io = def
       voice = { path: draft.voice.path, seconds: draft.voice.seconds };
     }
 
-    const data = {
+    data = {
       city: draft.city, country: draft.country ?? '', date: draft.date ?? null,
       text: draft.text ?? '', photos, voice, song: draft.song ?? null, shared: !!draft.shared
     };
     if (existing?.created_at !== undefined) data.created_at = existing.created_at;
-    await io.saveStory(uid, storyId, data);
+  } catch (e) {
+    await cleanUp();
+    throw e;
+  }
 
+  const written = io.saveStory(uid, storyId, data).then(async () => {
     const kept = new Set(storyPaths(data));
     for (const path of existing ? storyPaths(existing) : []) {
       if (!kept.has(path)) await io.deleteFile(path).catch(() => {});
     }
-  } catch (e) {
-    for (const path of uploaded) await io.deleteFile(path).catch(() => {});
+  }, async e => {
+    await cleanUp();
     throw e;
-  }
+  });
+  // Wie offline: der lokale Stand ist sofort da, die Bestaetigung kommt irgendwann (oder nie)
+  await settleWrite(written, { online: false, onError: onWriteError });
   return storyId;
 }
 
-export async function deleteStoryWithMedia(uid, story, { io = defaultIo } = {}) {
+/**
+ * Dateien loeschen braucht Netz und wird abgewartet. Das Dokument wartet offline nicht
+ * auf den Server (nur bei Stories ohne Dateien moeglich, der Aufrufer prueft das).
+ */
+export async function deleteStoryWithMedia(uid, story, { io = defaultIo, online = true, onWriteError } = {}) {
   for (const path of storyPaths(story)) await io.deleteFile(path);
-  await io.deleteStoryDoc(uid, story.id);
+  await settleWrite(io.deleteStoryDoc(uid, story.id), { online, onError: onWriteError });
 }

@@ -6,10 +6,10 @@
 // nach einem Teilabbruch das neue Bild im User-Doc wieder ueberschreiben.
 import { updateProfile } from '../vendor/firebase/10.12.0/firebase-auth.js';
 import { doc, updateDoc, writeBatch } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db, auth } from './config.js?v=4';
-import { firestoreIo } from './account-io.js?v=9';
-import { uploadBlob, publicUrl, deleteFile } from './storage.js?v=1';
-import { toJpegBlob } from './image.js?v=1';
+import { db, auth } from './config.js?v=5';
+import { firestoreIo } from './account-io.js?v=10';
+import { uploadBlob, publicUrl, deleteFile } from './storage.js?v=2';
+import { toJpegBlob } from './image.js?v=2';
 
 const MAX_URL = 500;      // Regelgrenze fuer avatar_url in firestore.rules
 const BATCH_LIMIT = 500;  // Firestore: Operationen pro Batch
@@ -79,11 +79,11 @@ export function initProfilePicture({ onChange, toast, t }) {
     btn.classList.add('busy');
     try {
       await work();
-      onChange();
     } catch (e) {
       console.error('[TM] avatar failed:', e);
       toast(t(e?.message === 'not-an-image' ? 'toast.notAnImage' : 'toast.avatarFailed'));
     } finally {
+      onChange(); // auch nach Teilfehlern den echten Stand zeigen
       busy = false;
       btn.classList.remove('busy');
     }

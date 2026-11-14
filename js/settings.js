@@ -1,13 +1,13 @@
-import { t, getLang, setLang } from './i18n.js?v=18';
-import { getTheme, setTheme } from './theme.js?v=27';
-import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=25';
+import { t, getLang, setLang } from './i18n.js?v=19';
+import { getTheme, setTheme } from './theme.js?v=28';
+import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=26';
 import { isNative } from './platform.js?v=1';
-import { APP_VERSION } from './version.js?v=20';
+import { APP_VERSION } from './version.js?v=21';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { collectDeletionSummary, deleteAccount } from './account.js?v=9';
-import { auth } from './config.js?v=4';
+import { collectDeletionSummary, deleteAccount } from './account.js?v=10';
+import { auth } from './config.js?v=5';
 import { isOnline } from './net-status.js?v=1';
-import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
+import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=3';
 
 /** Wires the settings in the profile sheet (js/hub.js): theme/language
  *  switches, sign-in methods, sign-out, deletion and version display.

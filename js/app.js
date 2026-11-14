@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=25';
+import { onAuthChange, signOutUser } from './auth.js?v=26';
 import {
   loadUserDataFast, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -7,17 +7,17 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=30';
+} from './db.js?v=31';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=23';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=23';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=24';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=24';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=24';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=30';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=27';
+} from './countries.js?v=31';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=28';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=29';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
@@ -28,23 +28,23 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=51';
-import { initTheme, getTheme } from './theme.js?v=27';
+} from './ui.js?v=52';
+import { initTheme, getTheme } from './theme.js?v=28';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=27';
+import { setupSettings } from './settings.js?v=28';
 import { initHub, openPanel, closePanel } from './hub.js?v=1';
-import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
-import { t, getLang, applyTranslations } from './i18n.js?v=18';
-import { startUpdateCheck } from './version.js?v=20';
-import { installLegalViewer } from './legal-view.js?v=7';
+import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=3';
+import { t, getLang, applyTranslations } from './i18n.js?v=19';
+import { startUpdateCheck } from './version.js?v=21';
+import { installLegalViewer } from './legal-view.js?v=8';
 import { avatarEl } from './avatar.js?v=2';
-import { openStoryForm } from './story-form.js?v=7';
-import { openStoryViewer } from './story-viewer.js?v=4';
-import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=3';
-import { sortStories, citiesWithStories, orphanStories } from './story-logic.js?v=1';
-import { deleteStoryWithMedia } from './story-save.js?v=4';
-import { initProfilePicture } from './profile.js?v=2';
-import { auth } from './config.js?v=4';
+import { openStoryForm } from './story-form.js?v=8';
+import { openStoryViewer } from './story-viewer.js?v=5';
+import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=4';
+import { sortStories, citiesWithStories, orphanStories, storyPaths } from './story-logic.js?v=1';
+import { deleteStoryWithMedia } from './story-save.js?v=5';
+import { initProfilePicture } from './profile.js?v=3';
+import { auth } from './config.js?v=5';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
 let _uid            = null;
@@ -593,9 +593,21 @@ async function _onRemoveCityFromGroup(city, type) {
   }
 }
 
+// Dateien lassen sich nur online loeschen. Ohne Dateien geht das Dokument offline in die
+// Warteschlange, ohne dass die Oberflaeche auf den Server wartet.
+function _storiesDeletable(stories) {
+  if (isOnline() || !stories.some(s => storyPaths(s).length)) return true;
+  showToast(t('story.needsConnection'));
+  return false;
+}
+const _deleteStory = (story, failToast) => deleteStoryWithMedia(_uid, story, {
+  online: isOnline(), onWriteError: () => showToast(t(failToast))
+});
+
 async function _onDeleteStory(story) {
+  if (!_storiesDeletable([story])) return;
   try {
-    await deleteStoryWithMedia(_uid, story);
+    await _deleteStory(story, 'story.deleteFailed');
   } catch (err) {
     console.error('[TM] story delete failed:', err);
     showToast(t('story.deleteFailed'));
@@ -606,9 +618,11 @@ async function _onDeleteStory(story) {
 function _onRemoveCity(city, type) {
   const stories = type === 'visited' ? _myStories.filter(s => s.city === city.name) : [];
   if (!stories.length) { _removeCity(city, type); return; }
+  if (!_storiesDeletable(stories)) return;
   showConfirm(t('story.removeCityWarning', { name: city.name, count: stories.length }), t('dialog.remove'), async () => {
+    if (!_storiesDeletable(stories)) return; // Netz waehrend der Rueckfrage verloren
     try {
-      for (const story of stories) await deleteStoryWithMedia(_uid, story);
+      for (const story of stories) await _deleteStory(story, 'toast.removeFailed');
     } catch (err) {
       console.error('[TM] story delete failed:', err);
       showToast(t('toast.removeFailed'));
@@ -876,11 +890,11 @@ function _setMapMode(mode) {
       _currentFilter = 'all';
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('nav-all')?.classList.add('active');
-      _renderPlaces();
     }
   } else {
     if (livedNav) livedNav.style.display = '';
   }
+  _renderPlaces(); // die Liste zeigt je nach Modus Staedte oder Laender
 
   // Hide any open tooltips
   hideCountryTooltip();
@@ -1004,7 +1018,7 @@ function _onHubAdd() {
 }
 
 function _renderPlaces() {
-  renderPlacesList(_userData, _currentFilter, citiesWithStories(_liveStories()));
+  renderPlacesList(_userData, _currentFilter, citiesWithStories(_liveStories()), _viewMode === 'group' ? 'cities' : _mapMode);
 }
 
 function _renderOwnMarkers() {
