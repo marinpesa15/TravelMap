@@ -9,15 +9,15 @@ import {
   acceptConsent
 } from './db.js?v=30';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=22';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=23';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=23';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=29';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=26';
+} from './countries.js?v=30';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=27';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=29';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
@@ -28,22 +28,22 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=50';
-import { initTheme, getTheme } from './theme.js?v=26';
+} from './ui.js?v=51';
+import { initTheme, getTheme } from './theme.js?v=27';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=25';
+import { setupSettings } from './settings.js?v=26';
 import { initHub, openPanel, closePanel } from './hub.js?v=1';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
-import { t, getLang, applyTranslations } from './i18n.js?v=16';
-import { startUpdateCheck } from './version.js?v=18';
-import { installLegalViewer } from './legal-view.js?v=6';
+import { t, getLang, applyTranslations } from './i18n.js?v=18';
+import { startUpdateCheck } from './version.js?v=19';
+import { installLegalViewer } from './legal-view.js?v=7';
 import { avatarEl } from './avatar.js?v=2';
-import { openStoryForm } from './story-form.js?v=6';
-import { openStoryViewer } from './story-viewer.js?v=3';
+import { openStoryForm } from './story-form.js?v=7';
+import { openStoryViewer } from './story-viewer.js?v=4';
 import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=3';
 import { sortStories, citiesWithStories, orphanStories } from './story-logic.js?v=1';
 import { deleteStoryWithMedia } from './story-save.js?v=4';
-import { initProfilePicture } from './profile.js?v=1';
+import { initProfilePicture } from './profile.js?v=2';
 import { auth } from './config.js?v=4';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 

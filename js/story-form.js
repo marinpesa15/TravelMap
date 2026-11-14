@@ -1,7 +1,7 @@
 // Story-Formular (Sheet #story-form): Datum, Fotos, Text, Sprachnotiz, Song, Freigabe.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t } from './i18n.js?v=16';
-import { showToast } from './ui.js?v=50';
+import { t } from './i18n.js?v=18';
+import { showToast } from './ui.js?v=51';
 import { toJpegBlob } from './image.js?v=1';
 import { blobUrl } from './storage.js?v=1';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';

@@ -1,8 +1,8 @@
 import * as constants from './constants.js?v=13';
 import { layers as basemapLayers, namedFlavor } from '../vendor/protomaps-basemaps/5.7.2/index.js';
-import { loadCountriesGeoJSON } from './countries.js?v=29';
+import { loadCountriesGeoJSON } from './countries.js?v=30';
 import { buildFallbackStyle } from './fallback-style.js?v=1';
-import { getLang } from './i18n.js?v=16';
+import { getLang } from './i18n.js?v=18';
 
 // ===== Karte =====
 //

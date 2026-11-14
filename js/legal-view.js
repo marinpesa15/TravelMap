@@ -10,7 +10,7 @@
 // and works offline. In the browser this module does nothing.
 
 import { isNative } from './platform.js?v=1';
-import { t } from './i18n.js?v=16';
+import { t } from './i18n.js?v=18';
 
 const LEGAL_HREF = /^(privacy|support)\.html(#[\w-]*)?$/;
 

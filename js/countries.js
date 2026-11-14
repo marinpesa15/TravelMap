@@ -1,4 +1,4 @@
-import { searchLocalCountries } from './places.js?v=7';
+import { searchLocalCountries } from './places.js?v=8';
 
 const LAYER_VISITED  = 'tm-visited';
 const LAYER_WISHLIST = 'tm-wishlist';

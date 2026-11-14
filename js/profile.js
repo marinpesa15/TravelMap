@@ -7,7 +7,7 @@
 import { updateProfile } from '../vendor/firebase/10.12.0/firebase-auth.js';
 import { doc, updateDoc, writeBatch } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { db, auth } from './config.js?v=4';
-import { firestoreIo } from './account-io.js?v=7';
+import { firestoreIo } from './account-io.js?v=9';
 import { uploadBlob, publicUrl, deleteFile } from './storage.js?v=1';
 import { toJpegBlob } from './image.js?v=1';
 

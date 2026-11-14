@@ -1,7 +1,7 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=29';
-import { t, getLang } from './i18n.js?v=16';
-import { searchLocalCities } from './places.js?v=7';
+import { searchCountries } from './countries.js?v=30';
+import { t, getLang } from './i18n.js?v=18';
+import { searchLocalCities } from './places.js?v=8';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';

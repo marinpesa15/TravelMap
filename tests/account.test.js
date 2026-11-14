@@ -25,6 +25,11 @@ function fakeIo(over = {}) {
     deleteFriendPairs: rec('deleteFriendPairs'),
     findInviteTokens: rec('findInviteTokens', ['tok']),
     deleteInvite: rec('deleteInvite'),
+    stories: [],
+    loadStories: () => { calls.push('loadStories'); return Promise.resolve(io.stories); },
+    deleteFile: path => { calls.push('deleteFile:' + path); return Promise.resolve(); },
+    deleteStoryDoc: (uid, id) => { calls.push('deleteStoryDoc:' + id); return Promise.resolve(); },
+    deleteAvatar: rec('deleteAvatar'),
     deleteUserDoc: rec('deleteUserDoc'),
     deleteAuthUser: rec('deleteAuthUser'),
     ...over
@@ -120,13 +125,72 @@ describe('deleteAccount', () => {
     const io = fakeIo();
     const seen = [];
     await deleteAccount('me', { io, onProgress: s => seen.push(s) });
-    expect(seen).toContain('groups');
-    expect(seen).toContain('account');
+    expect(seen).toEqual(['groups', 'friends', 'invite', 'stories', 'profileDoc', 'account']);
+  });
+
+  const twoStories = () => [
+    { id: 's1', city: 'Rom', photos: [{ path: 'users/me/stories/s1/p0.jpg' }, { path: 'users/me/stories/s1/p1.jpg' }],
+      voice: { path: 'users/me/stories/s1/voice-2.m4a' } },
+    // verwaiste Story: Stadt existiert nicht mehr, wird trotzdem geloescht
+    { id: 's2', city: 'Weg', photos: [{ path: 'users/me/stories/s2/p0.jpg' }] }
+  ];
+
+  it('loescht je Story erst alle Dateien, dann das Dokument, dann das Profilbild, alles vor dem User-Doc', async () => {
+    const io = fakeIo();
+    io.stories = twoStories();
+    await deleteAccount('me', { io });
+    const c = io.calls;
+    expect(c.slice(c.indexOf('loadStories'), c.indexOf('deleteUserDoc'))).toEqual([
+      'loadStories',
+      'deleteFile:users/me/stories/s1/p0.jpg',
+      'deleteFile:users/me/stories/s1/p1.jpg',
+      'deleteFile:users/me/stories/s1/voice-2.m4a',
+      'deleteStoryDoc:s1',
+      'deleteFile:users/me/stories/s2/p0.jpg',
+      'deleteStoryDoc:s2',
+      'deleteAvatar'
+    ]);
+    expect(c.at(-1)).toBe('deleteAuthUser');
+  });
+
+  it('loescht das Profilbild auch ohne Stories', async () => {
+    const io = fakeIo();
+    await deleteAccount('me', { io });
+    expect(io.calls).toContain('deleteAvatar');
+  });
+
+  it('bricht vor dem User-Doc ab, wenn eine Datei nicht geloescht werden kann, und ein zweiter Lauf geht durch', async () => {
+    const io = fakeIo();
+    io.stories = twoStories();
+    let fail = true;
+    const deleted = new Set();
+    io.deleteFile = path => {
+      io.calls.push('deleteFile:' + path);
+      if (fail && path.endsWith('p1.jpg')) return Promise.reject(new Error('network'));
+      deleted.add(path);
+      return Promise.resolve();
+    };
+    io.deleteStoryDoc = (uid, id) => {
+      io.calls.push('deleteStoryDoc:' + id);
+      io.stories = io.stories.filter(s => s.id !== id);
+      return Promise.resolve();
+    };
+    await expect(deleteAccount('me', { io })).rejects.toThrow('network');
+    expect(io.calls).not.toContain('deleteStoryDoc:s1');
+    expect(io.calls).not.toContain('deleteUserDoc');
+    expect(io.calls).not.toContain('deleteAuthUser');
+    expect(io.stories).toHaveLength(2);
+
+    fail = false;
+    io.calls.length = 0;
+    await deleteAccount('me', { io });
+    expect(io.stories).toHaveLength(0);
+    expect(io.calls.at(-1)).toBe('deleteAuthUser');
   });
 });
 
 describe('collectDeletionSummary', () => {
-  it('zaehlt Staedte, Laender, Freunde und Gruppen', async () => {
+  it('zaehlt Staedte, Laender, Freunde, Gruppen und Stories', async () => {
     const io = fakeIo({
       loadUser: () => Promise.resolve({
         visited_cities: [{ name: 'Rom' }, { name: 'Wien' }],
@@ -135,15 +199,16 @@ describe('collectDeletionSummary', () => {
         wishlist_countries: ['NO']
       }),
       loadFriendUids: () => Promise.resolve(['anna', 'ben']),
-      loadMyGroups: () => Promise.resolve([{ id: 'g1' }])
+      loadMyGroups: () => Promise.resolve([{ id: 'g1' }]),
+      loadStories: () => Promise.resolve([{ id: 's1' }, { id: 's2' }, { id: 's3' }])
     });
     const s = await collectDeletionSummary('me', { io });
-    expect(s).toEqual({ cities: 3, countries: 3, friends: 2, groups: 1 });
+    expect(s).toEqual({ cities: 3, countries: 3, friends: 2, groups: 1, stories: 3 });
   });
 
   it('liefert Nullen fuer ein leeres Konto', async () => {
     const io = fakeIo({ loadUser: () => Promise.resolve(null) });
     const s = await collectDeletionSummary('me', { io });
-    expect(s).toEqual({ cities: 0, countries: 0, friends: 0, groups: 0 });
+    expect(s).toEqual({ cities: 0, countries: 0, friends: 0, groups: 0, stories: 0 });
   });
 });

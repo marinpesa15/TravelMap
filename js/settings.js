@@ -1,10 +1,10 @@
-import { t, getLang, setLang } from './i18n.js?v=16';
-import { getTheme, setTheme } from './theme.js?v=26';
+import { t, getLang, setLang } from './i18n.js?v=18';
+import { getTheme, setTheme } from './theme.js?v=27';
 import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=25';
 import { isNative } from './platform.js?v=1';
-import { APP_VERSION } from './version.js?v=18';
+import { APP_VERSION } from './version.js?v=19';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { collectDeletionSummary, deleteAccount } from './account.js?v=7';
+import { collectDeletionSummary, deleteAccount } from './account.js?v=9';
 import { auth } from './config.js?v=4';
 import { isOnline } from './net-status.js?v=1';
 import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
