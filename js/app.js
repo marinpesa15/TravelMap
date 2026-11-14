@@ -9,18 +9,18 @@ import {
   acceptConsent
 } from './db.js?v=27';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=18';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=19';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=25';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=22';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=27';
+} from './countries.js?v=26';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=23';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=28';
 import {
-  updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
+  updateStats, renderPlacesList, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
@@ -28,15 +28,15 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=46';
-import { initTheme, getTheme } from './theme.js?v=22';
+} from './ui.js?v=47';
+import { initTheme, getTheme } from './theme.js?v=23';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=20';
+import { setupSettings } from './settings.js?v=21';
+import { initHub, openPanel, closePanel } from './hub.js?v=1';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
-import { t, getLang, applyTranslations } from './i18n.js?v=9';
-import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=14';
-import { installLegalViewer } from './legal-view.js?v=2';
+import { t, getLang, applyTranslations } from './i18n.js?v=10';
+import { startUpdateCheck } from './version.js?v=15';
+import { installLegalViewer } from './legal-view.js?v=3';
 import { avatarEl } from './avatar.js?v=2';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
@@ -259,7 +259,7 @@ async function _init(user) {
 
     initTheme();
     setupSettings(_map);
-    _initMobileSidebar();
+    initHub({ onAdd: _onHubAdd, onPlace: _flyToPlace });
     _initNetStatus();
     _setupFilterNav();
     _initMapModeTabs();
@@ -268,6 +268,7 @@ async function _init(user) {
 
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
     updateStats(_userData);
+    _renderPlaces();
     _mark('render');
 
     // Map + stats are on screen — reveal the app
@@ -276,9 +277,6 @@ async function _init(user) {
     console.info('[TM] start', _marks.join(' '));
 
     _maybeShowRelayHint(user, preData);
-
-    // One-time staggered entrance for the sidebar lists (app start only)
-    staggerIn('.collection-nav .nav-item, #recent-logs .recent-log-item');
 
     // Watch for newer deploys and offer a reload (Lumiq-style update prompt)
     startUpdateCheck();
@@ -290,6 +288,7 @@ async function _init(user) {
     if (_unsubUserData) _unsubUserData();
     _unsubUserData = subscribeUserData(_uid, data => {
       _userData = data;
+      _renderPlaces();
       if (_viewMode === 'own') {
         if (_mapMode === 'cities') {
           renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
@@ -336,11 +335,6 @@ async function _init(user) {
     setupConfirmDialog();
     setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode);
 
-    document.getElementById('btn-add-location')?.addEventListener('click', () => {
-      _closeMobileSidebar();
-      document.getElementById('city-search')?.focus();
-    });
-
     document.getElementById('btn-close-search')?.addEventListener('click', _closeMobileSearchOverlay);
 
     _map.on('click', () => hideCityPopup());
@@ -355,10 +349,11 @@ async function _init(user) {
         input.placeholder = (_viewMode === 'group' || _mapMode !== 'countries')
           ? t('search.cities') : t('search.countries');
       }
-      // Sidebar lists / stats
+      // Stats und Orte-Liste (Laendernamen haengen an der Sprache)
       if (_userData) {
         if (_mapMode === 'countries') updateCountriesView(_userData);
         else updateStats(_userData);
+        _renderPlaces();
       }
       renderFriendsList(_friends, _switchToFriendView, _onDeleteFriend);
       renderGroupsList(_groups, _uid, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _friends);
@@ -385,21 +380,20 @@ function _maybeShowRelayHint(user, preData) {
     if (localStorage.getItem(key) === '1') return;
     localStorage.setItem(key, '1');
   } catch { /* storage unavailable */ }
-  showRelayHint(() => document.getElementById('btn-settings')?.click());
+  showRelayHint(() => openPanel('profile'));
 }
 
 // ===== User Profile =====
 function _showUserProfile(user) {
-  const host   = document.getElementById('user-avatar');
-  const nameEl = document.getElementById('user-name');
   // Apple gibt kein Foto heraus, Google nur online: der Kreis mit der
   // Initiale steht immer, das Bild kommt dazu, wenn es laedt (js/avatar.js).
-  host?.replaceChildren(avatarEl({
-    name: user.displayName || user.email, url: user.photoURL, seed: user.uid, className: 'user-avatar'
-  }));
-  if (nameEl) {
-    nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
-  }
+  const avatar = className => avatarEl({
+    name: user.displayName || user.email, url: user.photoURL, seed: user.uid, className
+  });
+  document.getElementById('user-avatar')?.replaceChildren(avatar('user-avatar'));
+  document.getElementById('profile-avatar')?.replaceChildren(avatar('profile-avatar'));
+  const nameEl = document.getElementById('profile-name');
+  if (nameEl) nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
 }
 
 /**
@@ -577,13 +571,12 @@ async function _onRemoveCity(city, type) {
 
 // ===== Friend View Mode =====
 async function _switchToFriendView(friend) {
-  _closeMobileSidebar(); // auf dem Handy verdeckt die Schublade sonst die Karte
+  closePanel(); // das Freunde-Sheet verdeckt sonst die Karte
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'friend';
 
   document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
   document.querySelector(`.social-item[data-uid="${friend.uid}"]`)?.classList.add('active');
-  document.getElementById('btn-add-location').style.display = 'none';
 
   try {
     if (_mapMode === 'countries') await _ensureCountryLayers();
@@ -636,8 +629,6 @@ function _returnToOwnView() {
     hideCountryLayers(_map); // remove any friend/group country fills
     renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
   }
-
-  document.getElementById('btn-add-location').style.display = '';
 
   // Restore placeholder to match current map mode
   const _ownSearchInput = document.getElementById('city-search');
@@ -699,7 +690,7 @@ async function _onAddMembersToGroup(groupId, friendUids) {
 
 // ===== Group View Mode =====
 function _switchToGroupView(group) {
-  _closeMobileSidebar(); // auf dem Handy verdeckt die Schublade sonst die Karte
+  closePanel(); // das Freunde-Sheet verdeckt sonst die Karte
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'group';
   _currentGroupId = group.id;
@@ -754,6 +745,7 @@ function _setupFilterNav() {
       _currentFilter = item.dataset.filter;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
+      _renderPlaces();
       if (_viewMode === 'own') {
         if (_mapMode === 'countries') {
           const { visited, wishlist } = _getFilteredCountryData();
@@ -808,6 +800,7 @@ function _setMapMode(mode) {
       _currentFilter = 'all';
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('nav-all')?.classList.add('active');
+      _renderPlaces();
     }
   } else {
     if (livedNav) livedNav.style.display = '';
@@ -871,7 +864,7 @@ function _onCountryMapClick({ isoCode, countryName }, point) {
 
 // ===== Mobile Banner / Search Overlay =====
 function _enterBannerMode(isGroup) {
-  if (window.innerWidth > 768) return;
+  document.body.classList.add('banner-mode'); // Tab-Leiste und Statistik aus
   const area = document.querySelector('.map-area');
   area?.classList.add('banner-active');
   if (isGroup) area?.classList.add('group-active');
@@ -885,7 +878,7 @@ function _enterBannerMode(isGroup) {
 }
 
 function _exitBannerMode() {
-  if (window.innerWidth > 768) return;
+  document.body.classList.remove('banner-mode');
   _closeMobileSearchOverlay();
   document.querySelector('.map-area')?.classList.remove('banner-active', 'group-active');
 }
@@ -927,24 +920,22 @@ function _initNetStatus() {
   });
 }
 
-// ===== Mobile Sidebar =====
-function _closeMobileSidebar() {
-  document.getElementById('sidebar')?.classList.remove('open');
-  document.getElementById('sidebar-backdrop')?.classList.remove('open');
+// ===== Hub =====
+// Plus: wie frueher "Ort hinzufuegen", fuehrt in die Suche
+function _onHubAdd() {
+  closePanel();
+  document.getElementById('city-search')?.focus();
 }
 
-function _initMobileSidebar() {
-  const btn      = document.getElementById('btn-menu');
-  const backdrop = document.getElementById('sidebar-backdrop');
-  if (!btn) return;
+function _renderPlaces() {
+  // shortcut: storyCities bleibt leer, bis Aufgabe 7 die Stories liefert
+  renderPlacesList(_userData, _currentFilter, new Set());
+}
 
-  btn.addEventListener('click', () => {
-    const sidebar = document.getElementById('sidebar');
-    sidebar?.classList.toggle('open');
-    backdrop?.classList.toggle('open');
-    // The initial count-up played while the drawer was off-screen — replay it
-    // each time the drawer opens so the animation is actually visible.
-    if (sidebar?.classList.contains('open')) replayStatsCountUp();
-  });
-  backdrop?.addEventListener('click', _closeMobileSidebar);
+// Tipp auf einen Ort im Orte-Sheet: Karte fliegt hin
+function _flyToPlace(name) {
+  const city = [...(_userData?.visited_cities ?? []), ...(_userData?.wishlist_cities ?? [])]
+    .find(c => c.name === name);
+  if (!city || !Number.isFinite(city.lng) || !Number.isFinite(city.lat)) return;
+  _map.flyTo({ center: [city.lng, city.lat], zoom: Math.max(_map.getZoom(), 6) });
 }

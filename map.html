@@ -10,7 +10,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-v4.png">
   <link rel="manifest" href="manifest.webmanifest?v=6">
   <meta name="theme-color" content="#0b0d19">
-  <link rel="stylesheet" href="css/style.css?v=47">
+  <link rel="stylesheet" href="css/style.css?v=48">
+  <link rel="stylesheet" href="css/hub.css?v=1">
   <link href="vendor/maplibre-gl/4.7.1/maplibre-gl.css" rel="stylesheet">
   <script defer src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
   <script defer src="vendor/pmtiles/3.2.1/pmtiles.js"></script>
@@ -72,111 +73,6 @@
 
   <div class="app-shell">
 
-    <!-- ═══ LEFT SIDEBAR ═══ -->
-    <aside id="sidebar">
-
-      <!-- Brand header -->
-      <div class="sidebar-header">
-        <div class="brand-icon" style="background:#171933">
-          <img src="icons/logo-mark.png?v=1" alt="" style="height:26px;width:auto;display:block">
-        </div>
-        <h1 class="brand-name">TravelMap</h1>
-        <button class="btn-settings" id="btn-settings" title="Settings" data-i18n-title="settings.gearTitle" aria-label="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-      </div>
-
-      <!-- Snapshot stats grid (clickable tabs) -->
-      <div class="sidebar-section">
-        <p class="section-label" data-i18n="sidebar.view">View</p>
-        <div class="stats-grid">
-          <div class="stat-card stat-tab active" data-mode="cities" id="tab-cities">
-            <p class="stat-label" data-i18n="stats.cities">Cities</p>
-            <p class="stat-num" id="stat-cities-num">0</p>
-          </div>
-          <div class="stat-card stat-tab" data-mode="countries" id="tab-countries">
-            <p class="stat-label" data-i18n="stats.countries">Countries</p>
-            <p class="stat-num" id="stat-countries-num">0</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Collection nav -->
-      <div class="sidebar-section">
-        <p class="section-label" data-i18n="sidebar.collection">Collection</p>
-        <nav class="collection-nav">
-          <a href="#" class="nav-item active" data-filter="all" id="nav-all">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-            <span class="nav-label" data-i18n="nav.all">All</span>
-            <span class="nav-badge" id="nav-all-count">0</span>
-          </a>
-          <a href="#" class="nav-item" data-filter="visited" id="nav-visited">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            <span class="nav-label" data-i18n="nav.visited">Visited</span>
-            <span class="nav-badge" id="nav-visited-count">0</span>
-          </a>
-          <a href="#" class="nav-item" data-filter="wishlist" id="nav-wishlist">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span class="nav-label" data-i18n="nav.wishlist">Want to visit</span>
-            <span class="nav-badge" id="nav-wishlist-count">0</span>
-          </a>
-          <a href="#" class="nav-item" data-filter="lived" id="nav-lived">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            <span class="nav-label" data-i18n="nav.lived">Lived there</span>
-            <span class="nav-badge" id="nav-lived-count">0</span>
-          </a>
-        </nav>
-      </div>
-
-      <!-- Recent Logs -->
-      <div class="sidebar-section" id="recent-logs-section">
-        <p class="section-label" data-i18n="sidebar.recentLogs">Recent Logs</p>
-        <div id="recent-logs" class="recent-logs"></div>
-      </div>
-
-      <!-- Friends -->
-      <div class="sidebar-section" id="friends-section">
-        <div class="section-header">
-          <p class="section-label" data-i18n="sidebar.friends">Friends</p>
-          <button class="btn-section-action" id="btn-copy-invite" data-i18n="sidebar.invite" data-i18n-title="sidebar.inviteTitle" title="Copy invite link">+ Invite</button>
-        </div>
-        <div id="friends-list" class="social-list"></div>
-      </div>
-
-      <!-- Groups (placeholder for Task 6) -->
-      <div class="sidebar-section" id="groups-section">
-        <div class="section-header">
-          <p class="section-label" data-i18n="sidebar.groups">Groups</p>
-          <button class="btn-section-action" id="btn-create-group" data-i18n="sidebar.newGroup" data-i18n-title="sidebar.newGroupTitle" title="Create group">+ New</button>
-        </div>
-        <div id="groups-list" class="social-list"></div>
-      </div>
-
-      <!-- Spacer -->
-      <div style="flex:1"></div>
-
-      <!-- Footer: Add + Sign out -->
-      <div class="sidebar-footer">
-        <button class="btn-add-location" id="btn-add-location">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          <span data-i18n="sidebar.addLocation">Add New Location</span>
-        </button>
-      </div>
-
-    </aside>
-
     <!-- ═══ MAP AREA ═══ -->
     <main class="map-area">
       <!-- View mode banner -->
@@ -192,14 +88,7 @@
 
       <div id="map"></div>
 
-      <!-- Mobile hamburger (hidden on desktop) -->
-      <button class="btn-menu" id="btn-menu" aria-label="Open menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
-
-      <!-- Top-right: search + user pill -->
+      <!-- Oben: Suche und Avatar (oeffnet das Profil) -->
       <div class="top-right-bar">
         <div class="search-wrap">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -208,10 +97,9 @@
           <input type="text" id="city-search" placeholder="Search cities..." data-i18n-placeholder="search.cities" autocomplete="off">
           <div id="search-results"></div>
         </div>
-        <div class="user-pill" id="user-pill">
+        <button type="button" class="user-pill" id="user-pill" aria-label="Profile" data-i18n-aria="hub.profile">
           <span id="user-avatar" class="user-avatar-host"></span>
-          <span id="user-name" class="user-name">...</span>
-        </div>
+        </button>
       </div>
 
       <!-- Kartenzustand: laedt noch, oder Offline-Karte (js/map.js) -->
@@ -229,19 +117,178 @@
       <!-- Bottom-left: legend (cities / countries) -->
       <div class="map-legend" id="legend-cities">
         <div class="legend-item"><span class="legend-dot indigo"></span><span data-i18n="legend.visited">Visited</span></div>
-        <div class="legend-item"><span class="legend-dot amber"></span><span data-i18n="legend.lived">Lived</span></div>
+        <div class="legend-item"><span class="legend-dot violet"></span><span data-i18n="legend.lived">Lived</span></div>
         <div class="legend-item"><span class="legend-dot emerald"></span><span data-i18n="legend.wishlist">Wishlist</span></div>
       </div>
       <div class="map-legend" id="legend-countries" style="display:none">
         <div class="legend-item"><span class="legend-dot indigo" style="border-radius:3px;width:14px;height:10px"></span><span data-i18n="legend.visited">Visited</span></div>
         <div class="legend-item"><span class="legend-dot emerald" style="border-radius:3px;width:14px;height:10px"></span><span data-i18n="legend.wishlist">Wishlist</span></div>
       </div>
+      <!-- Statistik ueber der Tab-Leiste, schaltet zwischen Staedten und Laendern -->
+      <div id="hub-stats">
+        <div class="stat-tab active" data-mode="cities" id="tab-cities">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l5-3v16"/><path d="M10 21V3l9 4v14"/><path d="M13 9h2M13 13h2M13 17h2"/></svg>
+          <div>
+            <p class="stat-num" id="stat-cities-num">0</p>
+            <p class="stat-label" data-i18n="stats.cities">Cities</p>
+          </div>
+        </div>
+        <div class="stat-tab" data-mode="countries" id="tab-countries">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <div>
+            <p class="stat-num" id="stat-countries-num">0</p>
+            <p class="stat-label" data-i18n="stats.countries">Countries</p>
+          </div>
+        </div>
+      </div>
     </main>
 
   </div><!-- .app-shell -->
 
-  <!-- Mobile sidebar backdrop -->
-  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+  <!-- ═══ HUB: Sheets und Tab-Leiste (js/hub.js) ═══ -->
+
+  <!-- Orte: Filter und Liste, neueste zuerst -->
+  <section class="sheet" id="panel-places" aria-labelledby="panel-places-title">
+    <div class="sheet-card">
+      <button type="button" class="sheet-grabber" aria-label="Close" data-i18n-aria="hub.close"></button>
+      <h2 class="sheet-title" id="panel-places-title" data-i18n="hub.places">Places</h2>
+      <nav class="collection-nav">
+        <a href="#" class="nav-item active" data-filter="all" id="nav-all">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <span class="nav-label" data-i18n="nav.all">All</span>
+          <span class="nav-badge" id="nav-all-count">0</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="visited" id="nav-visited">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <span class="nav-label" data-i18n="nav.visited">Visited</span>
+          <span class="nav-badge" id="nav-visited-count">0</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="wishlist" id="nav-wishlist">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span class="nav-label" data-i18n="legend.wishlist">Wishlist</span>
+          <span class="nav-badge" id="nav-wishlist-count">0</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="lived" id="nav-lived">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span class="nav-label" data-i18n="legend.lived">Lived</span>
+          <span class="nav-badge" id="nav-lived-count">0</span>
+        </a>
+      </nav>
+      <div id="places-list" class="places-list"></div>
+    </div>
+  </section>
+
+  <!-- Freunde: Einladen, Freunde, Gruppen -->
+  <section class="sheet" id="panel-friends" aria-labelledby="panel-friends-title">
+    <div class="sheet-card">
+      <button type="button" class="sheet-grabber" aria-label="Close" data-i18n-aria="hub.close"></button>
+      <h2 class="sheet-title" id="panel-friends-title" data-i18n="hub.friends">Friends</h2>
+      <div class="sheet-section" id="friends-section">
+        <div class="section-header">
+          <p class="section-label" data-i18n="sidebar.friends">Friends</p>
+          <button class="btn-section-action" id="btn-copy-invite" data-i18n="sidebar.invite" data-i18n-title="sidebar.inviteTitle" title="Copy invite link">+ Invite</button>
+        </div>
+        <div id="friends-list" class="social-list"></div>
+      </div>
+
+      <div class="sheet-section" id="groups-section">
+        <div class="section-header">
+          <p class="section-label" data-i18n="sidebar.groups">Groups</p>
+          <button class="btn-section-action" id="btn-create-group" data-i18n="sidebar.newGroup" data-i18n-title="sidebar.newGroupTitle" title="Create group">+ New</button>
+        </div>
+        <div id="groups-list" class="social-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Profil: Kopf, Statistik, Einstellungen (frueher Modal, js/settings.js) -->
+  <section class="sheet" id="panel-profile" aria-labelledby="panel-profile-title">
+    <div class="sheet-card">
+      <button type="button" class="sheet-grabber" aria-label="Close" data-i18n-aria="hub.close"></button>
+      <h2 class="sheet-title" id="panel-profile-title" data-i18n="hub.profile">Profile</h2>
+      <div class="profile-head">
+        <span id="profile-avatar"></span>
+        <p id="profile-name"></p>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l5-3v16"/><path d="M10 21V3l9 4v14"/><path d="M13 9h2M13 13h2M13 17h2"/></svg>
+          <div>
+            <p class="stat-num" id="profile-cities-num">0</p>
+            <p class="stat-label" data-i18n="stats.cities">Cities</p>
+          </div>
+        </div>
+        <div class="profile-stat">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <div>
+            <p class="stat-num" id="profile-countries-num">0</p>
+            <p class="stat-label" data-i18n="stats.countries">Countries</p>
+          </div>
+        </div>
+      </div>
+      <div class="profile-group">
+        <div class="settings-row">
+          <p class="dialog-label" data-i18n="settings.appearance">Appearance</p>
+          <button class="btn-theme-toggle" id="settings-theme-toggle" data-i18n-title="settings.appearance" title="Appearance">☀️</button>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="settings-row">
+          <p class="dialog-label" data-i18n="settings.language">Language</p>
+          <div class="radio-group" id="settings-lang">
+            <div class="radio-opt" data-lang="en">English</div>
+            <div class="radio-opt" data-lang="de">Deutsch</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-group">
+        <!-- Google und Apple auf einem Konto, siehe linkProvider in js/auth.js -->
+        <p class="dialog-label" data-i18n="settings.signin">Sign-in methods</p>
+        <div class="settings-providers" id="settings-providers"></div>
+        <p id="settings-link-status" class="delete-status" hidden></p>
+      </div>
+      <div class="profile-group">
+        <div class="settings-links">
+          <a href="privacy.html#privacy" target="_blank" rel="noopener" data-i18n="settings.privacy">Privacy Policy</a>
+          <a href="privacy.html#imprint" target="_blank" rel="noopener" data-i18n="settings.imprint">Legal Notice</a>
+        </div>
+      </div>
+      <button class="btn-danger settings-signout" id="settings-signout" data-i18n="settings.signout">Sign out</button>
+      <button class="btn-danger settings-delete" id="settings-delete" data-i18n="delete.button">Delete account</button>
+      <p class="settings-version" id="settings-version"></p>
+    </div>
+  </section>
+
+  <nav id="hub">
+    <button type="button" class="hub-tab" data-panel="map" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span data-i18n="hub.map">Map</span>
+    </button>
+    <button type="button" class="hub-tab" data-panel="places">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span data-i18n="hub.places">Places</span>
+    </button>
+    <button type="button" id="hub-add" aria-label="Add place" data-i18n-aria="hub.add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <button type="button" class="hub-tab" data-panel="friends">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span data-i18n="hub.friends">Friends</span>
+    </button>
+    <button type="button" class="hub-tab" data-panel="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span data-i18n="hub.profile">Profile</span>
+    </button>
+  </nav>
 
   <!-- ═══ OVERLAYS ═══ -->
 
@@ -298,38 +345,6 @@
         <button class="btn-cancel" id="group-photo-skip" data-i18n="dialog.skip">Skip</button>
         <button class="btn-add"    id="group-photo-confirm" data-i18n="photo.use">Use this photo</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Settings Modal -->
-  <div id="settings-modal">
-    <div class="settings-card">
-      <div class="settings-header">
-        <h3 data-i18n="settings.title">Settings</h3>
-        <button id="settings-close" class="settings-close" aria-label="Close">✕</button>
-      </div>
-      <div class="settings-row">
-        <p class="dialog-label" data-i18n="settings.appearance">Appearance</p>
-        <button class="btn-theme-toggle" id="settings-theme-toggle" data-i18n-title="settings.appearance" title="Appearance">☀️</button>
-      </div>
-      <p class="dialog-label" data-i18n="settings.language">Language</p>
-      <div class="radio-group" id="settings-lang">
-        <div class="radio-opt" data-lang="en">English</div>
-        <div class="radio-opt" data-lang="de">Deutsch</div>
-      </div>
-      <div class="settings-divider"></div>
-      <!-- Google und Apple auf einem Konto, siehe linkProvider in js/auth.js -->
-      <p class="dialog-label" data-i18n="settings.signin">Sign-in methods</p>
-      <div class="settings-providers" id="settings-providers"></div>
-      <p id="settings-link-status" class="delete-status" hidden></p>
-      <div class="settings-divider"></div>
-      <div class="settings-links">
-        <a href="privacy.html#privacy" target="_blank" rel="noopener" data-i18n="settings.privacy">Privacy Policy</a>
-        <a href="privacy.html#imprint" target="_blank" rel="noopener" data-i18n="settings.imprint">Legal Notice</a>
-      </div>
-      <button class="btn-danger settings-signout" id="settings-signout" data-i18n="settings.signout">Sign out</button>
-      <button class="btn-danger settings-delete" id="settings-delete" data-i18n="delete.button">Delete account</button>
-      <p class="settings-version" id="settings-version"></p>
     </div>
   </div>
 
@@ -430,6 +445,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=61"></script>
+  <script type="module" src="js/app.js?v=62"></script>
 </body>
 </html>

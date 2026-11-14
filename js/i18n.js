@@ -26,6 +26,12 @@ const translations = {
     'legend.visited': 'Visited',
     'legend.lived': 'Lived',
     'legend.wishlist': 'Wishlist',
+    'hub.map': 'Map',
+    'hub.places': 'Places',
+    'hub.friends': 'Friends',
+    'hub.profile': 'Profile',
+    'hub.add': 'Add place',
+    'hub.close': 'Close',
     'banner.back': '← Back',
     'banner.friendsMap': "{name}'s Map",
     // Search
@@ -206,6 +212,12 @@ const translations = {
     'legend.visited': 'Besucht',
     'legend.lived': 'Gelebt',
     'legend.wishlist': 'Wunschliste',
+    'hub.map': 'Karte',
+    'hub.places': 'Orte',
+    'hub.friends': 'Freunde',
+    'hub.profile': 'Profil',
+    'hub.add': 'Ort hinzufügen',
+    'hub.close': 'Schließen',
     'banner.back': '← Zurück',
     'banner.friendsMap': 'Karte von {name}',
     // Search
@@ -391,7 +403,7 @@ export function t(key, params = {}) {
 }
 
 /** Translates all elements carrying data-i18n / data-i18n-placeholder /
- *  data-i18n-title and sets <html lang>. */
+ *  data-i18n-title / data-i18n-aria and sets <html lang>. */
 export function applyTranslations() {
   document.documentElement.lang = getLang();
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -402,5 +414,8 @@ export function applyTranslations() {
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    el.setAttribute('aria-label', t(el.dataset.i18nAria));
   });
 }

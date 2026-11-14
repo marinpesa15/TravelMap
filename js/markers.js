@@ -129,12 +129,12 @@ function _createMarkerEl(city, type, onRemove) {
   el.title      = city.name;
   el.className  = 'marker-dot';
 
-  // Color scheme: indigo = visited, amber = lived, emerald = wishlist
+  // Color scheme: indigo = visited, violet = lived, emerald = wishlist (gold is the story ring)
   let color;
   if (type === 'wishlist') {
     color = '#10b981'; // emerald
   } else if (city.lived) {
-    color = '#f59e0b'; // amber
+    color = '#a78bfa'; // violet
   } else {
     color = '#6366f1'; // indigo
   }

@@ -1,4 +1,4 @@
-import { getLang } from './i18n.js?v=9';
+import { getLang } from './i18n.js?v=10';
 import { isNative } from './platform.js?v=1';
 import { decideUpdate } from './update-logic.js?v=1';
 

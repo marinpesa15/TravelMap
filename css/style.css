@@ -16,7 +16,6 @@
   --bg-overlay:   rgba(0,0,0,0.65);
   --bg-toast:     rgba(13,17,23,0.97);
   /* Borders */
-  --bd-sidebar:  rgba(255,255,255,0.06);
   --bd-header:   rgba(255,255,255,0.05);
   --bd-card:     rgba(255,255,255,0.06);
   --bd-input:    rgba(255,255,255,0.09);
@@ -42,8 +41,11 @@
   --tx-dlabel:    #9ca3af;
   --tx-radio:     #9ca3af;
   --tx-signout:   #374151;
-  /* Misc */
-  --shadow-sidebar: none;
+  /* Rollen: Flaeche Navy, Sekundaer Indigo, Akzent Gold (auf Gold steht --accent-ink) */
+  --secondary:   #6366f1;
+  --accent:      #facc15;
+  --accent-fill: #facc15;
+  --accent-ink:  #080b11;
 }
 
 html.light {
@@ -61,7 +63,6 @@ html.light {
   --bg-popup:     rgba(255,255,255,0.99);
   --bg-overlay:   rgba(0,0,0,0.38);
   --bg-toast:     rgba(15,23,42,0.94);
-  --bd-sidebar:  rgba(0,0,0,0.09);
   --bd-header:   rgba(0,0,0,0.07);
   --bd-card:     rgba(0,0,0,0.07);
   --bd-input:    rgba(0,0,0,0.13);
@@ -86,7 +87,11 @@ html.light {
   --tx-dlabel:    #64748b;
   --tx-radio:     #64748b;
   --tx-signout:   #94a3b8;
-  --shadow-sidebar: 2px 0 16px rgba(0,0,0,0.08);
+  /* Gold als Linie und Text braucht auf hellem Grund mehr Kontrast */
+  --secondary:   #6366f1;
+  --accent:      #ca8a04;
+  --accent-fill: #facc15;
+  --accent-ink:  #080b11;
 }
 
 /* ===== Reset ===== */
@@ -144,133 +149,20 @@ body {
 .map-area  { position: relative; flex: 1; overflow: hidden; }
 #map       { position: absolute; inset: 0; }
 
-/* ===== Sidebar ===== */
-#sidebar {
-  width: 272px; flex-shrink: 0;
-  display: flex; flex-direction: column;
-  background: var(--bg-sidebar);
-  backdrop-filter: blur(16px);
-  border-right: 1px solid var(--bd-sidebar);
-  box-shadow: var(--shadow-sidebar);
-  z-index: 20;
-  overflow-y: auto;
-}
-.sidebar-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 18px 16px;
-  border-bottom: 1px solid var(--bd-header);
-}
-.brand-icon {
-  width: 34px; height: 34px; flex-shrink: 0;
-  background: #6366f1; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  color: white; box-shadow: 0 0 16px rgba(99,102,241,0.4);
-}
-.brand-name {
-  flex: 1;
-  font-size: 1rem; font-weight: 700;
-  color: var(--tx-primary); letter-spacing: -0.02em;
-}
-/* Settings gear button */
-.btn-settings {
-  width: 30px; height: 30px; flex-shrink: 0; margin-left: auto;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg-card); border: 1px solid var(--bd-card);
-  border-radius: 8px; cursor: pointer;
-  color: var(--tx-secondary); font-size: 14px;
-  transition: all 0.2s;
-}
-.btn-settings:hover { background: var(--bg-card-hov); }
-
-.sidebar-section { padding: 16px 16px 0; flex-shrink: 0; }
-.section-label {
-  font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.1em; color: var(--tx-muted); margin-bottom: 10px;
-}
-
-/* ===== Snapshot grid ===== */
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
-.stat-card {
-  background: var(--bg-card); border: 1px solid var(--bd-card);
-  border-radius: 14px; padding: 14px; transition: background 0.2s;
-}
-.stat-card:hover { background: var(--bg-card-hov); }
-.stat-label { font-size: 0.71rem; color: var(--tx-stat); margin-bottom: 4px; }
-.stat-num   { font-size: 1.65rem; font-weight: 700; color: var(--tx-primary); line-height: 1; }
-
-/* Stat tabs (clickable view toggle) */
-.stat-tab { cursor: pointer; user-select: none; border: 2px solid transparent; }
-.stat-tab:hover { background: var(--bg-card-hov); }
-.stat-tab.active {
-  border-color: rgba(99,102,241,0.35);
-  background: rgba(99,102,241,0.08);
-}
-.stat-tab.active .stat-label { color: #a5b4fc; }
-.stat-tab.active .stat-num   { color: var(--tx-primary); }
-
-/* ===== Collection nav ===== */
-.collection-nav { display: flex; flex-direction: column; gap: 3px; margin-bottom: 18px; }
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border-radius: 10px;
-  text-decoration: none; color: var(--tx-nav);
-  font-size: 0.83rem; font-weight: 500;
-  transition: all 0.15s; border: 1px solid transparent;
-}
-.nav-item:hover { background: var(--bg-nav-hov); color: var(--tx-primary); }
-.nav-item.active {
-  background: var(--bg-nav-act); color: #a5b4fc;
-  border-color: var(--bd-nav-act);
-}
-.nav-icon  { width: 15px; height: 15px; flex-shrink: 0; }
-.nav-label { flex: 1; }
-.nav-badge {
-  font-size: 0.69rem; padding: 2px 7px; border-radius: 99px;
-  background: var(--bg-nav-badge); color: var(--tx-nav-badge);
-}
-.nav-item.active .nav-badge { background: rgba(99,102,241,0.2); color: #818cf8; }
-
-/* ===== Recent Logs ===== */
-.recent-logs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
-.recent-log-item { display: flex; align-items: flex-start; gap: 10px; }
-.recent-log-icon {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(99,102,241,0.1);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 12px;
-}
-.recent-log-city { font-size: 0.81rem; font-weight: 600; color: var(--tx-log-city); }
-.recent-log-meta { font-size: 0.71rem; color: var(--tx-log-meta); margin-top: 1px; }
-
-/* ===== Sidebar footer ===== */
-.sidebar-footer {
-  padding: 14px 16px;
-  border-top: 1px solid var(--bd-header);
-  display: flex; flex-direction: column; gap: 7px;
-  margin-top: auto;
-}
-.btn-add-location {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 11px; background: #6366f1; color: white;
-  font-size: 0.84rem; font-weight: 700;
-  border: none; border-radius: 12px; cursor: pointer;
-  transition: background 0.15s; font-family: inherit;
-}
-.btn-add-location:hover { background: #4f46e5; }
 /* ===== Top-right overlay ===== */
 .top-right-bar {
-  position: absolute; top: 16px; right: 16px;
-  z-index: 10; display: flex; align-items: center; gap: 10px;
+  position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 12px; right: 12px;
+  z-index: 10; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
 }
-.search-wrap { position: relative; }
+.search-wrap { position: relative; flex: 1; min-width: 0; max-width: 520px; }
 .search-icon {
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
   width: 15px; height: 15px; color: var(--tx-muted); pointer-events: none;
 }
 #city-search {
-  width: 240px; padding: 10px 14px 10px 35px;
+  width: 100%; min-width: 0; height: 40px; padding: 10px 14px 10px 35px;
   background: var(--bg-input); border: 1px solid var(--bd-input);
-  border-radius: 14px; backdrop-filter: blur(16px);
+  border-radius: 12px; backdrop-filter: blur(16px);
   color: var(--tx-input); font-size: 0.83rem; outline: none; font-family: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -308,20 +200,18 @@ body {
 .search-result-item:last-child  { border-radius: 0 0 12px 12px; }
 .search-result-item:only-child  { border-radius: 12px; }
 
+/* Avatar oben rechts, oeffnet das Profil (js/hub.js) */
 .user-pill {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 14px 5px 5px;
-  background: var(--bg-input); border: 1px solid var(--bd-input);
-  border-radius: 12px; backdrop-filter: blur(16px);
+  display: flex; flex-shrink: 0; padding: 0; cursor: pointer;
+  background: none; border: 2px solid var(--bd-input); border-radius: 50%;
 }
 .user-avatar-host { display: flex; flex-shrink: 0; }
-.user-avatar { width: 28px; height: 28px; border-radius: 8px; }
-.user-avatar .avatar-initials { font-size: 12px; }
-.user-name   { font-size: 0.81rem; font-weight: 600; color: var(--tx-input); }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; }
+.user-avatar .avatar-initials { font-size: 14px; }
 
 /* ===== Legend ===== */
 .map-legend {
-  position: absolute; bottom: 40px; left: 16px;
+  position: absolute; left: 12px;
   display: flex; align-items: center; gap: 18px;
   padding: 11px 18px;
   background: var(--bg-legend); border: 1px solid var(--bd-legend);
@@ -329,8 +219,8 @@ body {
 }
 .legend-item  { display: flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--tx-legend); }
 .legend-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.legend-dot.indigo  { background: #6366f1; }
-.legend-dot.amber   { background: #f59e0b; }
+.legend-dot.indigo  { background: var(--secondary); }
+.legend-dot.violet  { background: #a78bfa; }
 .legend-dot.emerald { background: #10b981; }
 
 /* ===== Pulse Markers ===== */
@@ -365,7 +255,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2.5px solid #6366f1;
+  border: 2.5px solid var(--secondary);
   box-sizing: border-box;
 }
 .group-pin-img .avatar-initials { font-size: 16px; }
@@ -380,7 +270,7 @@ body {
   height: 0;
   border-left:  7px solid transparent;
   border-right: 7px solid transparent;
-  border-top:   9px solid #6366f1;
+  border-top:   9px solid var(--secondary);
 }
 
 /* ===== Country Tooltip ===== */
@@ -430,12 +320,12 @@ body {
   transition: all 0.15s; user-select: none;
 }
 .radio-opt:hover  { color: var(--tx-primary); border-color: var(--bd-input); }
-.radio-opt.selected { border-color: #6366f1; color: #c7d2fe; background: rgba(99,102,241,0.1); }
+.radio-opt.selected { border-color: var(--secondary); color: #c7d2fe; background: rgba(99,102,241,0.1); }
 .checkbox-row {
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 18px; font-size: 0.84rem; color: var(--tx-primary); cursor: pointer;
 }
-#lived-checkbox { width: 16px; height: 16px; accent-color: #6366f1; cursor: pointer; }
+#lived-checkbox { width: 16px; height: 16px; accent-color: var(--secondary); cursor: pointer; }
 .dialog-actions { display: flex; gap: 8px; }
 .btn-cancel {
   flex: 1; padding: 9px; border: 1px solid var(--bd-dialog);
@@ -444,10 +334,10 @@ body {
 }
 .btn-add {
   flex: 2; padding: 9px; border: none;
-  border-radius: 8px; background: #6366f1; color: white;
+  border-radius: 8px; background: var(--accent-fill); color: var(--accent-ink);
   font-size: 0.84rem; font-weight: 600; cursor: pointer; font-family: inherit;
 }
-.btn-add:hover { background: #4f46e5; }
+.btn-add:hover { filter: brightness(1.06); }
 
 /* ===== Country Tooltip ===== */
 #country-tooltip {
@@ -537,7 +427,7 @@ body {
 .group-photo-preview-wrap {
   width: 100px; height: 100px; margin: 0 auto 16px;
   border-radius: 50%; overflow: hidden;
-  border: 3px solid #6366f1;
+  border: 3px solid var(--secondary);
   background: rgba(99,102,241,0.1);
 }
 #group-photo-preview {
@@ -567,109 +457,11 @@ body {
   #toast { transition: opacity 0.2s ease; }
 }
 
-/* ===== Mobile Hamburger Button ===== */
-.btn-menu {
-  display: none; /* hidden on desktop */
-  position: absolute; top: 14px; left: 14px; z-index: 10;
-  width: 40px; height: 40px;
-  align-items: center; justify-content: center;
-  background: var(--bg-legend); border: 1px solid var(--bd-legend);
-  border-radius: 10px; cursor: pointer; color: var(--tx-primary);
-  backdrop-filter: blur(8px); flex-shrink: 0;
+/* ===== Friends + Groups (Freunde-Sheet) ===== */
+.section-label {
+  font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--tx-muted); margin-bottom: 10px;
 }
-.btn-menu:hover { background: var(--bg-card-hov); }
-
-/* ===== Sidebar Backdrop (mobile) ===== */
-.sidebar-backdrop {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.52); z-index: 49;
-}
-.sidebar-backdrop.open { display: block; }
-
-/* ===== Mobile Layout ===== */
-@media (max-width: 768px) {
-  /* Sidebar becomes a slide-in drawer */
-  #sidebar {
-    position: fixed; left: 0; top: 0;
-    height: 100vh; height: 100dvh;
-    width: 290px;
-    transform: translateX(-100%);
-    /* iOS-like drawer curve (Ionic) — feels native on the phone */
-    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    z-index: 50;
-    box-shadow: 6px 0 40px rgba(0,0,0,0.5);
-    background: var(--bg-sidebar);
-    backdrop-filter: blur(20px);
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-  }
-  #sidebar.open { transform: translateX(0); }
-
-  /* Sidebar footer: pad above home indicator */
-  .sidebar-footer {
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
-  }
-
-  /* Show hamburger, hide on desktop */
-  .btn-menu { display: flex; }
-
-  /* Map takes full screen */
-  .map-area { width: 100%; }
-
-  /* Shift search bar right to avoid hamburger overlap */
-  .top-right-bar { left: 64px; right: 12px; top: 14px; }
-
-  /* Banner slots into top bar area — search is hidden when banner is active */
-  .view-banner { top: 14px; left: 64px; right: 130px; max-width: none; overflow: hidden; }
-  .view-banner-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .search-wrap { flex: 1; min-width: 0; }
-  #city-search { min-width: 0; width: 100%; }
-
-  /* Top-Bar-Elemente in einheitlicher Form */
-  .btn-menu, #city-search, .user-pill { border-radius: 12px; }
-
-  /* User-Button: nur der Avatar, gleiche Kachel wie der Hamburger */
-  .user-pill { padding: 4px; gap: 0; }
-  .user-name { display: none; }
-  .user-avatar { width: 30px; height: 30px; }
-
-  /* When banner is visible: hide hamburger + search, push user-pill right */
-  .banner-active .btn-menu { display: none; }
-  .banner-active .search-wrap { display: none; }
-  .banner-active .top-right-bar { justify-content: flex-end; }
-
-  /* Banner can use full width when hamburger is gone. Rechts steht nur noch
-     der quadratische User-Button, deshalb bleibt mehr Platz fuer den Namen. */
-  .banner-active #view-banner { left: 12px; right: 64px; max-width: none; }
-
-  /* Show search button inside banner in group mode */
-  .map-area.group-active .btn-search-banner { display: flex; }
-
-  /* Legend: push up above browser chrome + safe area */
-  .map-legend {
-    bottom: max(80px, calc(60px + env(safe-area-inset-bottom)));
-    left: 14px;
-  }
-
-  /* Attribution ueber den Home-Indikator */
-  .maplibregl-ctrl-bottom-left {
-    margin-bottom: env(safe-area-inset-bottom) !important;
-  }
-
-  /* Navigation control: push up above browser chrome */
-  .maplibregl-ctrl-bottom-right {
-    margin-bottom: max(60px, calc(50px + env(safe-area-inset-bottom))) !important;
-  }
-
-  /* Dialog full-width on small screens */
-  #city-dialog { padding: 16px; }
-  .dialog-card { width: 100%; max-width: 340px; padding: 20px; }
-
-  /* Toast: above browser chrome */
-  #toast { bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
-}
-
-/* ===== Social Sidebar (Friends + Groups) ===== */
 .section-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 8px;
@@ -757,13 +549,7 @@ body {
   color: var(--tx-primary); margin-bottom: 14px;
 }
 
-/* ===== Settings Modal ===== */
-#settings-modal {
-  position: fixed; inset: 0; z-index: 220;
-  display: none; align-items: center; justify-content: center;
-  background: var(--bg-overlay); backdrop-filter: blur(6px);
-}
-#settings-modal.open { display: flex; }
+/* ===== Einstellungen (im Profil-Sheet) und Loeschdialog ===== */
 .settings-card {
   background: var(--bg-dialog); border: 1px solid var(--bd-dialog);
   border-radius: 16px; padding: 24px;
@@ -775,11 +561,6 @@ body {
   margin-bottom: 16px;
 }
 .settings-header h3 { font-size: 1rem; font-weight: 700; color: var(--tx-primary); }
-.settings-close {
-  background: none; border: none; cursor: pointer;
-  color: var(--tx-muted); font-size: 14px; padding: 4px;
-}
-.settings-close:hover { color: var(--tx-primary); }
 .settings-divider { border-top: 1px solid var(--bd-dialog); margin: 16px 0; }
 .settings-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -844,7 +625,7 @@ body {
 }
 .group-check-item:hover { background: var(--bg-card-hov); }
 .group-check-item input[type="checkbox"] {
-  width: 15px; height: 15px; accent-color: #6366f1; cursor: pointer;
+  width: 15px; height: 15px; accent-color: var(--secondary); cursor: pointer;
 }
 .group-check-name { font-size: 0.83rem; color: var(--tx-primary); }
 .group-members-list {
@@ -968,17 +749,17 @@ body {
    Pressable controls scale down slightly on :active — instant feedback.
    The transition longhands intentionally override earlier per-button
    shorthands so transform is always included. */
-.btn-add-location, .btn-add, .btn-cancel, .btn-danger,
-.btn-section-action, .btn-settings, .btn-theme-toggle,
-.btn-menu, .btn-upload-photo, .btn-google,
+.btn-add, .btn-cancel, .btn-danger,
+.btn-section-action, .btn-theme-toggle,
+.btn-upload-photo, .btn-google,
 .stat-tab, .radio-opt, .tooltip-btn {
   transition-property: transform, background, background-color, color, border-color, filter, box-shadow;
   transition-duration: 160ms;
   transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
 }
-.btn-add-location:active, .btn-add:active, .btn-cancel:active, .btn-danger:active,
-.btn-section-action:active, .btn-settings:active, .btn-theme-toggle:active,
-.btn-menu:active, .btn-upload-photo:active, .btn-google:active,
+.btn-add:active, .btn-cancel:active, .btn-danger:active,
+.btn-section-action:active, .btn-theme-toggle:active,
+.btn-upload-photo:active, .btn-google:active,
 .radio-opt:active, .tooltip-btn:active {
   transform: scale(0.96);
 }
@@ -1066,7 +847,7 @@ body {
 
 /* ===== Beacon Markers (own + friend view) =====
    Glowing head on a thin stem, bottom-anchored at the exact spot.
-   Visited = indigo, lived = amber, wishlist = dashed hollow emerald. */
+   Visited = indigo, lived = violet, wishlist = dashed hollow emerald. */
 .beacon-marker { width: 16px; height: 22px; cursor: pointer; }
 .beacon {
   display: flex; flex-direction: column; align-items: center;
@@ -1081,8 +862,8 @@ body {
 }
 .beacon-stem { width: 1.5px; height: 8px; background: #fff; }
 .beacon-base { width: 4px; height: 2px; border-radius: 50%; background: #fff; }
-.beacon.visited .beacon-head { background: #6366f1; box-shadow: 0 0 8px rgba(99,102,241,0.55), 0 1px 3px rgba(0,0,0,0.6); }
-.beacon.lived   .beacon-head { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.55), 0 1px 3px rgba(0,0,0,0.6); }
+.beacon.visited .beacon-head { background: var(--secondary); box-shadow: 0 0 8px rgba(99,102,241,0.55), 0 1px 3px rgba(0,0,0,0.6); }
+.beacon.lived   .beacon-head { background: #a78bfa; box-shadow: 0 0 8px rgba(167,139,250,0.55), 0 1px 3px rgba(0,0,0,0.6); }
 .beacon.wishlist .beacon-head {
   background: rgba(16,185,129,0.12);
   border: 1.5px dashed #10b981;
@@ -1121,8 +902,8 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
   flex: 1; padding: 11px 14px; cursor: pointer;
   border-radius: 10px; font-size: 0.88rem; font-weight: 600;
 }
-.update-card .update-primary { background: #6366f1; color: white; border: none; }
-.update-card .update-primary:hover { background: #575ae8; }
+.update-card .update-primary { background: var(--accent-fill); color: var(--accent-ink); border: none; }
+.update-card .update-primary:hover { filter: brightness(1.06); }
 .update-card .update-secondary {
   background: transparent; color: var(--tx-secondary);
   border: 1px solid var(--bd-dialog);
@@ -1193,7 +974,7 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 }
 .map-hint[hidden] { display: none; }
 .map-hint-retry {
-  flex-shrink: 0; padding: 5px 10px; border-radius: 8px; border: 1px solid #6366f1;
+  flex-shrink: 0; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--secondary);
   background: rgba(99,102,241,0.2); color: #c7d2fe; font-size: 0.74rem; font-weight: 600;
   cursor: pointer; font-family: inherit;
 }
@@ -1208,7 +989,7 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
 .settings-provider-name { flex: 1; font-weight: 600; }
 .settings-provider-linked { font-size: 0.74rem; color: #34d399; }
 .settings-provider-add {
-  padding: 5px 10px; border-radius: 8px; border: 1px solid #6366f1;
+  padding: 5px 10px; border-radius: 8px; border: 1px solid var(--secondary);
   background: rgba(99,102,241,0.15); color: #c7d2fe; font-size: 0.74rem; font-weight: 600;
   cursor: pointer; font-family: inherit;
 }
@@ -1232,44 +1013,22 @@ html.light .beacon.wishlist .beacon-head { border-color: #10b981; }
   flex-shrink: 0;
 }
 
-/* ===== Safe Area (iOS-App) =====
+/* ===== Safe Area und Banner-Modus =====
    In der nativen App reicht die Webview unter Statusleiste und Home-Indikator.
    Dieser Block steht bewusst ganz am Ende: die Grunddefinitionen von
-   .view-banner und .mobile-search-overlay kommen spaeter im Stylesheet als der
-   Mobile-Block und wuerden dieselben Eigenschaften sonst wieder ueberschreiben.
-   Im Browser sind die Insets 0, dort aendert sich also nichts. */
-@media (max-width: 768px) {
-  .btn-menu,
-  .top-right-bar,
-  .view-banner {
-    top: calc(14px + env(safe-area-inset-top));
-  }
+   .view-banner und .mobile-search-overlay stehen weiter oben und wuerden
+   dieselben Eigenschaften sonst wieder ueberschreiben. Gilt fuer iPhone und
+   iPad gleich. Im Browser sind die Insets 0, dort aendert sich also nichts. */
+.view-banner { top: calc(14px + env(safe-area-inset-top)); height: 40px; border-radius: 12px; }
+.view-banner-back, .view-banner-title { font-size: 0.83rem; padding: 0 12px; }
+.mobile-search-overlay { padding-top: calc(20px + env(safe-area-inset-top)); }
+.online-flash { top: calc(64px + env(safe-area-inset-top)); max-width: 92%; white-space: normal; text-align: center; }
+.map-hint { top: calc(112px + env(safe-area-inset-top)); }
 
-  /* Kopf der Schublade bleibt beim Scrollen stehen, sonst wandert er unter
-     die Uhr. Eigener Blur, weil --bg-sidebar durchscheinend ist. */
-  .sidebar-header {
-    position: sticky; top: 0; z-index: 1;
-    padding-top: calc(18px + env(safe-area-inset-top));
-    background: var(--bg-sidebar);
-    backdrop-filter: blur(16px);
-  }
-
-  .mobile-search-overlay {
-    padding-top: calc(20px + env(safe-area-inset-top));
-  }
-
-  .online-flash { top: calc(64px + env(safe-area-inset-top)); max-width: 92%; white-space: normal; text-align: center; }
-  .map-hint { top: calc(112px + env(safe-area-inset-top)); }
-
-  /* Gleiche Hoehe und Form fuer alles in der Top-Bar. Das Banner braucht die
-     Regeln hier unten, weil seine Grunddefinition weiter oben im Stylesheet
-     steht und den Mobile-Block sonst ueberschreibt. */
-  .btn-menu, .user-pill, .view-banner, #city-search {
-    height: 40px; box-sizing: border-box;
-  }
-  .view-banner { border-radius: 12px; }
-  .view-banner-back, .view-banner-title { font-size: 0.83rem; padding: 0 12px; }
-}
+/* Freundes- oder Gruppenkarte: Banner statt Suche, rechts bleibt der Avatar */
+.banner-active .search-wrap { display: none; }
+.banner-active #view-banner { left: 12px; right: 64px; max-width: none; }
+.map-area.group-active .btn-search-banner { display: flex; }
 
 /* ===== Avatar =====
    Kreis mit Initialen als Grundzustand, das Bild blendet sich erst ein,

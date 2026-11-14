@@ -1,11 +1,12 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=25';
-import { t, getLang } from './i18n.js?v=9';
-import { searchLocalCities } from './places.js?v=3';
+import { searchCountries } from './countries.js?v=26';
+import { t, getLang } from './i18n.js?v=10';
+import { searchLocalCities } from './places.js?v=4';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
 import { avatarEl } from './avatar.js?v=2';
+import { buildPlaceList } from './places-list-logic.js?v=1';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -20,7 +21,7 @@ function esc(value) {
   }[ch]));
 }
 
-// ===== Stats & Sidebar =====
+// ===== Stats und Orte-Sheet =====
 
 export function updateStats(userData) {
   const countries = (userData.visited_countries  ?? []).length;
@@ -39,9 +40,13 @@ export function updateStats(userData) {
   _setText('nav-visited-count',  cities);
   _setText('nav-wishlist-count', wishlist);
   _setText('nav-lived-count',    lived);
+  _setProfileStats(userData);
+}
 
-  // Recent logs (last 3 visited cities, newest first)
-  _updateRecentLogs(userData.visited_cities ?? []);
+// Statistik im Profil-Sheet, unabhaengig vom Kartenmodus
+function _setProfileStats(userData) {
+  _setText('profile-cities-num',    (userData.visited_cities    ?? []).length);
+  _setText('profile-countries-num', (userData.visited_countries ?? []).length);
 }
 
 function _setText(id, value) {
@@ -68,52 +73,55 @@ function _setStat(id, value) {
   }
 }
 
-// Mobile drawer: the initial count-up plays while the sidebar is off-screen,
-// so the hamburger handler replays it every time the drawer opens.
-export function replayStatsCountUp() {
-  for (const id of ['stat-countries-num', 'stat-cities-num']) {
-    const value = _statPrev[id];
-    if (value !== undefined) countUp(document.getElementById(id), value, 0, 0.8);
-  }
-}
+// Tracks the newest row so a newly added place can grow into the list.
+// Keyed by filter: switching filters replaces the list and must not animate.
+let _lastPlaceKey = null;
 
-// Tracks the newest log entry so a newly added one can grow into the list.
-// Kind guard: switching cities ↔ countries mode replaces the whole list and
-// must not play the insert animation.
-let _lastLogKey = null;
-
-function _animateNewLogEntry(containerEl, kind, firstLabel) {
-  const key = firstLabel ? `${kind}:${firstLabel}` : null;
-  const prev = _lastLogKey;
-  _lastLogKey = key;
+function _animateNewPlace(containerEl, filter, firstName) {
+  const key = firstName ? `${filter}:${firstName}` : null;
+  const prev = _lastPlaceKey;
+  _lastPlaceKey = key;
   if (!key || !prev || prev === key) return;
-  if (prev.split(':')[0] !== kind) return;
-  const first = containerEl.querySelector('.recent-log-item');
+  if (prev.split(':')[0] !== filter) return;
+  const first = containerEl.querySelector('.place-row');
   if (first) expandIn(first);
 }
 
-function _updateRecentLogs(visitedCities) {
-  const el = document.getElementById('recent-logs');
+const PIN_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>';
+
+/** Fuellt die Liste im Orte-Sheet. storyCities: Set der Stadtnamen mit Story. */
+export function renderPlacesList(userData, filter, storyCities = new Set()) {
+  const el = document.getElementById('places-list');
   if (!el) return;
+  const places = buildPlaceList(userData, filter, storyCities);
 
-  const recent = [...visitedCities].reverse().slice(0, 3);
-
-  if (recent.length === 0) {
-    el.innerHTML = `<p class="recent-log-meta" style="color:#374151">${t('empty.noCities')}</p>`;
+  if (places.length === 0) {
+    el.innerHTML = `<p class="places-empty">${t('empty.noCities')}</p>`;
+    _lastPlaceKey = null;
     return;
   }
 
-  el.innerHTML = recent.map(city => `
-    <div class="recent-log-item">
-      <div class="recent-log-icon">📍</div>
-      <div>
-        <p class="recent-log-city">${esc(city.name)}</p>
-        <p class="recent-log-meta">${esc(city.country) || '—'}</p>
-      </div>
-    </div>
-  `).join('');
+  let regions = null;
+  try { regions = new Intl.DisplayNames([getLang()], { type: 'region' }); } catch { /* alte WebView */ }
+  const countryName = code => {
+    try { return (/^[A-Z]{2}$/.test(code) && regions?.of(code)) || code; } catch { return code; }
+  };
 
-  _animateNewLogEntry(el, 'cities', recent[0]?.name);
+  el.innerHTML = places.map(p => {
+    const cls = ['place-row', p.type, p.lived ? 'lived' : '', p.hasStory ? 'has-story' : ''].filter(Boolean).join(' ');
+    const meta = [countryName(p.country), p.type === 'wishlist' ? t('legend.wishlist') : p.lived ? t('legend.lived') : '']
+      .filter(Boolean).join(' · ');
+    return `
+    <button type="button" class="${cls}" data-name="${esc(p.name)}">
+      <span class="place-icon">${PIN_SVG}</span>
+      <span class="place-text">
+        <span class="place-name">${esc(p.name)}</span>
+        <span class="place-meta">${esc(meta)}</span>
+      </span>
+    </button>`;
+  }).join('');
+
+  _animateNewPlace(el, filter, places[0].name);
 }
 
 // ===== City Remove Popup =====
@@ -865,45 +873,7 @@ export function updateCountriesView(userData) {
   _setText('nav-visited-count',  visited);
   _setText('nav-wishlist-count', wishlist);
   _setText('nav-lived-count',    0);
-
-  // Recent logs — countries
-  _updateCountryLogs(userData.visited_countries ?? [], userData.wishlist_countries ?? []);
-}
-
-function _updateCountryLogs(visitedCodes, wishlistCodes) {
-  const el = document.getElementById('recent-logs');
-  if (!el) return;
-
-  // Show last 3 visited countries, fill remainder with wishlist if needed
-  const recent = [
-    ...[...visitedCodes].reverse().slice(0, 3).map(code => ({ code, type: 'visited' })),
-    ...[...wishlistCodes].reverse().map(code => ({ code, type: 'wishlist' }))
-  ].slice(0, 3);
-
-  if (recent.length === 0) {
-    el.innerHTML = `<p class="recent-log-meta" style="color:#374151">${t('empty.noCountries')}</p>`;
-    return;
-  }
-
-  let countryNames;
-  try { countryNames = new Intl.DisplayNames([getLang()], { type: 'region' }); } catch { countryNames = null; }
-
-  el.innerHTML = recent.map(({ code, type }) => {
-    let name = code;
-    try { name = countryNames?.of(code) || code; } catch { name = code; }
-    const icon = type === 'visited' ? '🌍' : '⭐';
-    return `
-      <div class="recent-log-item">
-        <div class="recent-log-icon">${icon}</div>
-        <div>
-          <p class="recent-log-city">${esc(name)}</p>
-          <p class="recent-log-meta">${type === 'visited' ? t('recent.visited') : t('recent.wishlist')}</p>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  _animateNewLogEntry(el, 'countries', recent[0]?.code);
+  _setProfileStats(userData);
 }
 
 // ===== View Mode Banner =====
