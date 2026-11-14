@@ -61,20 +61,39 @@ service cloud.firestore {
       // Friends subcollection: readable/deletable by either party.
       // Writes are limited to the expected profile fields so neither party
       // can smuggle arbitrary data into the other user's subcollection.
+      // Story-Zugriff haengt an diesem Eintrag. Deshalb darf sich die Gegenseite
+      // nur mit dem Token aus dem Einladungslink selbst eintragen (Invite von uid).
       match /friends/{friendUid} {
         allow read, delete: if request.auth != null && (
           request.auth.uid == uid ||
           request.auth.uid == friendUid
         );
-        allow create, update: if request.auth != null && (
-            request.auth.uid == uid ||
-            request.auth.uid == friendUid
+        allow create: if request.auth != null
+          && (
+            request.auth.uid == uid
+            || (
+              request.auth.uid == friendUid
+              && request.resource.data.get('token', null) is string
+              && get(/databases/$(database)/documents/invites/$(request.resource.data.token)).data.uid == uid
+            )
           )
-          && request.resource.data.keys().hasOnly(['display_name', 'avatar_url', 'since'])
+          && request.resource.data.keys().hasOnly(['display_name', 'avatar_url', 'since', 'token'])
           && request.resource.data.get('display_name', '') is string
           && request.resource.data.get('display_name', '').size() <= 100
           && request.resource.data.get('avatar_url', '') is string
-          && request.resource.data.get('avatar_url', '').size() <= 500;
+          && request.resource.data.get('avatar_url', '').size() <= 500
+          && request.resource.data.get('token', '') is string
+          && request.resource.data.get('token', '').size() <= 64;
+        allow update: if request.auth != null && (
+            request.auth.uid == uid ||
+            request.auth.uid == friendUid
+          )
+          && request.resource.data.keys().hasOnly(['display_name', 'avatar_url', 'since', 'token'])
+          && request.resource.data.get('display_name', '') is string
+          && request.resource.data.get('display_name', '').size() <= 100
+          && request.resource.data.get('avatar_url', '') is string
+          && request.resource.data.get('avatar_url', '').size() <= 500
+          && request.resource.data.get('token', '') == resource.data.get('token', '');
       }
 
       // Stories: privat, ein Freund liest nur mit shared == true. Die Query

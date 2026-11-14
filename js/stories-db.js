@@ -1,5 +1,5 @@
 import {
-  doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
+  doc, collection, getDocs, setDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { db } from './config.js?v=4';
 
@@ -16,15 +16,15 @@ export function newStoryId(uid) {
   return doc(_col(uid)).id;
 }
 
-/** Legt an oder ueberschreibt. created_at wird nur beim ersten Schreiben gesetzt. */
+/**
+ * Legt an oder ueberschreibt. created_at kommt aus data (beim Bearbeiten das Story-Objekt
+ * durchreichen), sonst serverTimestamp(). Das await loest erst nach Server-Bestaetigung auf,
+ * offline darf der UI-Ablauf also nicht darauf warten.
+ */
 export async function saveStory(uid, storyId, data) {
-  const ref = doc(_col(uid), storyId);
-  const existing = await getDoc(ref);
   const { id, ...fields } = data;
-  await setDoc(ref, {
-    ...fields,
-    created_at: existing.exists() ? existing.data().created_at : serverTimestamp()
-  });
+  const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
+  await setDoc(doc(_col(uid), storyId), { ...clean, created_at: data.created_at ?? serverTimestamp() });
 }
 
 export async function deleteStoryDoc(uid, storyId) {

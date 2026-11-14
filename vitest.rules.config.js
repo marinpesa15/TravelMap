@@ -22,6 +22,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/rules/**/*.test.js'],
+    // Storage- und Friends-Tests teilen die projectId der Emulator-CLI, also nacheinander.
+    fileParallelism: false,
     testTimeout: 15000,
     hookTimeout: 30000
   }

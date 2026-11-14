@@ -25,8 +25,9 @@ export function loadFriends(uid, callback) {
 /**
  * Creates bidirectional friendship in a single batch write.
  * myData / theirData: { display_name, avatar_url }
+ * inviteToken: Token aus dem Einladungslink, die Regeln verlangen ihn fuer meinen Eintrag in der Liste der anderen Person.
  */
-export async function addFriendship(myUid, theirUid, theirData, myData) {
+export async function addFriendship(myUid, theirUid, theirData, myData, inviteToken) {
   const batch = writeBatch(db);
   batch.set(_friendRef(myUid, theirUid), {
     display_name: theirData.display_name || '',
@@ -36,7 +37,8 @@ export async function addFriendship(myUid, theirUid, theirData, myData) {
   batch.set(_friendRef(theirUid, myUid), {
     display_name: myData.display_name || '',
     avatar_url:   myData.avatar_url   || '',
-    since:        serverTimestamp()
+    since:        serverTimestamp(),
+    token:        inviteToken
   });
   await batch.commit();
 }

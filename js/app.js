@@ -10,7 +10,7 @@ import {
 } from './db.js?v=28';
 import { planDedupeCities } from './city-logic.js?v=3';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=20';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=22';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=23';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
 import {
   initCountryLayers, updateCountryFills,
@@ -436,7 +436,7 @@ async function _handleInviteToken(myData) {
       return;
     }
 
-    await addFriendship(_uid, them.uid, them, myData);
+    await addFriendship(_uid, them.uid, them, myData, token);
     clearToken();
     showToast(t('toast.nowFriends', { name: them.display_name || t('friend.fallback') }));
   } catch (err) {
