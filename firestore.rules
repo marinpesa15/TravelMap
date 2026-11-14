@@ -76,6 +76,28 @@ service cloud.firestore {
           && request.resource.data.get('avatar_url', '') is string
           && request.resource.data.get('avatar_url', '').size() <= 500;
       }
+
+      // Stories: privat, ein Freund liest nur mit shared == true. Die Query
+      // des Freundes muss daher where('shared', '==', true) enthalten.
+      match /stories/{storyId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == uid ||
+          (resource.data.shared == true &&
+           exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid)))
+        );
+        allow delete: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(
+               ['city', 'country', 'date', 'text', 'photos', 'voice', 'song', 'shared', 'created_at'])
+          && request.resource.data.city is string
+          && request.resource.data.city.size() >= 1 && request.resource.data.city.size() <= 200
+          && request.resource.data.get('country', '') is string
+          && request.resource.data.get('text', '') is string
+          && request.resource.data.get('text', '').size() <= 2000
+          && request.resource.data.get('photos', []) is list
+          && request.resource.data.get('photos', []).size() <= 10
+          && request.resource.data.shared is bool;
+      }
     }
 
     // Groups: readable by members, creatable only with yourself as creator+member,
