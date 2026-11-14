@@ -3,7 +3,8 @@ import { createRecorder } from '../js/voice.js';
 
 class FakeRecorder {
   static isTypeSupported = type => type === 'audio/mp4';
-  constructor(stream, opts) { this.stream = stream; this.opts = opts; this.state = 'inactive'; }
+  static last = null;
+  constructor(stream, opts) { this.stream = stream; this.opts = opts; this.state = 'inactive'; FakeRecorder.last = this; }
   start() { this.state = 'recording'; }
   stop() {
     this.state = 'inactive';
@@ -41,9 +42,14 @@ describe('createRecorder', () => {
     const ticks = [];
     const r = createRecorder({ maxSeconds: 120, mediaDevices: d, Recorder: FakeRecorder, onTick: s => ticks.push(s) });
     await r.start(); vi.advanceTimersByTime(125000);
-    expect((await r.stop()).seconds).toBe(120);
+    // vor jedem stop(): Selbststopp muss schon passiert sein
+    expect(FakeRecorder.last.state).toBe('inactive');
     expect(d.lastStream.getTracks()[0].stopped).toBe(true);
+    const count = ticks.length;
+    vi.advanceTimersByTime(5000);
+    expect(ticks.length).toBe(count);
     expect(ticks.at(-1)).toBe(120);
+    expect((await r.stop()).seconds).toBe(120);
   });
   it('gibt das Mikrofon bei cancel frei und kennt danach keine Aufnahme mehr', async () => {
     const d = devices();
