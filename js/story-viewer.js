@@ -1,0 +1,134 @@
+// Story-Viewer (Vollbild #story-viewer): Seiten wie eine Insta-Story, Tippen links/rechts
+// blaettert, Wischen nach unten schliesst. Kein automatisches Weiterblaettern.
+// #viewer-voice und #viewer-song sind Platz fuer Sprachnotiz (Aufgabe 8) und Song (Aufgabe 9).
+import { openOverlay, closeOverlay } from './anim.js?v=2';
+import { t, getLang } from './i18n.js?v=14';
+import { showConfirm } from './ui.js?v=50';
+import { blobUrl } from './storage.js?v=1';
+import { storyPages } from './story-logic.js?v=1';
+import { step } from './viewer-logic.js?v=1';
+
+const $ = id => document.getElementById(id);
+
+let state = null; // { stories, pos, own, unavailable, onEdit, onDelete, onAdd, onRemoveCity }
+
+function formatDate(x) {
+  if (x == null) return '';
+  return new Date(x.toMillis?.() ?? Number(x))
+    .toLocaleDateString(getLang(), { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function render() {
+  const s = state;
+  const story = s.stories[s.pos.story];
+  const pages = storyPages(story);
+  const page = pages[s.pos.page];
+  s.unavailable = false;
+
+  $('viewer-progress').replaceChildren(...pages.map((_, i) => {
+    const seg = document.createElement('span');
+    seg.className = i <= s.pos.page ? 'viewer-seg seen' : 'viewer-seg';
+    return seg;
+  }));
+  $('viewer-city').textContent = story.city;
+  $('viewer-date').textContent = formatDate(story.date);
+  $('viewer-menu').hidden = true;
+
+  const img = $('viewer-photo');
+  const isPhoto = page.kind === 'photo';
+  $('viewer-textpage').hidden = isPhoto;
+  $('viewer-textpage').textContent = isPhoto ? '' : story.text ?? '';
+  $('viewer-caption').textContent = isPhoto ? story.text ?? '' : '';
+  $('viewer-unavailable').hidden = true;
+  img.hidden = true;
+  img.removeAttribute('src');
+  if (!isPhoto) return;
+
+  const pos = s.pos;
+  blobUrl(page.path).then(url => {
+    if (state !== s || s.pos !== pos) return; // inzwischen weitergeblaettert
+    img.src = url;
+    img.hidden = false;
+  }).catch(() => {
+    if (state !== s || s.pos !== pos) return;
+    // Story inzwischen privat oder geloescht: Hinweis statt kaputtem Bild, naechster Tipp schliesst
+    s.unavailable = true;
+    $('viewer-caption').textContent = '';
+    $('viewer-unavailable').hidden = false;
+  });
+}
+
+function go(dir) {
+  if (!state) return;
+  if (state.unavailable) { close(); return; }
+  if (!$('viewer-menu').hidden) { $('viewer-menu').hidden = true; return; }
+  const next = step(state.pos, state.stories, dir);
+  if (!next) { close(); return; }
+  state.pos = next;
+  render();
+}
+
+function close() {
+  if (!state) return;
+  state = null;
+  closeOverlay($('story-viewer'));
+}
+
+// Menue-Aktion: Viewer schliessen, dann den Callback mit der aktuellen Story aufrufen
+function act(cb) {
+  const story = state?.stories[state.pos.story];
+  close();
+  cb?.(story);
+}
+
+let wired = false;
+function wire() {
+  if (wired) return;
+  wired = true;
+  $('viewer-prev').onclick = () => go(-1);
+  $('viewer-next').onclick = () => go(1);
+  $('viewer-close').onclick = close;
+  $('viewer-menu-btn').onclick = () => { $('viewer-menu').hidden = !$('viewer-menu').hidden; };
+  $('viewer-edit').onclick = () => act(state?.onEdit);
+  $('viewer-add').onclick = () => act(state?.onAdd);
+  $('viewer-remove-city').onclick = () => act(state?.onRemoveCity);
+  $('viewer-delete').onclick = () => {
+    const s = state;
+    $('viewer-menu').hidden = true;
+    showConfirm(t('story.deleteConfirm'), t('dialog.delete'), () => {
+      if (state === s) act(s.onDelete);
+    });
+  };
+
+  // Wischen nach unten schliesst
+  const stage = $('story-viewer');
+  let start = null;
+  stage.addEventListener('touchstart', e => {
+    const p = e.touches[0];
+    start = e.touches.length === 1 ? { x: p.clientX, y: p.clientY } : null;
+  }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!start) return;
+    const p = e.changedTouches[0];
+    const dx = p.clientX - start.x, dy = p.clientY - start.y;
+    start = null;
+    if (dy > 80 && Math.abs(dx) < dy) close();
+  }, { passive: true });
+}
+
+/**
+ * Oeffnet den Viewer. stories in Anzeigereihenfolge (sortStories). own blendet das
+ * Menue ein (Bearbeiten, Story hinzufuegen, Ort entfernen, Loeschen mit Rueckfrage).
+ * Jeder Callback bekommt die gerade gezeigte Story, der Viewer ist dann schon zu.
+ */
+export function openStoryViewer({ stories, startIndex = 0, own, onEdit, onDelete, onAdd, onRemoveCity }) {
+  if (!stories?.length) return;
+  wire();
+  state = {
+    stories, own, onEdit, onDelete, onAdd, onRemoveCity,
+    pos: { story: Math.min(startIndex, stories.length - 1), page: 0 }, unavailable: false
+  };
+  $('viewer-menu-btn').hidden = !own;
+  render();
+  openOverlay($('story-viewer'));
+}

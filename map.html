@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#0b0d19">
   <link rel="stylesheet" href="css/style.css?v=48">
   <link rel="stylesheet" href="css/hub.css?v=2">
-  <link rel="stylesheet" href="css/stories.css?v=1">
+  <link rel="stylesheet" href="css/stories.css?v=2">
   <link href="vendor/maplibre-gl/4.7.1/maplibre-gl.css" rel="stylesheet">
   <script defer src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
   <script defer src="vendor/pmtiles/3.2.1/pmtiles.js"></script>
@@ -366,6 +366,44 @@
     </div>
   </section>
 
+  <!-- Story-Viewer -->
+  <div id="story-viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-city">
+    <div class="viewer-stage">
+      <img id="viewer-photo" class="viewer-photo" alt="" draggable="false" hidden>
+      <p id="viewer-textpage" class="viewer-textpage" hidden></p>
+      <p id="viewer-unavailable" class="viewer-unavailable" data-i18n="story.unavailable" hidden>This story is no longer available.</p>
+      <button type="button" class="viewer-tap viewer-tap-prev" id="viewer-prev" aria-label="Previous" data-i18n-aria="viewer.prev"></button>
+      <button type="button" class="viewer-tap viewer-tap-next" id="viewer-next" aria-label="Next" data-i18n-aria="viewer.next"></button>
+      <div class="viewer-top">
+        <div class="viewer-progress" id="viewer-progress"></div>
+        <div class="viewer-head">
+          <svg class="viewer-pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+          <div class="viewer-title">
+            <h2 class="viewer-city" id="viewer-city"></h2>
+            <p class="viewer-date" id="viewer-date"></p>
+          </div>
+          <button type="button" class="viewer-icon-btn" id="viewer-menu-btn" aria-label="More" data-i18n-aria="viewer.more">⋯</button>
+          <button type="button" class="viewer-icon-btn" id="viewer-close" aria-label="Close" data-i18n-aria="hub.close">✕</button>
+        </div>
+        <div class="viewer-menu" id="viewer-menu" hidden>
+          <button type="button" id="viewer-edit" data-i18n="viewer.edit">Edit story</button>
+          <button type="button" id="viewer-add" data-i18n="viewer.add">Add story</button>
+          <button type="button" id="viewer-remove-city" data-i18n="viewer.removeCity">Remove place</button>
+          <button type="button" id="viewer-delete" class="danger" data-i18n="viewer.delete">Delete story</button>
+        </div>
+      </div>
+      <div class="viewer-bottom">
+        <p class="viewer-caption" id="viewer-caption"></p>
+        <div class="viewer-pills">
+          <!-- Aufgabe 8: Sprachnotiz-Pille -->
+          <div id="viewer-voice"></div>
+          <!-- Aufgabe 9: Song-Pille -->
+          <div id="viewer-song"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- City Remove Popup -->
   <div id="city-popup">
     <button id="city-popup-close">✕</button>
@@ -491,6 +529,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=67"></script>
+  <script type="module" src="js/app.js?v=68"></script>
 </body>
 </html>

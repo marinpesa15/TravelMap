@@ -16,11 +16,12 @@ export function animateNextAdd(cityName) {
  * Renders all city markers from userData.
  * Clears existing markers first.
  * onRemove(city, type, clientX, clientY) called when a marker is clicked.
+ * Pins whose name is in storyCities get the gold story ring (.has-story).
  */
-export function renderAllMarkers(map, userData, onRemove) {
+export function renderAllMarkers(map, userData, onRemove, storyCities = new Set()) {
   clearAllMarkers();
   (userData.visited_cities ?? []).forEach(city =>
-    _addMarker(map, city, 'visited', onRemove)
+    _addMarker(map, city, 'visited', onRemove, false, storyCities.has(city.name))
   );
   (userData.wishlist_cities ?? []).forEach(city =>
     _addMarker(map, city, 'wishlist', onRemove)
@@ -49,16 +50,19 @@ export function clearAllMarkers() {
 }
 
 /**
- * Renders markers without click handlers (read-only view mode).
- * Used when viewing a friend's map.
+ * Renders markers for a friend's map (read-only). Only pins in storyCities
+ * are tappable: they carry the story ring and call onStoryTap(city).
  */
-export function renderReadOnlyMarkers(map, userData) {
+export function renderReadOnlyMarkers(map, userData, storyCities = new Set(), onStoryTap = null) {
   clearAllMarkers();
-  (userData.visited_cities  ?? []).forEach(city => _addMarker(map, city, 'visited',  null));
+  (userData.visited_cities ?? []).forEach(city => {
+    const hasStory = storyCities.has(city.name);
+    _addMarker(map, city, 'visited', hasStory && onStoryTap ? c => onStoryTap(c) : null, false, hasStory);
+  });
   (userData.wishlist_cities ?? []).forEach(city => _addMarker(map, city, 'wishlist', null));
 }
 
-function _addMarker(map, city, type, onRemove, isGroup = false) {
+function _addMarker(map, city, type, onRemove, isGroup = false, hasStory = false) {
   if (!city || typeof city.lng !== 'number' || typeof city.lat !== 'number'
       || isNaN(city.lng) || isNaN(city.lat)) {
     console.warn('TravelMap: skipping city with invalid coords', city);
@@ -72,7 +76,7 @@ function _addMarker(map, city, type, onRemove, isGroup = false) {
   let el;
   if (isGroupVisited)  el = _createGroupVisitedMarkerEl(city, onRemove);
   else if (isGroup)    el = _createMarkerEl(city, type, onRemove);
-  else                 el = _createBeaconEl(city, type, onRemove);
+  else                 el = _createBeaconEl(city, type, onRemove, hasStory);
 
   // Just-added city → drop animation. Mapbox positions the outer element via
   // its transform, so we wrap and animate the inner one.
@@ -99,10 +103,10 @@ function _addMarker(map, city, type, onRemove, isGroup = false) {
 // Small glowing head on a thin stem, anchored at the base. State drives the
 // look: visited = indigo, lived = amber, wishlist = dashed hollow emerald.
 
-function _createBeaconEl(city, type, onRemove) {
+function _createBeaconEl(city, type, onRemove, hasStory) {
   const el     = document.createElement('div');
   el.title     = city.name;
-  el.className = 'beacon-marker';
+  el.className = hasStory ? 'beacon-marker has-story' : 'beacon-marker';
 
   const state = type === 'wishlist' ? 'wishlist' : (city.lived ? 'lived' : 'visited');
   el.innerHTML = `

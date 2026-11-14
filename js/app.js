@@ -6,19 +6,19 @@ import {
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
-  acceptConsent
-} from './db.js?v=28';
+  acceptConsent, loadUserDataFromServer
+} from './db.js?v=29';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=21';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=22';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=23';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=28';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=25';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=28';
+} from './countries.js?v=29';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=26';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=29';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
@@ -26,19 +26,23 @@ import {
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
   showMapHint, setupMapHint, showRelayHint,
-  openAddMemberModal, setupConfirmDialog,
+  openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=49';
-import { initTheme, getTheme } from './theme.js?v=25';
+} from './ui.js?v=50';
+import { initTheme, getTheme } from './theme.js?v=26';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=24';
+import { setupSettings } from './settings.js?v=25';
 import { initHub, openPanel, closePanel } from './hub.js?v=1';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
-import { t, getLang, applyTranslations } from './i18n.js?v=13';
-import { startUpdateCheck } from './version.js?v=17';
-import { installLegalViewer } from './legal-view.js?v=5';
+import { t, getLang, applyTranslations } from './i18n.js?v=14';
+import { startUpdateCheck } from './version.js?v=18';
+import { installLegalViewer } from './legal-view.js?v=6';
 import { avatarEl } from './avatar.js?v=2';
-import { openStoryForm } from './story-form.js?v=2';
+import { openStoryForm } from './story-form.js?v=3';
+import { openStoryViewer } from './story-viewer.js?v=1';
+import { subscribeMyStories, loadSharedStories, loadMyStoriesFromServer } from './stories-db.js?v=2';
+import { sortStories, citiesWithStories, orphanStories } from './story-logic.js?v=1';
+import { deleteStoryWithMedia } from './story-save.js?v=3';
 import { initProfilePicture } from './profile.js?v=1';
 import { auth } from './config.js?v=4';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
@@ -53,6 +57,8 @@ let _groups         = [];
 let _viewMode       = 'own'; // 'own' | 'friend' | 'group'
 let _currentGroupId = null;
 let _mapMode        = 'cities'; // 'cities' | 'countries'
+let _myStories      = []; // Stand aus subscribeMyStories
+let _friendViewSeq  = 0;  // verwirft verspaetete Antworten einer frueheren Freundesansicht
 
 // Real-time listener handles
 let _unsubUserData   = null;
@@ -60,6 +66,7 @@ let _unsubFriends    = null;
 let _unsubGroups     = null;
 let _unsubGroupView  = null;
 let _unsubFriendView = null;
+let _unsubMyStories  = null;
 
 // First-run flags (prevent double setup of listeners)
 let _friendsSetup   = false;
@@ -175,6 +182,7 @@ onAuthChange(async user => {
     // Abmelden und Loeschen leiten selbst weiter, nachdem aufgeraeumt ist
     if (isLeaving()) return;
     markLeaving();
+    if (_unsubMyStories) { _unsubMyStories(); _unsubMyStories = null; }
     await shutdownFirestore();
     // Preserve invite token across the login redirect
     const params = new URLSearchParams(window.location.search);
@@ -270,7 +278,7 @@ async function _init(user) {
 
     setupCountryTooltip();
 
-    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+    _renderOwnMarkers();
     updateStats(_userData);
     _renderPlaces();
     _mark('render');
@@ -292,10 +300,11 @@ async function _init(user) {
     if (_unsubUserData) _unsubUserData();
     _unsubUserData = subscribeUserData(_uid, data => {
       _userData = data;
+      _removeOrphanStories();
       _renderPlaces();
       if (_viewMode === 'own') {
         if (_mapMode === 'cities') {
-          renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+          _renderOwnMarkers();
           updateStats(_userData);
         } else {
           const { visited, wishlist } = _getFilteredCountryData();
@@ -303,6 +312,15 @@ async function _init(user) {
           updateCountriesView(_userData);
         }
       }
+    });
+
+    // ── Real-time: own stories (Ring an Pins und im Orte-Sheet) ───────────
+    if (_unsubMyStories) _unsubMyStories();
+    _unsubMyStories = subscribeMyStories(_uid, stories => {
+      _myStories = stories;
+      _removeOrphanStories();
+      _renderPlaces();
+      if (_viewMode === 'own' && _mapMode === 'cities') _renderOwnMarkers();
     });
 
     // ── Real-time: friends list ───────────────────────────────────────────
@@ -509,6 +527,18 @@ function _onCityRemoveRequest(city, type, clientX, clientY) {
     showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto, _onMarkGroupCityVisited);
     return;
   }
+  const stories = type === 'visited' ? _liveStories().filter(s => s.city === city.name) : [];
+  if (_viewMode === 'own' && stories.length) {
+    hideCityPopup();
+    openStoryViewer({
+      stories: sortStories(stories), own: true,
+      onEdit:   story => openStoryForm({ uid: _uid, city, story }),
+      onDelete: _onDeleteStory,
+      onAdd:    () => openStoryForm({ uid: _uid, city }),
+      onRemoveCity: () => _onRemoveCity(city, type)
+    });
+    return;
+  }
   showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited,
     _viewMode === 'own' ? c => openStoryForm({ uid: _uid, city: c }) : null);
 }
@@ -565,7 +595,32 @@ async function _onRemoveCityFromGroup(city, type) {
   }
 }
 
-async function _onRemoveCity(city, type) {
+async function _onDeleteStory(story) {
+  try {
+    await deleteStoryWithMedia(_uid, story);
+  } catch (err) {
+    console.error('[TM] story delete failed:', err);
+    showToast(t('story.deleteFailed'));
+  }
+}
+
+// Eine Stadt mit Stories: erst nachfragen, dann Stories samt Dateien loeschen, dann die Stadt
+function _onRemoveCity(city, type) {
+  const stories = type === 'visited' ? _myStories.filter(s => s.city === city.name) : [];
+  if (!stories.length) { _removeCity(city, type); return; }
+  showConfirm(t('story.removeCityWarning', { name: city.name, count: stories.length }), t('dialog.remove'), async () => {
+    try {
+      for (const story of stories) await deleteStoryWithMedia(_uid, story);
+    } catch (err) {
+      console.error('[TM] story delete failed:', err);
+      showToast(t('toast.removeFailed'));
+      return; // Stadt bleibt, damit keine Story ohne Stadt zurueckbleibt
+    }
+    await _removeCity(city, type);
+  });
+}
+
+async function _removeCity(city, type) {
   try {
     if (type === 'visited')  await removeVisitedCity(_uid, city.name);
     if (type === 'wishlist') await removeWishlistCity(_uid, city.name);
@@ -588,10 +643,12 @@ async function _switchToFriendView(friend) {
   try {
     if (_mapMode === 'countries') await _ensureCountryLayers();
 
-    // Real-time: friend's map updates live while we're watching it
-    if (_unsubFriendView) _unsubFriendView();
-    _unsubFriendView = subscribeUserData(friend.uid, friendData => {
-      if (_viewMode !== 'friend') return;
+    // Geteilte Stories einmal laden. Schlaegt das fehl, bleibt die Karte ohne Ringe.
+    const seq = ++_friendViewSeq;
+    let friendData = null;
+    let sharedStories = [];
+    const renderFriend = () => {
+      if (_viewMode !== 'friend' || seq !== _friendViewSeq || !friendData) return;
       clearAllMarkers();
       if (_mapMode === 'countries') {
         // Show friend's country fills in the current map mode
@@ -599,8 +656,22 @@ async function _switchToFriendView(friend) {
         showCountryLayers(_map);
       } else {
         hideCountryLayers(_map);
-        renderReadOnlyMarkers(_map, friendData);
+        const orphans = new Set(orphanStories(sharedStories, friendData));
+        const live = sharedStories.filter(s => !orphans.has(s));
+        renderReadOnlyMarkers(_map, friendData, citiesWithStories(live), city => openStoryViewer({
+          stories: sortStories(live.filter(s => s.city === city.name)), own: false
+        }));
       }
+    };
+    loadSharedStories(friend.uid)
+      .then(stories => { sharedStories = stories; renderFriend(); })
+      .catch(err => console.error('[TM] shared stories failed:', err));
+
+    // Real-time: friend's map updates live while we're watching it
+    if (_unsubFriendView) _unsubFriendView();
+    _unsubFriendView = subscribeUserData(friend.uid, data => {
+      friendData = data;
+      renderFriend();
     });
 
     showViewBanner(t('banner.friendsMap', { name: friend.display_name || t('friend.fallback') }), _returnToOwnView);
@@ -634,7 +705,7 @@ function _returnToOwnView() {
     }).catch(err => console.error('[TM] country layers failed:', err));
   } else {
     hideCountryLayers(_map); // remove any friend/group country fills
-    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+    _renderOwnMarkers();
   }
 
   // Restore placeholder to match current map mode
@@ -758,7 +829,7 @@ function _setupFilterNav() {
           const { visited, wishlist } = _getFilteredCountryData();
           updateCountryFills(_map, visited, wishlist);
         } else {
-          renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+          _renderOwnMarkers();
         }
       }
     });
@@ -820,7 +891,7 @@ function _setMapMode(mode) {
   if (mode === 'cities') {
     hideCountryLayers(_map);
     if (_viewMode === 'own') {
-      renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+      _renderOwnMarkers();
     }
     if (_userData) updateStats(_userData);
   } else {
@@ -935,8 +1006,37 @@ function _onHubAdd() {
 }
 
 function _renderPlaces() {
-  // shortcut: storyCities bleibt leer, bis Aufgabe 7 die Stories liefert
-  renderPlacesList(_userData, _currentFilter, new Set());
+  renderPlacesList(_userData, _currentFilter, citiesWithStories(_liveStories()));
+}
+
+function _renderOwnMarkers() {
+  renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest, citiesWithStories(_liveStories()));
+}
+
+// Stories, deren Stadt noch besucht ist. Verwaiste bekommen keinen Ring.
+function _liveStories() {
+  const orphans = new Set(orphanStories(_myStories, _userData));
+  return _myStories.filter(s => !orphans.has(s));
+}
+
+// Verwaiste Stories (Stadt nicht mehr besucht, z. B. auf einem anderen Geraet entfernt) still
+// loeschen. Entschieden wird nur auf frischen Serverdaten fuer Stories und Nutzerdokument: ein
+// Cache-Stand oder ein halb geladener Start koennte sonst echte Stories loeschen.
+let _orphanCheck = null;
+function _removeOrphanStories() {
+  if (_orphanCheck || isLeaving() || !isOnline() || !_userData) return;
+  if (!orphanStories(_myStories, _userData).length) return;
+  const uid = _uid;
+  _orphanCheck = Promise.all([loadUserDataFromServer(uid), loadMyStoriesFromServer(uid)])
+    .then(async ([userData, stories]) => {
+      if (!userData) return; // kein Nutzerdokument: nichts entscheiden
+      for (const story of orphanStories(stories, userData)) {
+        if (isLeaving() || uid !== _uid) return;
+        await deleteStoryWithMedia(uid, story);
+      }
+    })
+    .catch(err => console.error('[TM] orphan story cleanup failed:', err))
+    .finally(() => { _orphanCheck = null; });
 }
 
 // Tipp auf einen Ort im Orte-Sheet: Karte fliegt hin

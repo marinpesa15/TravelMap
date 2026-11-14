@@ -1,12 +1,12 @@
 // Story-Formular (Sheet #story-form): Datum, Fotos, Text, Freigabe. Die Zeilen
 // #story-voice-row und #story-song-row sind Platz fuer Sprachnotiz und Song.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t } from './i18n.js?v=13';
-import { showToast } from './ui.js?v=49';
+import { t } from './i18n.js?v=14';
+import { showToast } from './ui.js?v=50';
 import { toJpegBlob } from './image.js?v=1';
 import { blobUrl } from './storage.js?v=1';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
-import { saveStoryWithMedia } from './story-save.js?v=2';
+import { saveStoryWithMedia } from './story-save.js?v=3';
 import { settleWrite } from './offline-write.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 
