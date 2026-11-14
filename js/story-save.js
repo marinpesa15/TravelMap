@@ -3,7 +3,7 @@
 // einer bearbeiteten Story fallen erst nach dem erfolgreichen Speichern weg.
 import { validateDraft, storagePath, storyPaths } from './story-logic.js?v=1';
 import { uploadBlob, deleteFile } from './storage.js?v=1';
-import { newStoryId, saveStory, deleteStoryDoc } from './stories-db.js?v=2';
+import { newStoryId, saveStory, deleteStoryDoc } from './stories-db.js?v=3';
 
 const defaultIo = { uploadBlob, deleteFile, saveStory, deleteStoryDoc, newStoryId };
 

@@ -6,7 +6,7 @@ import { showToast } from './ui.js?v=50';
 import { toJpegBlob } from './image.js?v=1';
 import { blobUrl } from './storage.js?v=1';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
-import { saveStoryWithMedia } from './story-save.js?v=3';
+import { saveStoryWithMedia } from './story-save.js?v=4';
 import { settleWrite } from './offline-write.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 

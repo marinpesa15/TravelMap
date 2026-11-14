@@ -1,5 +1,5 @@
 import {
-  doc, collection, getDocs, getDocsFromServer, setDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
+  doc, collection, getDocs, setDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { db } from './config.js?v=4';
 
@@ -34,12 +34,6 @@ export async function deleteStoryDoc(uid, storyId) {
 /** Echtzeit-Listener auf die eigenen Stories. Liefert die Unsubscribe-Funktion. */
 export function subscribeMyStories(uid, callback) {
   return onSnapshot(_col(uid), snap => callback(snap.docs.map(_withId)));
-}
-
-/** Eigene Stories nur vom Server (nie aus dem Cache). Wirft offline. */
-export async function loadMyStoriesFromServer(uid) {
-  const snap = await getDocsFromServer(_col(uid));
-  return snap.docs.map(_withId);
 }
 
 /** Geteilte Stories eines Freundes. Der shared-Filter ist fuer die Regel Pflicht. */

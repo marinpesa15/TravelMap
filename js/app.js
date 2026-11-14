@@ -6,8 +6,8 @@ import {
   addVisitedCountry, addWishlistCountry, removeCountry,
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
-  acceptConsent, loadUserDataFromServer
-} from './db.js?v=29';
+  acceptConsent
+} from './db.js?v=30';
 import { planDedupeCities } from './city-logic.js?v=3';
 import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=22';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=23';
@@ -38,11 +38,11 @@ import { t, getLang, applyTranslations } from './i18n.js?v=14';
 import { startUpdateCheck } from './version.js?v=18';
 import { installLegalViewer } from './legal-view.js?v=6';
 import { avatarEl } from './avatar.js?v=2';
-import { openStoryForm } from './story-form.js?v=3';
+import { openStoryForm } from './story-form.js?v=4';
 import { openStoryViewer } from './story-viewer.js?v=1';
-import { subscribeMyStories, loadSharedStories, loadMyStoriesFromServer } from './stories-db.js?v=2';
+import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=3';
 import { sortStories, citiesWithStories, orphanStories } from './story-logic.js?v=1';
-import { deleteStoryWithMedia } from './story-save.js?v=3';
+import { deleteStoryWithMedia } from './story-save.js?v=4';
 import { initProfilePicture } from './profile.js?v=1';
 import { auth } from './config.js?v=4';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
@@ -300,7 +300,6 @@ async function _init(user) {
     if (_unsubUserData) _unsubUserData();
     _unsubUserData = subscribeUserData(_uid, data => {
       _userData = data;
-      _removeOrphanStories();
       _renderPlaces();
       if (_viewMode === 'own') {
         if (_mapMode === 'cities') {
@@ -318,7 +317,6 @@ async function _init(user) {
     if (_unsubMyStories) _unsubMyStories();
     _unsubMyStories = subscribeMyStories(_uid, stories => {
       _myStories = stories;
-      _removeOrphanStories();
       _renderPlaces();
       if (_viewMode === 'own' && _mapMode === 'cities') _renderOwnMarkers();
     });
@@ -1017,26 +1015,6 @@ function _renderOwnMarkers() {
 function _liveStories() {
   const orphans = new Set(orphanStories(_myStories, _userData));
   return _myStories.filter(s => !orphans.has(s));
-}
-
-// Verwaiste Stories (Stadt nicht mehr besucht, z. B. auf einem anderen Geraet entfernt) still
-// loeschen. Entschieden wird nur auf frischen Serverdaten fuer Stories und Nutzerdokument: ein
-// Cache-Stand oder ein halb geladener Start koennte sonst echte Stories loeschen.
-let _orphanCheck = null;
-function _removeOrphanStories() {
-  if (_orphanCheck || isLeaving() || !isOnline() || !_userData) return;
-  if (!orphanStories(_myStories, _userData).length) return;
-  const uid = _uid;
-  _orphanCheck = Promise.all([loadUserDataFromServer(uid), loadMyStoriesFromServer(uid)])
-    .then(async ([userData, stories]) => {
-      if (!userData) return; // kein Nutzerdokument: nichts entscheiden
-      for (const story of orphanStories(stories, userData)) {
-        if (isLeaving() || uid !== _uid) return;
-        await deleteStoryWithMedia(uid, story);
-      }
-    })
-    .catch(err => console.error('[TM] orphan story cleanup failed:', err))
-    .finally(() => { _orphanCheck = null; });
 }
 
 // Tipp auf einen Ort im Orte-Sheet: Karte fliegt hin

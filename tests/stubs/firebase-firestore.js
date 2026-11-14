@@ -34,9 +34,7 @@ const snapshot = () => ({
 export const doc = () => ({});
 export const collection = () => ({});
 export const getDoc = async () => snapshot();
-export const getDocFromServer = async () => snapshot();
 export const getDocs = async () => ({ docs: [] });
-export const getDocsFromServer = async () => ({ docs: [] });
 export const deleteDoc = async () => {};
 export const updateDoc = (ref, data) => record('update', data);
 export const setDoc = (ref, data) => record('set', data);

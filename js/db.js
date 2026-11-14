@@ -1,5 +1,5 @@
 import {
-  doc, getDoc, getDocFromServer, setDoc, updateDoc, onSnapshot, runTransaction,
+  doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction,
   arrayUnion, arrayRemove, serverTimestamp
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 import { db } from './config.js?v=4';
@@ -116,12 +116,6 @@ export function loadUserDataFast(uid, { timeoutMs = 10000 } = {}) {
     // unsub schon vor der Zuweisung gelaufen und muss nachgeholt werden.
     if (done) unsub();
   });
-}
-
-/** Nutzerdokument nur vom Server (nie aus dem Cache), null wenn es keins gibt. Wirft offline. */
-export async function loadUserDataFromServer(uid) {
-  const snap = await getDocFromServer(userRef(uid));
-  return snap.exists() ? snap.data() : null;
 }
 
 /** Persists the privacy consent on the user doc (creates it if missing). */
