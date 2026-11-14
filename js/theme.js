@@ -1,5 +1,5 @@
 // ===== Theme =====
-import { setMapTheme } from './map.js?v=24';
+import { setMapTheme } from './map.js?v=25';
 
 export function getTheme() {
   return localStorage.getItem('tm-theme') || 'dark';

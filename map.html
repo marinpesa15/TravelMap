@@ -12,6 +12,7 @@
   <meta name="theme-color" content="#0b0d19">
   <link rel="stylesheet" href="css/style.css?v=48">
   <link rel="stylesheet" href="css/hub.css?v=2">
+  <link rel="stylesheet" href="css/stories.css?v=1">
   <link href="vendor/maplibre-gl/4.7.1/maplibre-gl.css" rel="stylesheet">
   <script defer src="vendor/maplibre-gl/4.7.1/maplibre-gl.js"></script>
   <script defer src="vendor/pmtiles/3.2.1/pmtiles.js"></script>
@@ -331,10 +332,45 @@
     <button class="tooltip-btn remove"   id="country-tooltip-remove" data-i18n="tooltip.remove" style="display:none">🗑️ Remove</button>
   </div>
 
+  <!-- Story-Formular -->
+  <section class="sheet" id="story-form" aria-labelledby="story-form-title">
+    <div class="sheet-card story-card">
+      <button type="button" class="sheet-grabber" id="story-grabber" aria-label="Close" data-i18n-aria="hub.close"></button>
+      <h2 class="sheet-title" id="story-form-title" data-i18n="story.new">New story</h2>
+      <p class="story-city" id="story-city"></p>
+      <label class="story-row">
+        <span class="story-row-label" data-i18n="story.date">Date</span>
+        <input type="date" id="story-date" class="story-date">
+      </label>
+      <div class="story-photos" id="story-photos">
+        <label class="story-photo-add" id="story-photo-add">
+          <span class="story-photo-plus">+</span>
+          <span data-i18n="story.photos">Photos</span>
+          <input type="file" id="story-photo-input" accept="image/*" multiple hidden>
+        </label>
+      </div>
+      <div class="story-text-wrap">
+        <textarea id="story-text" maxlength="2000" rows="3" placeholder="What did you experience?" data-i18n-placeholder="story.textPlaceholder"></textarea>
+        <span class="story-counter" id="story-counter" hidden></span>
+      </div>
+      <!-- Task 8 fuellt diese Zeile (Sprachnotiz) und blendet sie ein -->
+      <div class="story-row" id="story-voice-row" hidden></div>
+      <!-- Task 9 fuellt diese Zeile (Song) und blendet sie ein -->
+      <div class="story-row" id="story-song-row" hidden></div>
+      <label class="story-row story-switch-row">
+        <span class="story-row-label" data-i18n="story.shared">Visible to friends</span>
+        <input type="checkbox" id="story-shared" class="story-switch">
+      </label>
+      <button type="button" class="story-save" id="story-save" data-i18n="story.save">Save</button>
+      <button type="button" class="story-cancel" id="story-cancel" data-i18n="dialog.cancel">Cancel</button>
+    </div>
+  </section>
+
   <!-- City Remove Popup -->
   <div id="city-popup">
     <button id="city-popup-close">✕</button>
     <p id="city-popup-name">München</p>
+    <button class="btn-add-story" id="btn-add-story" data-i18n="popup.addStory">Add story</button>
     <button class="btn-mark-visited" id="btn-mark-visited" data-i18n="popup.markVisited">✓ Mark as visited</button>
     <button class="btn-remove-city" id="btn-remove-city" data-i18n="tooltip.remove">🗑️ Remove</button>
   </div>
@@ -455,6 +491,6 @@
     <div id="mobile-search-body"></div>
   </div>
 
-  <script type="module" src="js/app.js?v=65"></script>
+  <script type="module" src="js/app.js?v=66"></script>
 </body>
 </html>

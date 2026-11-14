@@ -9,15 +9,15 @@ import {
   acceptConsent
 } from './db.js?v=28';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=20';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=21';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=23';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=23';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=27';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=24';
+} from './countries.js?v=28';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=25';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=28';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
@@ -28,16 +28,17 @@ import {
   showMapHint, setupMapHint, showRelayHint,
   openAddMemberModal, setupConfirmDialog,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=48';
-import { initTheme, getTheme } from './theme.js?v=24';
+} from './ui.js?v=49';
+import { initTheme, getTheme } from './theme.js?v=25';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=23';
+import { setupSettings } from './settings.js?v=24';
 import { initHub, openPanel, closePanel } from './hub.js?v=1';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=2';
-import { t, getLang, applyTranslations } from './i18n.js?v=11';
-import { startUpdateCheck } from './version.js?v=16';
-import { installLegalViewer } from './legal-view.js?v=4';
+import { t, getLang, applyTranslations } from './i18n.js?v=13';
+import { startUpdateCheck } from './version.js?v=17';
+import { installLegalViewer } from './legal-view.js?v=5';
 import { avatarEl } from './avatar.js?v=2';
+import { openStoryForm } from './story-form.js?v=1';
 import { initProfilePicture } from './profile.js?v=1';
 import { auth } from './config.js?v=4';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
@@ -508,7 +509,8 @@ function _onCityRemoveRequest(city, type, clientX, clientY) {
     showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto, _onMarkGroupCityVisited);
     return;
   }
-  showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited);
+  showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited,
+    _viewMode === 'own' ? c => openStoryForm({ uid: _uid, city: c }) : null);
 }
 
 async function _onMarkCityVisited(city) {

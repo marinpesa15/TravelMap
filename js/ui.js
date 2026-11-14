@@ -1,7 +1,7 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=27';
-import { t, getLang } from './i18n.js?v=11';
-import { searchLocalCities } from './places.js?v=5';
+import { searchCountries } from './countries.js?v=28';
+import { t, getLang } from './i18n.js?v=13';
+import { searchLocalCities } from './places.js?v=6';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
@@ -970,8 +970,9 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
  * @param {function} onRemove(city, type)
  * @param {function} [onChangePhoto(city, type)] — if provided, shows change-photo button
  * @param {function} [onMarkVisited(city)] — if provided, wishlist pins get a "mark as visited" button
+ * @param {function} [onAddStory(city)] — if provided, visited pins get an "add story" button
  */
-export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null, onMarkVisited = null) {
+export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null, onMarkVisited = null, onAddStory = null) {
   _cityPopupData = { city, type };
   const popup = document.getElementById('city-popup');
   document.getElementById('city-popup-name').textContent = city.name;
@@ -994,6 +995,19 @@ export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePh
   } else {
     markBtn.style.display = 'none';
     markBtn.onclick = null;
+  }
+
+  const storyBtn = document.getElementById('btn-add-story');
+  if (onAddStory && type === 'visited') {
+    storyBtn.style.display = 'block';
+    storyBtn.onclick = () => {
+      const snapshot = _cityPopupData;
+      hideCityPopup();
+      if (snapshot) onAddStory(snapshot.city);
+    };
+  } else {
+    storyBtn.style.display = 'none';
+    storyBtn.onclick = null;
   }
 
   document.getElementById('btn-remove-city').onclick = () => {
