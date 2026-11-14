@@ -152,3 +152,22 @@
 .viewer-pills { display: flex; gap: 10px; }
 .viewer-pills > * { pointer-events: auto; }
 .viewer-pills > :empty { display: none; }
+
+/* Sprachnotiz im Formular */
+.story-voice-ctl { display: flex; align-items: center; gap: 10px; }
+.story-voice-btn {
+  min-height: 36px; padding: 0 14px; border: 1px solid var(--secondary); border-radius: 18px;
+  background: none; color: var(--secondary); font: inherit; font-weight: 600; cursor: pointer;
+}
+.story-voice-btn.round { width: 36px; padding: 0; border-radius: 50%; }
+.story-voice-btn:disabled { opacity: 0.5; cursor: default; }
+.story-voice-time { font-variant-numeric: tabular-nums; color: var(--tx-secondary); }
+.story-voice-time.recording { color: #f87171; }
+
+/* Sprachnotiz-Pille im Viewer */
+.viewer-pill {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  border: none; border-radius: 22px; background: rgba(255,255,255,0.18); color: #fff;
+  font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}

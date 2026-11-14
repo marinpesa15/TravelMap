@@ -1,4 +1,4 @@
-import { t } from './i18n.js?v=14';
+import { t } from './i18n.js?v=15';
 import { showToast } from './ui.js?v=50';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
 

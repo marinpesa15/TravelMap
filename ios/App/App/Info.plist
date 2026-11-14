@@ -36,9 +36,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>TravelMap needs the camera if you want to take a photo for a place on a shared group map.</string>
+	<string>TravelMap needs the camera if you want to add a photo to a story, your profile or a shared group map.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>TravelMap needs your photo library if you want to attach a picture to a place on a shared group map.</string>
+	<string>TravelMap needs your photo library if you want to add a photo to a story, your profile or a shared group map.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>TravelMap needs the microphone if you want to record a voice note for a story.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -1,7 +1,7 @@
-// Story-Formular (Sheet #story-form): Datum, Fotos, Text, Freigabe. Die Zeilen
-// #story-voice-row und #story-song-row sind Platz fuer Sprachnotiz und Song.
+// Story-Formular (Sheet #story-form): Datum, Fotos, Text, Sprachnotiz, Freigabe. Die Zeile
+// #story-song-row ist Platz fuer den Song (Aufgabe 9).
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t } from './i18n.js?v=14';
+import { t } from './i18n.js?v=15';
 import { showToast } from './ui.js?v=50';
 import { toJpegBlob } from './image.js?v=1';
 import { blobUrl } from './storage.js?v=1';
@@ -9,6 +9,7 @@ import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
 import { saveStoryWithMedia } from './story-save.js?v=4';
 import { settleWrite } from './offline-write.js?v=1';
 import { isOnline } from './net-status.js?v=1';
+import { canRecord, createRecorder, createPlayer } from './voice.js?v=1';
 
 const $ = id => document.getElementById(id);
 const COUNTER_FROM = 1800;
@@ -22,7 +23,8 @@ function millisToDate(x) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-let state = null; // { uid, city, story, onSaved, photos: [{ path?, blob?, url }], voice, song, saving, busy }
+let state = null; // { uid, city, story, onSaved, photos: [{ path?, blob?, url }], voice, song, saving, busy,
+//                 canVoice, rec, seconds, player, voiceUrl, playing }
 
 function releasePhoto(p) {
   if (p.blob) URL.revokeObjectURL(p.url);
@@ -49,6 +51,111 @@ function renderPhotos() {
     strip.insertBefore(tile, $('story-photo-add'));
   });
   $('story-photo-add').hidden = state.photos.length >= LIMITS.photos;
+}
+
+const mmss = n => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
+
+function voiceButton(text, label, onclick, cls = '') {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = `story-voice-btn ${cls}`.trim();
+  b.textContent = text;
+  if (label) b.setAttribute('aria-label', label);
+  b.onclick = onclick;
+  return b;
+}
+
+// Spielt nichts mehr ab und gibt Objekt-URL der neuen Aufnahme frei
+function releaseVoice(s) {
+  s.player?.stop();
+  s.player = null;
+  if (s.voice?.blob && s.voiceUrl) URL.revokeObjectURL(s.voiceUrl);
+  s.voiceUrl = null;
+  s.playing = false;
+}
+
+function setVoice(s, voice) {
+  releaseVoice(s);
+  s.voice = voice;
+  const ready = url => {
+    if (state !== s || s.voice !== voice) return;
+    s.voiceUrl = url;
+    s.player = createPlayer(url, playing => { s.playing = playing; renderVoice(); });
+    renderVoice();
+  };
+  if (voice?.blob) ready(URL.createObjectURL(voice.blob));
+  else if (voice) blobUrl(voice.path).then(ready).catch(() => {});
+  renderVoice();
+}
+
+function renderVoice() {
+  const s = state;
+  if (!s) return; // Player meldet nach dem Schliessen noch pause
+  const row = $('story-voice-row');
+  row.hidden = !s.canVoice;
+  const label = document.createElement('span');
+  label.className = 'story-row-label';
+  label.textContent = t('voice.title');
+  const ctl = document.createElement('div');
+  ctl.className = 'story-voice-ctl';
+  if (s.rec) {
+    const time = document.createElement('span');
+    time.className = 'story-voice-time recording';
+    time.textContent = mmss(s.seconds);
+    ctl.append(time, voiceButton(t('voice.stop'), '', () => stopRecording(s)));
+  } else if (s.voice) {
+    const play = voiceButton(s.playing ? '❚❚' : '▶', t(s.playing ? 'voice.pause' : 'voice.play'), () => s.player?.toggle(), 'round');
+    play.disabled = !s.player;
+    const time = document.createElement('span');
+    time.className = 'story-voice-time';
+    time.textContent = mmss(s.voice.seconds);
+    ctl.append(play, time, voiceButton('✕', t('voice.discard'), () => { if (!s.saving) setVoice(s, null); }, 'round'));
+  } else {
+    ctl.append(voiceButton(t('voice.record'), '', () => startRecording(s)));
+  }
+  row.replaceChildren(label, ctl);
+}
+
+async function startRecording(s) {
+  if (s.saving || s.rec) return;
+  const rec = createRecorder({
+    onTick: n => {
+      if (state !== s || s.rec !== rec) return;
+      s.seconds = n;
+      renderVoice();
+      if (n >= LIMITS.voiceSeconds) stopRecording(s);
+    }
+  });
+  s.rec = rec;
+  s.seconds = 0;
+  s.player?.stop();
+  renderVoice();
+  try {
+    await rec.start();
+  } catch (e) {
+    if (state !== s || s.rec !== rec) return;
+    s.rec = null;
+    if (e.message === 'mic-denied') showToast(t('voice.denied'));
+    else s.canVoice = false;
+    renderVoice();
+    return;
+  }
+  // Formular wurde waehrend der Mikrofonfreigabe geschlossen
+  if (state !== s || s.rec !== rec) rec.cancel();
+}
+
+async function stopRecording(s) {
+  const rec = s.rec;
+  if (!rec) return;
+  s.rec = null;
+  try {
+    const { blob, seconds } = await rec.stop();
+    if (state !== s) return;
+    if (blob.size) setVoice(s, { blob, seconds });
+  } catch {
+    if (state === s) showToast(t('voice.failed'));
+  }
+  if (state === s) renderVoice();
 }
 
 function updateCounter() {
@@ -86,12 +193,19 @@ function close() {
   const s = state;
   state = null;
   s?.photos.forEach(releasePhoto);
+  if (s) { s.rec?.cancel(); releaseVoice(s); }
   closeOverlay(sheet);
 }
 
 async function save() {
   if (state.saving || state.busy) return;
   const s = state;
+  if (s.rec) {
+    s.busy = true;
+    await stopRecording(s);
+    if (state !== s) return;
+    s.busy = false;
+  }
   const draft = {
     city: s.city.name, country: s.city.country ?? '',
     date: dateToMillis($('story-date').value),
@@ -149,12 +263,17 @@ function wire() {
 /** Oeffnet das Formular fuer eine neue (story = null) oder bestehende Story. */
 export function openStoryForm({ uid, city, story = null, onSaved }) {
   wire();
-  if (state) state.photos.forEach(releasePhoto);
+  if (state) {
+    state.photos.forEach(releasePhoto);
+    state.rec?.cancel();
+    releaseVoice(state);
+  }
   state = {
     uid, city, story, onSaved, saving: false, busy: false,
     photos: (story?.photos ?? []).map(p => ({ path: p.path, url: '' })),
-    voice: story?.voice ?? null, song: story?.song ?? null
+    voice: null, song: story?.song ?? null, canVoice: canRecord(), rec: null, seconds: 0
   };
+  setVoice(state, story?.voice ?? null);
   $('story-form-title').textContent = t(story ? 'story.edit' : 'story.new');
   $('story-city').textContent = [city.name, city.country].filter(Boolean).join(', ');
   $('story-date').value = millisToDate(story?.date);

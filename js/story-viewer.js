@@ -1,12 +1,13 @@
 // Story-Viewer (Vollbild #story-viewer): Seiten wie eine Insta-Story, Tippen links/rechts
 // blaettert, Wischen nach unten schliesst. Kein automatisches Weiterblaettern.
-// #viewer-voice und #viewer-song sind Platz fuer Sprachnotiz (Aufgabe 8) und Song (Aufgabe 9).
+// #viewer-voice zeigt die Sprachnotiz-Pille, #viewer-song ist Platz fuer den Song (Aufgabe 9).
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t, getLang } from './i18n.js?v=14';
+import { t, getLang } from './i18n.js?v=15';
 import { showConfirm } from './ui.js?v=50';
 import { blobUrl } from './storage.js?v=1';
 import { storyPages } from './story-logic.js?v=1';
 import { step } from './viewer-logic.js?v=1';
+import { createPlayer } from './voice.js?v=1';
 
 const $ = id => document.getElementById(id);
 
@@ -16,6 +17,40 @@ function formatDate(x) {
   if (x == null) return '';
   return new Date(x.toMillis?.() ?? Number(x))
     .toLocaleDateString(getLang(), { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+let player = null; // Wiedergabe der Sprachnotiz, endet mit Seitenwechsel und Schliessen
+
+function stopVoice() {
+  player?.stop();
+  player = null;
+  $('viewer-voice').replaceChildren();
+}
+
+// Pille erst zeigen, wenn die Aufnahme ladbar ist (Zugriff verweigert: keine Pille)
+function renderVoice(s, story) {
+  stopVoice();
+  if (!story.voice?.path) return;
+  const pos = s.pos;
+  blobUrl(story.voice.path).then(url => {
+    if (state !== s || s.pos !== pos) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'viewer-pill';
+    const icon = document.createElement('span');
+    const time = document.createElement('span');
+    const sec = story.voice.seconds ?? 0;
+    time.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+    btn.append(icon, time);
+    const show = playing => {
+      icon.textContent = playing ? '❚❚' : '▶';
+      btn.setAttribute('aria-label', t(playing ? 'voice.pause' : 'voice.play'));
+    };
+    show(false);
+    player = createPlayer(url, show);
+    btn.onclick = () => player?.toggle();
+    $('viewer-voice').replaceChildren(btn);
+  }).catch(() => {});
 }
 
 function render() {
@@ -33,6 +68,7 @@ function render() {
   $('viewer-city').textContent = story.city;
   $('viewer-date').textContent = formatDate(story.date);
   $('viewer-menu').hidden = true;
+  renderVoice(s, story);
 
   const img = $('viewer-photo');
   const isPhoto = page.kind === 'photo';
@@ -71,6 +107,7 @@ function go(dir) {
 function close() {
   if (!state) return;
   state = null;
+  stopVoice();
   closeOverlay($('story-viewer'));
 }
 
