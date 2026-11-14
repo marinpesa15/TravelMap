@@ -10,3 +10,16 @@ iOS app (Capacitor 8, WKWebView) with a vanilla JS frontend, MapLibre + bundled 
 - Tests: `npm test` (vitest), Firestore rules: `npm run test:rules`. Pure logic lives in `*-logic.js` files so it can be tested without DOM.
 - Design docs and plans live in `docs/superpowers/specs` and `docs/superpowers/plans`.
 - Release: bump `APP_VERSION` in `js/version.js` with `MARKETING_VERSION` in Xcode. Update `landing/app-version.json` only once the build is live in the App Store.
+
+## Stories, Storage and Functions (2.0)
+
+- Stories hang on a visited or lived-in city of the own account, keyed by the city name (`city.name`). A story has a date, text (max 2000 characters), up to 10 photos (JPEG, max 1600 px, 1 MB), one voice note (`audio/mp4`, max 120 s, 3 MB) and a Spotify song. Each story is shared per story with friends via its "visible to friends" flag.
+- Photos, voice notes and the profile picture (512 px) live in Firebase Storage (`storage.rules`). Never call `getDownloadURL` for story media: they have no shareable links and are only read by the signed-in app. The owner always has access, a friend only while the story is shared.
+- Deleting a story, removing a city (after confirmation) or deleting the account also deletes the files.
+- Song search is the callable `searchSongs` in `functions/` (region europe-west1), which queries Spotify with the app's own client credentials (Functions secrets `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`). The app never talks to the Spotify API itself. Song covers load directly from Spotify's image servers, the Spotify embed player only after a tap. The privacy policy states this, change both together.
+- Adding a friend stores the invite code used in the friend entry (`firestore.rules` checks it).
+- `npm run test:rules` covers Firestore and Storage rules in the emulators.
+
+### Release order for 2.0
+
+Deploy `firestore.rules`, `storage.rules` and the function only together with the forced 2.0 update: the new friends rule requires the invite token that 1.x clients do not send, so deployed earlier it would break adding friends in 1.x. Order, each step confirmed by Marin: rules and function, App Store submission, then (once 2.0 is live) `landing/app-version.json` with `latest` and `minimum` set to `2.0.0`, then `firebase deploy --only hosting`.

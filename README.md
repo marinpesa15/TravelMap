@@ -16,6 +16,10 @@ A personal travel tracking app built with vanilla JS, MapLibre GL JS, and Fireba
 - **Friends** — add friends via invite link, view their maps (read-only)
 - **Groups** — shared maps: create groups, add members, pin cities together
   with personalised avatar/photo pins
+- **Stories** — per visited or lived-in city: date, text (2000 characters),
+  up to 10 photos, a voice note (120 s) and a Spotify song; each story can be
+  shared with friends or kept private
+- **Profile picture** — pick your own picture (512 px) for profile and pins
 - **Collection filter** — All / Visited / Want to visit / Lived there
 - **Settings** — gear button opens a modal with theme, language, privacy links,
   sign-out and app version
@@ -36,6 +40,8 @@ A personal travel tracking app built with vanilla JS, MapLibre GL JS, and Fireba
 | Place search | Mapbox Search Box API (online), bundled `data/places.json` (offline) |
 | Auth | Firebase Authentication (Google) |
 | Database | Firestore |
+| Media | Firebase Storage (story photos, voice notes, profile picture) |
+| Song search | Cloud Function `searchSongs` (europe-west1) querying the Spotify Web API |
 | Hosting | Firebase Hosting |
 
 ## Project Structure
@@ -68,6 +74,8 @@ TravelMap/
 │   ├── config.js       # Firebase config (gitignored)
 │   └── constants.js    # Mapbox token for search, optional BASEMAP_REMOTE_URL (gitignored)
 ├── firestore.rules     # Locked-down security rules
+├── storage.rules       # Storage rules (story media, profile picture)
+├── functions/          # Cloud Function searchSongs (Spotify search)
 └── firebase.json       # Hosting config (no-cache headers)
 ```
 
@@ -77,7 +85,17 @@ TravelMap/
 2. Create `js/config.js` with your Firebase config (see `js/config.example.js`)
 3. Create `js/constants.js` with your Mapbox token for the place search (see `js/constants.example.js`)
 4. Fill in your name/address/email in `privacy.html` (search for `[DEIN`)
-5. `firebase use <your-project>` and `firebase deploy`
+5. `firebase use <your-project>`, enable Firebase Storage in the console
+6. Spotify song search: create an app in the Spotify developer dashboard and
+   store its credentials as Functions secrets:
+   `firebase functions:secrets:set SPOTIFY_CLIENT_ID` and
+   `firebase functions:secrets:set SPOTIFY_CLIENT_SECRET`
+   (then `cd functions && npm install`)
+7. Deploy: `firebase deploy --only firestore:rules,storage` and
+   `firebase deploy --only functions`, then hosting. Rules and function go out
+   together with the forced 2.0 update (see `CLAUDE.md`, Release order)
+
+Tests: `npm test`, `npm run test:rules` (Firestore and Storage emulators, needs Java).
 
 ## Basemap
 
