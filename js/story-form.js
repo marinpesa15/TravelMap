@@ -6,7 +6,7 @@ import { showToast } from './ui.js?v=49';
 import { toJpegBlob } from './image.js?v=1';
 import { blobUrl } from './storage.js?v=1';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
-import { saveStoryWithMedia } from './story-save.js?v=1';
+import { saveStoryWithMedia } from './story-save.js?v=2';
 import { settleWrite } from './offline-write.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 
@@ -81,6 +81,7 @@ async function addFiles(files) {
 }
 
 function close() {
+  if (state?.saving) return; // laufendes Speichern nicht abbrechen
   const sheet = $('story-form');
   const s = state;
   state = null;
@@ -108,6 +109,7 @@ async function save() {
   const btn = $('story-save');
   s.saving = true;
   btn.disabled = true;
+  $('story-cancel').disabled = $('story-grabber').disabled = true;
   btn.textContent = t('story.saving');
   try {
     // Offline wartet saveStory ewig auf den Server, der lokale Stand ist aber sofort da
@@ -115,11 +117,15 @@ async function save() {
       saveStoryWithMedia(s.uid, draft, { existing: s.story }),
       { online, onError: () => showToast(t('story.saveFailed')) }
     );
+    if (state !== s) return;
+    s.saving = false;
     close();
     s.onSaved?.(id);
   } catch (e) {
+    if (state !== s) return;
     showToast(t('story.saveFailed'));
     s.saving = false;
+    $('story-cancel').disabled = $('story-grabber').disabled = false;
     btn.disabled = false;
     btn.textContent = t('story.save');
   }
@@ -156,6 +162,7 @@ export function openStoryForm({ uid, city, story = null, onSaved }) {
   $('story-shared').checked = !!story?.shared;
   const btn = $('story-save');
   btn.disabled = false;
+  $('story-cancel').disabled = $('story-grabber').disabled = false;
   btn.textContent = t('story.save');
   updateCounter();
   renderPhotos();

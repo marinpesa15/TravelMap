@@ -58,6 +58,23 @@ describe('saveStoryWithMedia', () => {
     await saveStoryWithMedia('u1', draft({ photos: [{ path: 'users/u1/stories/s1/p1.jpg' }, { blob: B }] }), { existing, io });
     expect(io.saved.photos.at(-1)).toEqual({ path: 'users/u1/stories/s1/p2.jpg' });
   });
+  it('ueberschreibt beim Bearbeiten nie die bestehende Sprachnotiz, auch nicht bei Fehlschlag', async () => {
+    const io = fakeIo({ failSave: true });
+    const old = 'users/u1/stories/s1/voice.m4a';
+    const existing = { id: 's1', city: 'Wien', photos: [], voice: { path: old, seconds: 5 } };
+    await expect(saveStoryWithMedia('u1', draft({ voice: { blob: B, seconds: 7 } }), { existing, io })).rejects.toThrow();
+    const uploads = io.calls.filter(c => c[0] === 'upload').map(c => c[1]);
+    expect(uploads).toEqual(['users/u1/stories/s1/voice-1.m4a']);
+    expect(io.calls.filter(c => c[0] === 'delete').map(c => c[1])).toEqual(['users/u1/stories/s1/voice-1.m4a']);
+  });
+  it('zeigt nach neuer Sprachnotiz auf den neuen Pfad und loescht die alte erst danach', async () => {
+    const io = fakeIo();
+    const existing = { id: 's1', city: 'Wien', photos: [], voice: { path: 'users/u1/stories/s1/voice.m4a', seconds: 5 } };
+    await saveStoryWithMedia('u1', draft({ voice: { blob: B, seconds: 7 } }), { existing, io });
+    expect(io.saved.voice).toEqual({ path: 'users/u1/stories/s1/voice-1.m4a', seconds: 7 });
+    expect(io.calls.map(c => c[0])).toEqual(['upload', 'save', 'delete']);
+    expect(io.calls.at(-1)[1]).toBe('users/u1/stories/s1/voice.m4a');
+  });
   it('lehnt ungueltige Entwuerfe ab, bevor etwas hochgeladen wird', async () => {
     const io = fakeIo();
     await expect(saveStoryWithMedia('u1', draft(), { io })).rejects.toThrow('empty');

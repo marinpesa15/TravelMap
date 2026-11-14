@@ -13,6 +13,16 @@ function nextPhotoIndex(existing) {
   return used.length ? Math.max(...used) + 1 : 0;
 }
 
+// Nie auf einen Pfad hochladen, den die bestehende Story referenziert: scheitert das Speichern,
+// bliebe sonst die alte Aufnahme zerstoert. Ohne bestehende Aufnahme gilt der Standardpfad.
+function freeVoicePath(uid, storyId, existing) {
+  const old = existing?.voice?.path;
+  if (!old) return storagePath(uid, storyId, 'voice');
+  let n = 1;
+  while (`users/${uid}/stories/${storyId}/voice-${n}.m4a` === old) n++;
+  return `users/${uid}/stories/${storyId}/voice-${n}.m4a`;
+}
+
 export async function saveStoryWithMedia(uid, draft, { existing = null, io = defaultIo } = {}) {
   const error = validateDraft(draft);
   if (error) throw new Error(error);
@@ -39,7 +49,7 @@ export async function saveStoryWithMedia(uid, draft, { existing = null, io = def
 
     let voice = null;
     if (draft.voice?.blob) {
-      const path = storagePath(uid, storyId, 'voice');
+      const path = freeVoicePath(uid, storyId, existing);
       await upload(path, draft.voice.blob, 'audio/mp4');
       voice = { path, seconds: draft.voice.seconds };
     } else if (draft.voice) {
