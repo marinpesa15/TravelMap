@@ -40,6 +40,7 @@ export async function saveStoryWithMedia(uid, draft, { existing = null, io = def
     for (const path of uploaded) await io.deleteFile(path).catch(() => {});
   };
   const upload = async (path, blob, type) => {
+    console.info('[TM] upload', path, blob.size, type);
     await io.uploadBlob(path, blob, type);
     uploaded.push(path);
   };

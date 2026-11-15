@@ -17,6 +17,7 @@ iOS app (Capacitor 8, WKWebView) with a vanilla JS frontend, MapLibre + bundled 
 - Photos, voice notes and the profile picture (512 px) live in Firebase Storage (`storage.rules`). Never call `getDownloadURL` for story media: they have no shareable links and are only read by the signed-in app. The owner always has access, a friend only while the story is shared.
 - Deleting a story, removing a city (after confirmation) or deleting the account also deletes the files.
 - Song search is the callable `searchSongs` in `functions/` (region europe-west1), which queries Spotify with the app's own client credentials (Functions secrets `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`). The app never talks to the Spotify API itself. Song covers load directly from Spotify's image servers, the Spotify embed player only after a tap. The privacy policy states this, change both together.
+- Story media are downloaded with `getBlob`, which needs CORS on the bucket for the app's origin `capacitor://localhost`. The setting lives in `storage-cors.json` and is applied with `gcloud storage buckets update gs://travelmap-f4e3a.firebasestorage.app --cors-file=storage-cors.json`. Without it photos and voice notes upload but never load.
 - Adding a friend stores the invite code used in the friend entry (`firestore.rules` checks it).
 - `npm run test:rules` covers Firestore and Storage rules in the emulators.
 

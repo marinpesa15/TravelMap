@@ -148,7 +148,8 @@ function render() {
     if (state !== s || s.pos !== pos) return; // inzwischen weitergeblaettert
     img.src = url;
     img.hidden = false;
-  }).catch(() => {
+  }).catch(e => {
+    console.error('[TM] story photo load failed', page.path, e?.code ?? e);
     if (state !== s || s.pos !== pos) return;
     // Story inzwischen privat oder geloescht: Hinweis statt kaputtem Bild, naechster Tipp schliesst
     s.unavailable = true;

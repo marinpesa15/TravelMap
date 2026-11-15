@@ -5,7 +5,7 @@ import { showToast } from './ui.js?v=53';
 import { toJpegBlob } from './image.js?v=2';
 import { blobUrl } from './storage.js?v=2';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
-import { saveStoryWithMedia } from './story-save.js?v=5';
+import { saveStoryWithMedia } from './story-save.js?v=6';
 import { isOnline } from './net-status.js?v=1';
 import { searchSongs, safeCover } from './songs.js?v=2';
 import { canRecord, createRecorder, createPlayer } from './voice.js?v=1';
@@ -332,13 +332,14 @@ async function save() {
   try {
     // Loest nach den Uploads auf, ohne auf die Server-Bestaetigung zu warten
     const id = await saveStoryWithMedia(s.uid, draft, {
-      existing: s.story, onWriteError: () => showToast(t('story.saveFailed'))
+      existing: s.story, onWriteError: e => { console.error('[TM] story write rejected', e?.code ?? e); showToast(t('story.saveFailed')); }
     });
     if (state !== s) return;
     s.saving = false;
     close();
     s.onSaved?.(id);
   } catch (e) {
+    console.error('[TM] story save failed', e?.code ?? e);
     if (state !== s) return;
     showToast(t('story.saveFailed'));
     s.saving = false;
