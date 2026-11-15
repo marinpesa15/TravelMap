@@ -4,8 +4,11 @@
 :root {
   --hub-h: 64px;
   --hub-bottom: calc(12px + env(safe-area-inset-bottom));
-  /* Oberkante der Leiste plus Abstand: darueber liegt alles andere */
-  --hub-top: calc(var(--hub-bottom) + var(--hub-h) + 10px);
+  /* Oberkante der Leiste plus Abstand: dort sitzt die Statistik */
+  --hub-top: calc(var(--hub-bottom) + var(--hub-h) + 14px);
+  --stats-h: 52px;
+  /* Oberkante der Statistik plus Abstand: darueber Toast und Attribution */
+  --stats-top: calc(var(--hub-top) + var(--stats-h) + 8px);
 }
 
 /* ----- Tab-Leiste ----- */
@@ -45,23 +48,27 @@
 .hub-tab, #hub-add { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms; }
 .hub-tab:active, #hub-add:active { transform: scale(0.94); }
 
-/* Freundes- oder Gruppenkarte: dort zaehlt nur das Banner */
+/* Freundes- oder Gruppenkarte: dort zaehlt nur das Banner. Offenes Sheet:
+   es reicht bis unten, nichts liegt darunter oder davor. */
 body.banner-mode #hub,
-body.banner-mode #hub-stats { display: none; }
+body.banner-mode #hub-stats,
+body.panel-open #hub,
+body.panel-open #hub-stats { display: none; }
 
 /* ----- Statistik-Karte ueber der Leiste (Staedte / Laender umschalten) ----- */
 #hub-stats {
   position: fixed; z-index: 10;
   left: 24px; right: 24px; bottom: var(--hub-top);
   max-width: 420px; margin: 0 auto;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px;
+  height: var(--stats-h); box-sizing: border-box;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
   background: var(--bg-input); border: 1px solid var(--bd-input);
   border-radius: 20px; backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 .stat-tab {
   display: flex; align-items: center; gap: 12px;
-  padding: 8px 12px; border-radius: 14px;
+  padding: 8px 12px; border-radius: 16px;
   border: 1px solid transparent; cursor: pointer; user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -70,12 +77,22 @@ body.banner-mode #hub-stats { display: none; }
 .stat-num   { font-size: 1.4rem; font-weight: 700; color: var(--tx-primary); line-height: 1; }
 .stat-label { font-size: 0.72rem; color: var(--tx-secondary); margin-top: 3px; }
 
-/* Legende, Kartensteuerung und Toast ueber Leiste und Statistik schieben */
-.map-legend { bottom: calc(var(--hub-top) + 76px); }
-.maplibregl-ctrl-bottom-right { margin-bottom: calc(var(--hub-top) + 70px) !important; }
-/* Attribution links ueber der Legende */
-.maplibregl-ctrl-bottom-left  { margin-bottom: calc(var(--hub-top) + 122px) !important; }
-#toast { bottom: var(--hub-top); }
+/* Leiste: Zahl und Wort in einer Zeile */
+#hub-stats .stat-tab { gap: 8px; padding: 0 12px; }
+#hub-stats .stat-tab > div { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+#hub-stats .stat-icon { width: 20px; height: 20px; }
+#hub-stats .stat-num { font-size: 1.15rem; }
+#hub-stats .stat-label { margin-top: 0; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Attribution ("i") und Toast ueber der Statistik. Die Legende gibt es nur in
+   der Freundes- und Gruppenansicht, auf der eigenen Karte zeigen die
+   Filter-Chips im Orte-Sheet die Farben. */
+.maplibregl-ctrl-bottom-right { margin-bottom: calc(var(--stats-top) - 10px) !important; }
+#toast { bottom: var(--stats-top); }
+body:not(.banner-mode) .map-legend { display: none; }
+.map-legend { bottom: var(--hub-bottom); }
+body.banner-mode .maplibregl-ctrl-bottom-right { margin-bottom: calc(var(--hub-bottom) - 10px) !important; }
+body.banner-mode #toast { bottom: calc(var(--hub-bottom) + 56px); }
 
 /* ----- Sheets ----- */
 .sheet {
@@ -89,7 +106,7 @@ body.banner-mode #hub-stats { display: none; }
 .sheet-card {
   width: 100%; max-width: 520px; max-height: 72vh; overflow-y: auto;
   overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-  padding: 8px 18px calc(var(--hub-top) + 8px);
+  padding: 8px 18px calc(env(safe-area-inset-bottom) + 18px);
   background: var(--bg-sidebar); border: 1px solid var(--bd-dialog); border-bottom: none;
   border-radius: 26px 26px 0 0;
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
@@ -100,6 +117,17 @@ body.banner-mode #hub-stats { display: none; }
   display: block; width: 44px; height: 5px; margin: 4px auto 14px; padding: 0;
   border: none; border-radius: 3px; background: var(--bd-input); cursor: pointer;
 }
+/* Schliessen oben rechts, bleibt beim Scrollen stehen */
+.sheet-close {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; margin: 0 0 -34px auto; padding: 0;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: var(--bg-card); color: var(--tx-secondary);
+  font: inherit; font-size: 0.95rem; line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.sheet-close:active { transform: scale(0.94); }
 .sheet-title {
   font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em;
   color: var(--tx-primary); margin-bottom: 14px;
@@ -122,6 +150,8 @@ body.banner-mode #hub-stats { display: none; }
 }
 .nav-item.active { border-color: var(--accent); color: var(--tx-primary); }
 .nav-icon { width: 15px; height: 15px; flex-shrink: 0; }
+/* Punkt in Pin-Farbe: die Chips sind zugleich die Legende */
+.nav-item .legend-dot { width: 10px; height: 10px; }
 .nav-badge {
   font-size: 0.7rem; padding: 1px 7px; border-radius: 99px;
   background: var(--bg-nav-badge); color: var(--tx-nav-badge);
@@ -154,6 +184,27 @@ body.banner-mode #hub-stats { display: none; }
 }
 .place-meta { display: block; font-size: 0.8rem; color: var(--tx-secondary); margin-top: 2px; }
 .places-empty { font-size: 0.85rem; color: var(--tx-secondary); padding: 10px 2px; }
+
+/* ----- Freunde: Umschalter Freunde / Gruppen ----- */
+.friends-tabs .radio-opt { font: inherit; font-size: 0.85rem; font-weight: 600; }
+.friends-tabs .radio-opt:not(.selected) { background: none; }
+.sheet-section[hidden] { display: none; }
+
+/* ----- Neue Story ----- */
+.story-start-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.story-start-choice {
+  min-height: 52px; padding: 10px 12px; border-radius: 16px; cursor: pointer;
+  background: var(--bg-card); border: 1.5px solid var(--bd-card); color: var(--tx-primary);
+  font: inherit; font-size: 0.95rem; font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+}
+.story-start-choice[aria-expanded="true"] { border-color: var(--secondary); }
+.story-start-choice:active { transform: scale(0.97); }
+.story-start-filter {
+  width: 100%; box-sizing: border-box; padding: 10px 14px; margin-bottom: 4px;
+  border-radius: 12px; border: 1px solid var(--bd-input); background: var(--bg-input);
+  color: var(--tx-input); font: inherit; font-size: 16px;
+}
 
 /* ----- Freunde ----- */
 #panel-friends .social-item { padding: 10px; }

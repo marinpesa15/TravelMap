@@ -9,15 +9,15 @@ import {
   acceptConsent
 } from './db.js?v=31';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=24';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=25';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=24';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=24';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=31';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=28';
+} from './countries.js?v=32';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=29';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=29';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
@@ -25,22 +25,23 @@ import {
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
-  showMapHint, setupMapHint, showRelayHint,
+  showMapHint, setupMapHint, showRelayHint, renderStoryStartList,
   openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=52';
-import { initTheme, getTheme } from './theme.js?v=28';
+} from './ui.js?v=53';
+import { initTheme, getTheme } from './theme.js?v=29';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=28';
-import { initHub, openPanel, closePanel } from './hub.js?v=1';
+import { setupSettings } from './settings.js?v=29';
+import { initHub, openPanel, closePanel } from './hub.js?v=2';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=3';
-import { t, getLang, applyTranslations } from './i18n.js?v=19';
-import { startUpdateCheck } from './version.js?v=21';
-import { installLegalViewer } from './legal-view.js?v=8';
+import { t, getLang, applyTranslations } from './i18n.js?v=20';
+import { startUpdateCheck } from './version.js?v=22';
+import { installLegalViewer } from './legal-view.js?v=9';
 import { avatarEl } from './avatar.js?v=2';
-import { openStoryForm } from './story-form.js?v=8';
-import { openStoryViewer } from './story-viewer.js?v=5';
+import { openStoryForm } from './story-form.js?v=9';
+import { openStoryViewer } from './story-viewer.js?v=6';
 import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=4';
+import { findVisitedCity } from './places-list-logic.js?v=3';
 import { sortStories, citiesWithStories, orphanStories, storyPaths } from './story-logic.js?v=1';
 import { deleteStoryWithMedia } from './story-save.js?v=5';
 import { initProfilePicture } from './profile.js?v=3';
@@ -59,6 +60,7 @@ let _currentGroupId = null;
 let _mapMode        = 'cities'; // 'cities' | 'countries'
 let _myStories      = []; // Stand aus subscribeMyStories
 let _friendViewSeq  = 0;  // verwirft verspaetete Antworten einer frueheren Freundesansicht
+let _storyAfterAdd  = false; // Neue Story > Neue Stadt: die naechste Stadt aus der Suche bekommt das Story-Formular
 
 // Real-time listener handles
 let _unsubUserData   = null;
@@ -271,6 +273,7 @@ async function _init(user) {
     initTheme();
     setupSettings(_map);
     initHub({ onAdd: _onHubAdd, onPlace: _flyToPlace });
+    _setupStoryStart();
     initProfilePicture({ onChange: () => _showUserProfile(auth.currentUser), toast: showToast, t });
     _initNetStatus();
     _setupFilterNav();
@@ -353,11 +356,21 @@ async function _init(user) {
     });
 
     setupConfirmDialog();
-    setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode);
+    setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode, {
+      // Schon besucht: kein Dialog, gleich das Story-Formular
+      onPick: city => {
+        const visited = _storyAfterAdd && _viewMode === 'own' && findVisitedCity(_userData, city.name);
+        if (!visited) return false;
+        _storyAfterAdd = false;
+        openStoryForm({ uid: _uid, city: visited });
+        return true;
+      },
+      onCancel: () => { _storyAfterAdd = false; }
+    });
 
     document.getElementById('btn-close-search')?.addEventListener('click', _closeMobileSearchOverlay);
 
-    _map.on('click', () => hideCityPopup());
+    _map.on('click', () => { hideCityPopup(); _storyAfterAdd = false; });
 
     // Live language switch: retranslate static DOM + re-render dynamic lists
     window.addEventListener('tm-langchanged', () => {
@@ -501,11 +514,14 @@ async function _onAddCity(cityData, type, lived) {
     _closeMobileSearchOverlay();
     return;
   }
+  const storyAfter = _storyAfterAdd;
+  _storyAfterAdd = false;
   try {
     animateNextAdd(cityData.name);
     if (type === 'visited') {
       // Nimmt die Stadt auch von der Wunschliste und trackt ihr Land mit
       await addVisitedCity(_uid, { ...cityData, lived });
+      if (storyAfter) openStoryForm({ uid: _uid, city: { ...cityData, lived } });
     } else {
       const status = await addWishlistCity(_uid, cityData);
       if (status === 'alreadyVisited') {
@@ -877,7 +893,7 @@ function _setMapMode(mode) {
     if (results) results.innerHTML = '';
   }
 
-  // Toggle legends
+  // Legende (nur in der Freundes- und Gruppenansicht sichtbar, siehe hub.css)
   document.getElementById('legend-cities').style.display    = mode === 'cities'    ? '' : 'none';
   document.getElementById('legend-countries').style.display = mode === 'countries' ? '' : 'none';
 
@@ -1011,10 +1027,39 @@ function _initNetStatus() {
 }
 
 // ===== Hub =====
-// Plus: wie frueher "Ort hinzufuegen", fuehrt in die Suche
+// Plus: Sheet "Neue Story", die Liste klappt erst mit "Besuchte Stadt" auf
 function _onHubAdd() {
-  closePanel();
-  document.getElementById('city-search')?.focus();
+  document.getElementById('story-start-pick').hidden = true;
+  document.getElementById('story-start-visited').setAttribute('aria-expanded', 'false');
+  document.getElementById('story-start-filter').value = '';
+  openPanel('story');
+}
+
+let _storyStartSetup = false;
+function _setupStoryStart() {
+  if (_storyStartSetup) return;
+  _storyStartSetup = true;
+  const filter = document.getElementById('story-start-filter');
+  const render = () => renderStoryStartList(_userData, filter.value, citiesWithStories(_liveStories()));
+  document.getElementById('story-start-visited').addEventListener('click', e => {
+    document.getElementById('story-start-pick').hidden = false;
+    e.currentTarget.setAttribute('aria-expanded', 'true');
+    render();
+  });
+  filter.addEventListener('input', render);
+  document.getElementById('story-start-list').addEventListener('click', e => {
+    const city = findVisitedCity(_userData, e.target.closest('.place-row')?.dataset.name);
+    if (!city) return;
+    closePanel();
+    openStoryForm({ uid: _uid, city });
+  });
+  // Neue Stadt: die normale Suche oben, nach dem Hinzufuegen als besucht folgt das Formular
+  document.getElementById('story-start-new').addEventListener('click', () => {
+    closePanel();
+    if (_mapMode === 'countries') _setMapMode('cities');
+    _storyAfterAdd = true;
+    document.getElementById('city-search')?.focus();
+  });
 }
 
 function _renderPlaces() {

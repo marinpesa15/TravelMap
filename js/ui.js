@@ -1,13 +1,13 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=31';
-import { t, getLang } from './i18n.js?v=19';
-import { searchLocalCities } from './places.js?v=9';
+import { searchCountries } from './countries.js?v=32';
+import { t, getLang } from './i18n.js?v=20';
+import { searchLocalCities } from './places.js?v=10';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
 import { avatarEl } from './avatar.js?v=2';
 import { toJpegBlob } from './image.js?v=2';
-import { buildPlaceList } from './places-list-logic.js?v=2';
+import { buildPlaceList, filterPlaces } from './places-list-logic.js?v=3';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -125,6 +125,24 @@ export function renderPlacesList(userData, filter, storyCities = new Set(), mode
   _animateNewPlace(el, `${mode}-${filter}`, places[0].name);
 }
 
+/** Neue Story > Besuchte Stadt: besuchte und gelebte Staedte, neueste oben, gefiltert nach query. */
+export function renderStoryStartList(userData, query, storyCities = new Set()) {
+  const el = document.getElementById('story-start-list');
+  if (!el) return;
+  const all = buildPlaceList(userData, 'visited', storyCities);
+  if (!all.length) {
+    el.innerHTML = `<p class="places-empty">${t('storyStart.empty')}</p>`;
+    return;
+  }
+  const places = filterPlaces(all, query);
+  el.innerHTML = places.length ? '' : `<p class="places-empty">${t('search.noResults')}</p>`;
+  el.innerHTML += places.map(p => `
+    <button type="button" class="${['place-row', p.lived ? 'lived' : '', p.hasStory ? 'has-story' : ''].filter(Boolean).join(' ')}" data-name="${esc(p.name)}">
+      <span class="place-icon">${PIN_SVG}</span>
+      <span class="place-text"><span class="place-name">${esc(p.name)}</span></span>
+    </button>`).join('');
+}
+
 // ===== City Remove Popup =====
 
 let _cityPopupData = null; // { city, type }
@@ -138,14 +156,18 @@ export function hideCityPopup() {
 
 let _selectedCity = null; // { name, lat, lng, country }
 let _searchAbort  = null; // AbortController for in-flight geocoding requests
+let _onPick       = null; // siehe setupSearch
 
 /**
  * Sets up the unified search bar.
  * getMode(): returns 'cities' | 'countries'
  * onAddCity(cityData, type, lived): called when a city is added
  * onAddCountry({ name, isoCode }, type): called when a country is added from search
+ * onPick(city): before the dialog opens, return true to skip it
+ * onCancel(): the dialog was closed without adding
  */
-export function setupSearch(onAddCity, onAddCountry, getMode) {
+export function setupSearch(onAddCity, onAddCountry, getMode, { onPick, onCancel } = {}) {
+  _onPick = onPick;
   const input   = document.getElementById('city-search');
   const results = document.getElementById('search-results');
   let _debounce = null;
@@ -179,9 +201,10 @@ export function setupSearch(onAddCity, onAddCountry, getMode) {
     });
   });
 
-  document.getElementById('dialog-cancel').addEventListener('click', _closeDialog);
+  const cancel = () => { _closeDialog(); onCancel?.(); };
+  document.getElementById('dialog-cancel').addEventListener('click', cancel);
   dialog.addEventListener('click', e => {
-    if (e.target === dialog) _closeDialog();
+    if (e.target === dialog) cancel();
   });
 
   document.getElementById('dialog-add').addEventListener('click', () => {
@@ -317,9 +340,13 @@ function _renderCityResults(resultsEl, cities) {
           return;
         }
       }
+      resultsEl.innerHTML = '';
+      if (_onPick?.(selected)) {
+        document.getElementById('city-search').value = '';
+        return;
+      }
       _selectedCity = selected;
       _openDialog(selected.name);
-      resultsEl.innerHTML = '';
     });
     resultsEl.appendChild(item);
   });
@@ -327,7 +354,7 @@ function _renderCityResults(resultsEl, cities) {
 
 function _openDialog(cityName) {
   document.getElementById('dialog-city-name').textContent = cityName;
-  document.querySelectorAll('.radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
+  document.querySelectorAll('#city-dialog .radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
   document.getElementById('lived-checkbox').checked   = false;
   document.getElementById('lived-row').style.display  = 'flex';
   openOverlay(document.getElementById('city-dialog'));

@@ -2,8 +2,8 @@
 // blaettert, Wischen nach unten schliesst. Kein automatisches Weiterblaettern.
 // #viewer-voice zeigt die Sprachnotiz-Pille, #viewer-song die Song-Pille mit Spotify-Sheet.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t, getLang } from './i18n.js?v=19';
-import { showConfirm } from './ui.js?v=52';
+import { t, getLang } from './i18n.js?v=20';
+import { showConfirm } from './ui.js?v=53';
 import { blobUrl } from './storage.js?v=2';
 import { storyPages } from './story-logic.js?v=1';
 import { step } from './viewer-logic.js?v=1';

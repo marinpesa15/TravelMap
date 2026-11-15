@@ -1,8 +1,8 @@
 import * as constants from './constants.js?v=13';
 import { layers as basemapLayers, namedFlavor } from '../vendor/protomaps-basemaps/5.7.2/index.js';
-import { loadCountriesGeoJSON } from './countries.js?v=31';
+import { loadCountriesGeoJSON } from './countries.js?v=32';
 import { buildFallbackStyle } from './fallback-style.js?v=1';
-import { getLang } from './i18n.js?v=19';
+import { getLang } from './i18n.js?v=20';
 
 // ===== Karte =====
 //
@@ -63,8 +63,14 @@ export function initMap({ theme = 'dark', timeoutMs = 3000 } = {}) {
     zoom:   1.5,
     attributionControl: false
   });
-  _map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-  _map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+  // Kein Zoom-Knopf: Pinch und Drehen reichen auf dem Telefon. Die Quellen
+  // stehen eingeklappt hinter dem "i", rechts ueber der Statistik.
+  _map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+  // MapLibre klappt die Quellen beim Start und bei jedem resize auf, bis die Karte gezogen wird
+  const collapseAttribution = () =>
+    _map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+  collapseAttribution();
+  _map.on('resize', collapseAttribution);
   _map.on('style.load', _onStyleLoad);
 
   _installProtocol();

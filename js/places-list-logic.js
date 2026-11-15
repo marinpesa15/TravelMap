@@ -1,3 +1,5 @@
+import { normalize } from './place-search.js?v=1';
+
 // Liste fuer das Orte-Sheet (js/ui.js renderPlacesList). Besuchte zuerst,
 // zuletzt hinzugefuegte oben, danach die Wunschliste. Im Laender-Modus stehen
 // statt der Staedte die Laender (ISO-Codes) in der Liste, wie die Filter zaehlen.
@@ -20,4 +22,15 @@ export function buildPlaceList(userData, filter, storyCities = new Set(), mode =
   if (filter === 'wishlist') return wishlist;
   if (filter === 'lived')    return visited.filter(p => p.lived);
   return [...visited, ...wishlist];
+}
+
+// "Neue Story > Besuchte Stadt": Textfilter ueber die Liste aus buildPlaceList
+export function filterPlaces(places, query) {
+  const q = normalize(query ?? '');
+  return q ? places.filter(p => normalize(p.name).includes(q)) : places;
+}
+
+// Der gespeicherte Stadteintrag (mit Koordinaten) zu einem Namen, nur besuchte
+export function findVisitedCity(userData, name) {
+  return (userData?.visited_cities ?? []).find(c => c.name === name) ?? null;
 }

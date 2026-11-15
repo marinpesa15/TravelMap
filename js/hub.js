@@ -1,8 +1,8 @@
-// Tab-Leiste unten und ihre Sheets (Orte, Freunde, Profil). 'map' heisst:
-// kein Sheet offen. Die Inhalte der Sheets fuellen ui.js und settings.js.
+// Tab-Leiste unten und ihre Sheets (Orte, Freunde, Profil, Neue Story).
+// 'map' heisst: kein Sheet offen. Die Inhalte fuellen ui.js, settings.js und app.js.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
 
-const PANELS = { places: 'panel-places', friends: 'panel-friends', profile: 'panel-profile' };
+const PANELS = { places: 'panel-places', friends: 'panel-friends', profile: 'panel-profile', story: 'panel-story-start' };
 const SWIPE_CLOSE_PX = 80;
 
 /** onAdd(): Plus-Knopf. onPlace(cityName): Tipp auf eine Zeile im Orte-Sheet. */
@@ -24,10 +24,19 @@ export function initHub({ onAdd, onPlace }) {
     if (!sheet) continue;
     // Tipp neben das Sheet, also auf die Karte, oder auf den Griff schliesst
     sheet.addEventListener('click', e => {
-      if (e.target === sheet || e.target.closest('.sheet-grabber')) closePanel();
+      if (e.target === sheet || e.target.closest('.sheet-grabber, .sheet-close')) closePanel();
     });
     _swipeToClose(sheet.firstElementChild);
   }
+
+  // Freunde-Sheet: Freunde oder Gruppen, die Wahl bleibt bis zum Neustart
+  const tabs = document.querySelectorAll('.friends-tabs [role="tab"]');
+  tabs.forEach(tab => tab.addEventListener('click', () => tabs.forEach(t => {
+    const on = t === tab;
+    t.classList.toggle('selected', on);
+    t.setAttribute('aria-selected', String(on));
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  })));
 }
 
 export function openPanel(name) {
@@ -37,6 +46,8 @@ export function openPanel(name) {
     else tab.removeAttribute('aria-current');
   });
   const switching = target !== 'map';
+  // Offenes Sheet: Tab-Leiste und Statistik weg, das Sheet reicht bis unten
+  document.body.classList.toggle('panel-open', switching);
   for (const [key, id] of Object.entries(PANELS)) {
     const sheet = document.getElementById(id);
     if (!sheet) continue;

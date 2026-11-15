@@ -1,8 +1,8 @@
-import { t, getLang, setLang } from './i18n.js?v=19';
-import { getTheme, setTheme } from './theme.js?v=28';
+import { t, getLang, setLang } from './i18n.js?v=20';
+import { getTheme, setTheme } from './theme.js?v=29';
 import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=26';
 import { isNative } from './platform.js?v=1';
-import { APP_VERSION } from './version.js?v=21';
+import { APP_VERSION } from './version.js?v=22';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
 import { collectDeletionSummary, deleteAccount } from './account.js?v=10';
 import { auth } from './config.js?v=5';
