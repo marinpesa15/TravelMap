@@ -18,6 +18,7 @@ iOS app (Capacitor 8, WKWebView) with a vanilla JS frontend, MapLibre + bundled 
 - Deleting a story, removing a city (after confirmation) or deleting the account also deletes the files.
 - Song search is the callable `searchSongs` in `functions/` (region europe-west1), which queries Spotify with the app's own client credentials (Functions secrets `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`). The app never talks to the Spotify API itself. Song covers load directly from Spotify's image servers, the Spotify embed player only after a tap. The privacy policy states this, change both together.
 - Story media are downloaded with `getBlob`, which needs CORS on the bucket for the app's origin `capacitor://localhost`. The setting lives in `storage-cors.json` and is applied with `gcloud storage buckets update gs://travelmap-f4e3a.firebasestorage.app --cors-file=storage-cors.json`. Without it photos and voice notes upload but never load.
+- The Storage rules look up friendships and the story's `shared` flag in Firestore. For that the Storage service agent (`service-<project number>@gcp-sa-firebasestorage.iam.gserviceaccount.com`) needs the role `roles/firebaserules.firestoreServiceAgent`. A non-interactive `firebase deploy` does not grant it; without it the owner sees the media but friends get "not available".
 - Adding a friend stores the invite code used in the friend entry (`firestore.rules` checks it).
 - `npm run test:rules` covers Firestore and Storage rules in the emulators.
 
