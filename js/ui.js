@@ -29,8 +29,7 @@ export function updateStats(userData) {
   const cities    = (userData.visited_cities     ?? []).length;
   const lived     = (userData.visited_cities     ?? []).filter(c => c.lived).length;
   const wCities   = (userData.wishlist_cities    ?? []).length;
-  const wCountries= (userData.wishlist_countries ?? []).length;
-  const wishlist  = wCities + wCountries;
+  const wishlist  = wCities; // Staedtemodus: die Liste zeigt Staedte, also zaehlen nur sie
 
   // Snapshot grid — counts up on first render, ticks with a pop on change
   _setStat('stat-countries-num', countries);

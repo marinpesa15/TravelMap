@@ -24,6 +24,7 @@ const out = path.join(root, 'dist');
 const BUNDLE_IGNORE = [
   'firebase.json',
   'storage-cors.json',
+  'CLAUDE.md',
   '.firebaserc',
   '**/.*',
   '**/.*/**',

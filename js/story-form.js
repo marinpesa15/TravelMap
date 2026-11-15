@@ -1,7 +1,7 @@
 // Story-Formular (Sheet #story-form): Datum, Fotos, Text, Sprachnotiz, Song, Freigabe.
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { t } from './i18n.js?v=20';
-import { showToast } from './ui.js?v=53';
+import { t, getLang } from './i18n.js?v=20';
+import { showToast } from './ui.js?v=54';
 import { toJpegBlob } from './image.js?v=2';
 import { blobUrl } from './storage.js?v=2';
 import { LIMITS, storyPaths, validateDraft } from './story-logic.js?v=1';
@@ -381,7 +381,12 @@ export function openStoryForm({ uid, city, story = null, onSaved }) {
   renderSong();
   setVoice(state, story?.voice ?? null);
   $('story-form-title').textContent = t(story ? 'story.edit' : 'story.new');
-  $('story-city').textContent = [city.name, city.country].filter(Boolean).join(', ');
+  // Laendercode als Name anzeigen ("PT" -> "Portugal"), wie in der Orte-Liste
+  let country = city.country;
+  if (/^[A-Z]{2}$/.test(country ?? '')) {
+    try { country = new Intl.DisplayNames([getLang()], { type: 'region' }).of(country) ?? country; } catch { /* alte WebView */ }
+  }
+  $('story-city').textContent = [city.name, country].filter(Boolean).join(', ');
   $('story-date').value = millisToDate(story?.date);
   $('story-text').value = story?.text ?? '';
   $('story-shared').checked = !!story?.shared;
