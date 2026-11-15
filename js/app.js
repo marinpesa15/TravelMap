@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=31';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=25';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=26';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=24';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=24';
 import {

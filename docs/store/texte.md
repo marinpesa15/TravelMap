@@ -208,14 +208,14 @@ Sign-in is required, but no demo account is needed: the app offers Sign in with 
 
 WHAT TO TRY
 1. Add a place: use the search at the top, pick a city from the list, then choose Visited, Wishlist or Lived there.
-2. Country view: open the sidebar (hamburger, top left) and switch from Cities to Countries. Visited countries are filled in on the map.
-3. Friends and groups: the sidebar has an invite link and group creation. Seeing another person's map needs a second account.
+2. Country view: the card above the tab bar shows the number of cities and countries. Tap the countries half to switch; visited countries are filled in on the map.
+3. Friends and groups: the Friends tab in the bar at the bottom has two tabs, friends with the invite link and groups with group creation. Seeing another person's map needs a second account.
 4. Group photo: inside a group map you can attach a photo to a place. This opens the system picker, which is why the app declares camera and photo library usage.
-5. Stories: tap a visited city, then "Add story". A story has a date, optional text, up to 10 photos, a voice note and a song. Recording a voice note is the only place the app uses the microphone (NSMicrophoneUsageDescription), and only while the record button is active. The song search needs a connection and sends the search term to our Cloud Function, which queries Spotify; the Spotify player only loads after tapping the song.
+5. Stories: tap the gold plus button in the tab bar and pick a visited city or add a new one. A story has a date, optional text, up to 10 photos, a voice note and a song. Recording a voice note is the only place the app uses the microphone (NSMicrophoneUsageDescription), and only while the record button is active. The song search needs a connection and sends the search term to our Cloud Function, which queries Spotify; the Spotify player only loads after tapping the song.
 6. Sharing: each story has a switch "Visible to friends". Friends see it only with the switch on. Seeing a friend's story needs two accounts, so a test account with one shared story is provided: [TESTKONTO-ZUGANG HIER EINTRAGEN]. Please add it as a friend through an invite link or use the pre-connected account.
 
 ACCOUNT DELETION (5.1.1(v))
-Sidebar, gear icon, "Delete account". It removes the account itself plus the user document, friendships, invite entries, the user's contributions to group maps, all stories with their photos and voice notes, and the profile picture. For accounts created with Sign in with Apple, the Apple token is revoked as part of the deletion.
+Profile tab (bottom right), scroll down, "Delete account". It removes the account itself plus the user document, friendships, invite entries, the user's contributions to group maps, all stories with their photos and voice notes, and the profile picture. For accounts created with Sign in with Apple, the Apple token is revoked as part of the deletion.
 
 OFFLINE
 The app also runs without a connection. It ships with a place list of about 70,000 cities, so search and new entries work in airplane mode and sync once the device is back online. Only the map imagery itself needs a connection; a short notice explains that.
