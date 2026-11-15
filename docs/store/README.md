@@ -32,7 +32,7 @@ zuverlässig. Die Oberfläche ist dieselbe wie im App-Bundle.
 - **Datenschutz-URL:** https://travel.marinpesa.dev/privacy.html
 - **Bundle-ID:** com.marinpesa.travelmap
 - **Datentypen im Fragebogen** (müssen zu `ios/App/App/PrivacyInfo.xcprivacy` passen):
-  E-Mail-Adresse, Name, Benutzer-ID, Fotos oder Videos, andere Nutzerinhalte.
+  E-Mail-Adresse, Name, Benutzer-ID, Fotos oder Videos, Audiodaten (Sprachnotizen, seit 2.0), andere Nutzerinhalte.
   Jeweils Zweck „App-Funktionalität", mit dem Konto verknüpft, kein Tracking.
 - Noch offen: Store-Texte (Name, Untertitel, Beschreibung, Keywords) und die
   Review-Informationen mit Testkonto.
