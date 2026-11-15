@@ -17,7 +17,7 @@ import {
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
 } from './countries.js?v=32';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=29';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=30';
 import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=29';
 import {
   updateStats, renderPlacesList, updateCountriesView, setupSearch,
@@ -29,9 +29,9 @@ import {
   openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
 } from './ui.js?v=53';
-import { initTheme, getTheme } from './theme.js?v=29';
+import { initTheme, getTheme } from './theme.js?v=30';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=29';
+import { setupSettings } from './settings.js?v=30';
 import { initHub, openPanel, closePanel } from './hub.js?v=2';
 import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=3';
 import { t, getLang, applyTranslations } from './i18n.js?v=20';

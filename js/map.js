@@ -66,11 +66,18 @@ export function initMap({ theme = 'dark', timeoutMs = 3000 } = {}) {
   // Kein Zoom-Knopf: Pinch und Drehen reichen auf dem Telefon. Die Quellen
   // stehen eingeklappt hinter dem "i", rechts ueber der Statistik.
   _map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
-  // MapLibre klappt die Quellen beim Start und bei jedem resize auf, bis die Karte gezogen wird
-  const collapseAttribution = () =>
-    _map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
-  collapseAttribution();
-  _map.on('resize', collapseAttribution);
+  // MapLibre klappt die Quellen auf, sobald die ersten Quellenangaben da sind.
+  // Genau dann einmal einklappen, danach entscheidet der Tipp auf das "i".
+  const collapseAttribution = () => {
+    const el = _map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+    if (!el?.classList.contains('maplibregl-compact')) return;
+    el.classList.remove('maplibregl-compact-show');
+    el.removeAttribute('open');
+    _map.off('sourcedata', collapseAttribution);
+    _map.off('styledata', collapseAttribution);
+  };
+  _map.on('sourcedata', collapseAttribution);
+  _map.on('styledata', collapseAttribution);
   _map.on('style.load', _onStyleLoad);
 
   _installProtocol();

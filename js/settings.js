@@ -1,5 +1,5 @@
 import { t, getLang, setLang } from './i18n.js?v=20';
-import { getTheme, setTheme } from './theme.js?v=29';
+import { getTheme, setTheme } from './theme.js?v=30';
 import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=26';
 import { isNative } from './platform.js?v=1';
 import { APP_VERSION } from './version.js?v=22';
