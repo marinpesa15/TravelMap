@@ -14,18 +14,21 @@ mit „Mindestens ein Screenshot weist falsche Maße auf" ab.
 
 | Datei | Inhalt |
 |---|---|
-| `01-karte.png` | Weltkarte mit besuchten Städten |
-| `02-seitenleiste.png` | Seitenleiste mit Zählern, Freunden und Gruppen |
-| `03-laender.png` | Länderansicht mit eingefärbten Ländern |
-| `04-gruppe.png` | Gruppenkarte mit Zurück-Banner |
-| `05-suche.png` | Ortssuche mit Treffern aus der lokalen Liste |
-| `06-splash.png` | Startbildschirm mit Logo, Name und Tagline |
+| `01-karte.png` | Karte über Europa mit Pins, Story-Ringen, Statistik und Tab-Leiste |
+| `02-story.png` | Story-Viewer auf einem Lissabon-Foto mit Ort, Datum, Text, Sprachnotiz und Song |
+| `03-story-formular.png` | Ausgefülltes Story-Formular: Datum, drei Fotos, Text, Sprachnotiz, Song, für Freunde sichtbar |
+| `04-orte.png` | Orte-Sheet mit Filterchips und Ortsliste |
+| `05-laender.png` | Länderansicht mit eingefärbten besuchten und Wunschländern |
+| `06-freunde.png` | Freunde-Sheet mit den Tabs Freunde und Gruppen |
 
-Erzeugt am 22.09.2026 aus einer Kopie der App mit Demo-Daten (Zweig
-`test/local-demo`), aufgenommen über Playwright mit `device_scale_factor=3`:
-Viewport 440x956 ergibt 1320x2868, Viewport 428x926 ergibt 1284x2778. Direkte Taps im Simulator kamen auf dem Pro Max in der
-Seitenleiste nicht an, über die Weboberfläche mit `element.click()` dagegen
-zuverlässig. Die Oberfläche ist dieselbe wie im App-Bundle.
+Erzeugt am 15.11.2026 für TravelMap 2.0 in der echten App im iOS-Simulator
+(iPhone 18 Pro Max, iOS 27.0, Dunkelmodus, Statusleiste 9:41). Firebase war
+dabei durch Stubs mit erfundenen Demo-Daten ersetzt (Nutzerin „Lena Hoffmann",
+erfundene Freunde und Gruppen, KI-generierte Lissabon-Fotos), ohne Verbindung
+zu Firebase oder Spotify. Stubs, Skript und Befehle liegen in
+`scripts/store-screenshots/`. Der Simulator liefert 1320x2868, die
+6,5-Zoll-Fassung entsteht daraus mit `sips` (auf 1284 Breite skaliert, mittig
+auf 2778 Höhe beschnitten).
 
 ## Was sonst noch gebraucht wird
 
