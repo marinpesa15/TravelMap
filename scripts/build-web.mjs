@@ -23,6 +23,7 @@ const out = path.join(root, 'dist');
 // Glob patterns (Firebase Hosting syntax: **, *, ?) relative to the repo root.
 const BUNDLE_IGNORE = [
   'firebase.json',
+  'storage-cors.json',
   '.firebaserc',
   '**/.*',
   '**/.*/**',
@@ -36,6 +37,8 @@ const BUNDLE_IGNORE = [
   'vitest.config.js',
   'vitest.rules.config.js',
   'firestore.rules',
+  'storage.rules',
+  'functions/**',
   'firestore.indexes.json',
   '**/*.log',
   'scripts/**',

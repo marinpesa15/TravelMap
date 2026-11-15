@@ -14,12 +14,16 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-firestore\.js$/, replacement: 'firebase/firestore' },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-storage\.js$/, replacement: 'firebase/storage' },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-functions\.js$/, replacement: 'firebase/functions' },
       { find: /^\.\/config\.js(\?v=\d+)?$/, replacement: stub('config-emulator.js') }
     ]
   },
   test: {
     environment: 'node',
     include: ['tests/rules/**/*.test.js'],
+    // Storage- und Friends-Tests teilen die projectId der Emulator-CLI, also nacheinander.
+    fileParallelism: false,
     testTimeout: 15000,
     hookTimeout: 30000
   }

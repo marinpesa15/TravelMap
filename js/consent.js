@@ -1,10 +1,10 @@
-import { t } from './i18n.js?v=9';
-import { showToast } from './ui.js?v=46';
+import { t } from './i18n.js?v=20';
+import { showToast } from './ui.js?v=53';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
 
 // Bump this when the privacy policy changes materially —
 // every user will then see the consent banner again.
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2; // 2: Storage, Mikrofon und Spotify seit 2.0
 
 /** True if the loaded user doc contains an up-to-date consent. */
 export function hasConsent(userData) {

@@ -1,4 +1,4 @@
-import { db } from './config.js?v=3';
+import { db } from './config.js?v=5';
 import { terminate, clearIndexedDbPersistence } from '../vendor/firebase/10.12.0/firebase-firestore.js';
 
 // Verlaesst map.html die Seite, waehrend Firestore noch laeuft, blieb in der

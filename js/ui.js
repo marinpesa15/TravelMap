@@ -1,11 +1,13 @@
 import { suggestPlaces, retrievePlace } from './remote-search.js?v=2';
-import { searchCountries } from './countries.js?v=25';
-import { t, getLang } from './i18n.js?v=9';
-import { searchLocalCities } from './places.js?v=3';
+import { searchCountries } from './countries.js?v=32';
+import { t, getLang } from './i18n.js?v=20';
+import { searchLocalCities } from './places.js?v=10';
 import { normalize } from './place-search.js?v=1';
 import { isOnline } from './net-status.js?v=1';
 import { isNative } from './platform.js?v=1';
 import { avatarEl } from './avatar.js?v=2';
+import { toJpegBlob } from './image.js?v=2';
+import { buildPlaceList, filterPlaces } from './places-list-logic.js?v=3';
 import {
   openOverlay, closeOverlay, popoverIn,
   countUp, popScale, toastIn, toastOut, expandIn
@@ -20,7 +22,7 @@ function esc(value) {
   }[ch]));
 }
 
-// ===== Stats & Sidebar =====
+// ===== Stats und Orte-Sheet =====
 
 export function updateStats(userData) {
   const countries = (userData.visited_countries  ?? []).length;
@@ -39,9 +41,13 @@ export function updateStats(userData) {
   _setText('nav-visited-count',  cities);
   _setText('nav-wishlist-count', wishlist);
   _setText('nav-lived-count',    lived);
+  _setProfileStats(userData);
+}
 
-  // Recent logs (last 3 visited cities, newest first)
-  _updateRecentLogs(userData.visited_cities ?? []);
+// Statistik im Profil-Sheet, unabhaengig vom Kartenmodus
+function _setProfileStats(userData) {
+  _setText('profile-cities-num',    (userData.visited_cities    ?? []).length);
+  _setText('profile-countries-num', (userData.visited_countries ?? []).length);
 }
 
 function _setText(id, value) {
@@ -68,52 +74,73 @@ function _setStat(id, value) {
   }
 }
 
-// Mobile drawer: the initial count-up plays while the sidebar is off-screen,
-// so the hamburger handler replays it every time the drawer opens.
-export function replayStatsCountUp() {
-  for (const id of ['stat-countries-num', 'stat-cities-num']) {
-    const value = _statPrev[id];
-    if (value !== undefined) countUp(document.getElementById(id), value, 0, 0.8);
-  }
-}
+// Tracks the newest row so a newly added place can grow into the list.
+// Keyed by filter: switching filters replaces the list and must not animate.
+let _lastPlaceKey = null;
 
-// Tracks the newest log entry so a newly added one can grow into the list.
-// Kind guard: switching cities ↔ countries mode replaces the whole list and
-// must not play the insert animation.
-let _lastLogKey = null;
-
-function _animateNewLogEntry(containerEl, kind, firstLabel) {
-  const key = firstLabel ? `${kind}:${firstLabel}` : null;
-  const prev = _lastLogKey;
-  _lastLogKey = key;
+function _animateNewPlace(containerEl, filter, firstName) {
+  const key = firstName ? `${filter}:${firstName}` : null;
+  const prev = _lastPlaceKey;
+  _lastPlaceKey = key;
   if (!key || !prev || prev === key) return;
-  if (prev.split(':')[0] !== kind) return;
-  const first = containerEl.querySelector('.recent-log-item');
+  if (prev.split(':')[0] !== filter) return;
+  const first = containerEl.querySelector('.place-row');
   if (first) expandIn(first);
 }
 
-function _updateRecentLogs(visitedCities) {
-  const el = document.getElementById('recent-logs');
+const PIN_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>';
+
+/** Fuellt die Liste im Orte-Sheet. storyCities: Set der Stadtnamen mit Story, mode: 'cities' | 'countries'. */
+export function renderPlacesList(userData, filter, storyCities = new Set(), mode = 'cities') {
+  const el = document.getElementById('places-list');
   if (!el) return;
+  const places = buildPlaceList(userData, filter, storyCities, mode);
 
-  const recent = [...visitedCities].reverse().slice(0, 3);
-
-  if (recent.length === 0) {
-    el.innerHTML = `<p class="recent-log-meta" style="color:#374151">${t('empty.noCities')}</p>`;
+  if (places.length === 0) {
+    el.innerHTML = `<p class="places-empty">${t(mode === 'countries' ? 'empty.noCountries' : 'empty.noCities')}</p>`;
+    _lastPlaceKey = null;
     return;
   }
 
-  el.innerHTML = recent.map(city => `
-    <div class="recent-log-item">
-      <div class="recent-log-icon">📍</div>
-      <div>
-        <p class="recent-log-city">${esc(city.name)}</p>
-        <p class="recent-log-meta">${esc(city.country) || '—'}</p>
-      </div>
-    </div>
-  `).join('');
+  let regions = null;
+  try { regions = new Intl.DisplayNames([getLang()], { type: 'region' }); } catch { /* alte WebView */ }
+  const countryName = code => {
+    try { return (/^[A-Z]{2}$/.test(code) && regions?.of(code)) || code; } catch { return code; }
+  };
 
-  _animateNewLogEntry(el, 'cities', recent[0]?.name);
+  el.innerHTML = places.map(p => {
+    const cls = ['place-row', p.type, p.lived ? 'lived' : '', p.hasStory ? 'has-story' : ''].filter(Boolean).join(' ');
+    const meta = [countryName(p.country), p.type === 'wishlist' ? t('legend.wishlist') : p.lived ? t('legend.lived') : '']
+      .filter(Boolean).join(' · ');
+    return `
+    <button type="button" class="${cls}" data-name="${esc(p.name)}">
+      <span class="place-icon">${PIN_SVG}</span>
+      <span class="place-text">
+        <span class="place-name">${esc(mode === 'countries' ? countryName(p.name) : p.name)}</span>
+        <span class="place-meta">${esc(meta)}</span>
+      </span>
+    </button>`;
+  }).join('');
+
+  _animateNewPlace(el, `${mode}-${filter}`, places[0].name);
+}
+
+/** Neue Story > Besuchte Stadt: besuchte und gelebte Staedte, neueste oben, gefiltert nach query. */
+export function renderStoryStartList(userData, query, storyCities = new Set()) {
+  const el = document.getElementById('story-start-list');
+  if (!el) return;
+  const all = buildPlaceList(userData, 'visited', storyCities);
+  if (!all.length) {
+    el.innerHTML = `<p class="places-empty">${t('storyStart.empty')}</p>`;
+    return;
+  }
+  const places = filterPlaces(all, query);
+  el.innerHTML = places.length ? '' : `<p class="places-empty">${t('search.noResults')}</p>`;
+  el.innerHTML += places.map(p => `
+    <button type="button" class="${['place-row', p.lived ? 'lived' : '', p.hasStory ? 'has-story' : ''].filter(Boolean).join(' ')}" data-name="${esc(p.name)}">
+      <span class="place-icon">${PIN_SVG}</span>
+      <span class="place-text"><span class="place-name">${esc(p.name)}</span></span>
+    </button>`).join('');
 }
 
 // ===== City Remove Popup =====
@@ -129,14 +156,18 @@ export function hideCityPopup() {
 
 let _selectedCity = null; // { name, lat, lng, country }
 let _searchAbort  = null; // AbortController for in-flight geocoding requests
+let _onPick       = null; // siehe setupSearch
 
 /**
  * Sets up the unified search bar.
  * getMode(): returns 'cities' | 'countries'
  * onAddCity(cityData, type, lived): called when a city is added
  * onAddCountry({ name, isoCode }, type): called when a country is added from search
+ * onPick(city): before the dialog opens, return true to skip it
+ * onCancel(): the dialog was closed without adding
  */
-export function setupSearch(onAddCity, onAddCountry, getMode) {
+export function setupSearch(onAddCity, onAddCountry, getMode, { onPick, onCancel } = {}) {
+  _onPick = onPick;
   const input   = document.getElementById('city-search');
   const results = document.getElementById('search-results');
   let _debounce = null;
@@ -170,9 +201,10 @@ export function setupSearch(onAddCity, onAddCountry, getMode) {
     });
   });
 
-  document.getElementById('dialog-cancel').addEventListener('click', _closeDialog);
+  const cancel = () => { _closeDialog(); onCancel?.(); };
+  document.getElementById('dialog-cancel').addEventListener('click', cancel);
   dialog.addEventListener('click', e => {
-    if (e.target === dialog) _closeDialog();
+    if (e.target === dialog) cancel();
   });
 
   document.getElementById('dialog-add').addEventListener('click', () => {
@@ -308,9 +340,13 @@ function _renderCityResults(resultsEl, cities) {
           return;
         }
       }
+      resultsEl.innerHTML = '';
+      if (_onPick?.(selected)) {
+        document.getElementById('city-search').value = '';
+        return;
+      }
       _selectedCity = selected;
       _openDialog(selected.name);
-      resultsEl.innerHTML = '';
     });
     resultsEl.appendChild(item);
   });
@@ -318,7 +354,7 @@ function _renderCityResults(resultsEl, cities) {
 
 function _openDialog(cityName) {
   document.getElementById('dialog-city-name').textContent = cityName;
-  document.querySelectorAll('.radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
+  document.querySelectorAll('#city-dialog .radio-opt').forEach((o, i) => o.classList.toggle('selected', i === 0));
   document.getElementById('lived-checkbox').checked   = false;
   document.getElementById('lived-row').style.display  = 'flex';
   openOverlay(document.getElementById('city-dialog'));
@@ -865,45 +901,7 @@ export function updateCountriesView(userData) {
   _setText('nav-visited-count',  visited);
   _setText('nav-wishlist-count', wishlist);
   _setText('nav-lived-count',    0);
-
-  // Recent logs — countries
-  _updateCountryLogs(userData.visited_countries ?? [], userData.wishlist_countries ?? []);
-}
-
-function _updateCountryLogs(visitedCodes, wishlistCodes) {
-  const el = document.getElementById('recent-logs');
-  if (!el) return;
-
-  // Show last 3 visited countries, fill remainder with wishlist if needed
-  const recent = [
-    ...[...visitedCodes].reverse().slice(0, 3).map(code => ({ code, type: 'visited' })),
-    ...[...wishlistCodes].reverse().map(code => ({ code, type: 'wishlist' }))
-  ].slice(0, 3);
-
-  if (recent.length === 0) {
-    el.innerHTML = `<p class="recent-log-meta" style="color:#374151">${t('empty.noCountries')}</p>`;
-    return;
-  }
-
-  let countryNames;
-  try { countryNames = new Intl.DisplayNames([getLang()], { type: 'region' }); } catch { countryNames = null; }
-
-  el.innerHTML = recent.map(({ code, type }) => {
-    let name = code;
-    try { name = countryNames?.of(code) || code; } catch { name = code; }
-    const icon = type === 'visited' ? '🌍' : '⭐';
-    return `
-      <div class="recent-log-item">
-        <div class="recent-log-icon">${icon}</div>
-        <div>
-          <p class="recent-log-city">${esc(name)}</p>
-          <p class="recent-log-meta">${type === 'visited' ? t('recent.visited') : t('recent.wishlist')}</p>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  _animateNewLogEntry(el, 'countries', recent[0]?.code);
+  _setProfileStats(userData);
 }
 
 // ===== View Mode Banner =====
@@ -929,33 +927,14 @@ export function hideViewBanner() {
 
 // ===== Group Photo Dialog =====
 
-/**
- * Compresses an image file to a square JPEG thumbnail (Base64).
- * @param {File} file
- * @param {number} size — output px (default 120)
- * @returns {Promise<string>} Base64 data URL
- */
-async function _compressImage(file, size = 240) {
+/** Square 240 px JPEG of the chosen file as Base64 data URL (stored in Firestore). */
+async function _groupPhotoDataUrl(file) {
+  const blob = await toJpegBlob(file, { max: 240, square: true, quality: 0.88 });
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = reject;
-    reader.onload = e => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        // Centre-crop to square
-        const min = Math.min(img.width, img.height);
-        const sx  = (img.width  - min) / 2;
-        const sy  = (img.height - min) / 2;
-        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-        resolve(canvas.toDataURL('image/jpeg', 0.88));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
   });
 }
 
@@ -983,7 +962,7 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
     const file = input.files[0];
     if (!file) return;
     try {
-      _chosenURL  = await _compressImage(file);
+      _chosenURL  = await _groupPhotoDataUrl(file);
       preview.src = _chosenURL;
     } catch {
       showToast(t('toast.imageFailed'));
@@ -1018,8 +997,9 @@ export function showGroupPhotoDialog(cityName, defaultPhotoURL, onConfirm) {
  * @param {function} onRemove(city, type)
  * @param {function} [onChangePhoto(city, type)] — if provided, shows change-photo button
  * @param {function} [onMarkVisited(city)] — if provided, wishlist pins get a "mark as visited" button
+ * @param {function} [onAddStory(city)] — if provided, visited pins get an "add story" button
  */
-export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null, onMarkVisited = null) {
+export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePhoto = null, onMarkVisited = null, onAddStory = null) {
   _cityPopupData = { city, type };
   const popup = document.getElementById('city-popup');
   document.getElementById('city-popup-name').textContent = city.name;
@@ -1042,6 +1022,19 @@ export function showCityPopup(city, type, clientX, clientY, onRemove, onChangePh
   } else {
     markBtn.style.display = 'none';
     markBtn.onclick = null;
+  }
+
+  const storyBtn = document.getElementById('btn-add-story');
+  if (onAddStory && type === 'visited') {
+    storyBtn.style.display = 'block';
+    storyBtn.onclick = () => {
+      const snapshot = _cityPopupData;
+      hideCityPopup();
+      if (snapshot) onAddStory(snapshot.city);
+    };
+  } else {
+    storyBtn.style.display = 'none';
+    storyBtn.onclick = null;
   }
 
   document.getElementById('btn-remove-city').onclick = () => {

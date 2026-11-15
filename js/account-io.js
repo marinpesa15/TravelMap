@@ -5,8 +5,10 @@ import {
   doc, collection, getDoc, getDocs, deleteDoc, runTransaction,
   writeBatch, query, where
 } from '../vendor/firebase/10.12.0/firebase-firestore.js';
-import { db, auth } from './config.js?v=3';
-import { reauthenticate, revokeAppleSignIn } from './auth.js?v=24';
+import { db, auth } from './config.js?v=5';
+import { reauthenticate, revokeAppleSignIn } from './auth.js?v=26';
+import { deleteFile } from './storage.js?v=2';
+import { deleteStoryDoc } from './stories-db.js?v=4';
 
 // Firestore erlaubt hoechstens 500 Operationen pro Batch.
 const BATCH_LIMIT = 500;
@@ -46,6 +48,21 @@ export const firestoreIo = {
   async loadFriendUids(uid) {
     const snap = await getDocs(collection(db, 'users', uid, 'friends'));
     return snap.docs.map(d => d.id);
+  },
+
+  // Alle Story-Dokumente, auch verwaiste. Der Nutzer ist online und frisch
+  // angemeldet, ein einfaches getDocs auf die Untersammlung genuegt.
+  async loadStories(uid) {
+    const snap = await getDocs(collection(db, 'users', uid, 'stories'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  deleteFile,
+  deleteStoryDoc,
+
+  // deleteFile vertraegt "existiert nicht", ein Nutzer ohne Profilbild ist ok.
+  deleteAvatar(uid) {
+    return deleteFile(`users/${uid}/avatar.jpg`);
   },
 
   // Beide Richtungen: mein Eintrag bei ihm und seiner bei mir.

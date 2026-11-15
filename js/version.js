@@ -1,11 +1,11 @@
-import { getLang } from './i18n.js?v=9';
+import { getLang } from './i18n.js?v=20';
 import { isNative } from './platform.js?v=1';
 import { decideUpdate } from './update-logic.js?v=1';
 
 // Single source of truth for the app version, shown in the settings modal and
 // compared against the remote manifest below. Bump together with
 // MARKETING_VERSION in the Xcode project on every release.
-export const APP_VERSION = '1.6.0';
+export const APP_VERSION = '2.0.0';
 
 // The app ships inside the App Store bundle, so a newer version can only come
 // from the store. landing/app-version.json on Firebase Hosting tells running

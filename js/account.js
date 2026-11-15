@@ -5,19 +5,21 @@
 // Nutzer kann es erneut anstossen. Andersherum waere es fatal, denn ohne
 // Konto fehlt die Berechtigung, die eigenen Reste zu loeschen.
 import { planGroupChange } from './account-logic.js?v=1';
-import { firestoreIo } from './account-io.js?v=6';
+import { storyPaths } from './story-logic.js?v=1';
+import { firestoreIo } from './account-io.js?v=10';
 
 /** Zahlen fuer die Warnung, bevor irgendetwas veraendert wird. */
 export async function collectDeletionSummary(uid, { io = firestoreIo } = {}) {
-  const [user, friendUids, groups] = await Promise.all([
-    io.loadUser(uid), io.loadFriendUids(uid), io.loadMyGroups(uid)
+  const [user, friendUids, groups, stories] = await Promise.all([
+    io.loadUser(uid), io.loadFriendUids(uid), io.loadMyGroups(uid), io.loadStories(uid)
   ]);
   const u = user ?? {};
   return {
     cities:    (u.visited_cities    ?? []).length + (u.wishlist_cities    ?? []).length,
     countries: (u.visited_countries ?? []).length + (u.wishlist_countries ?? []).length,
     friends:   friendUids.length,
-    groups:    groups.length
+    groups:    groups.length,
+    stories:   stories.length
   };
 }
 
@@ -61,12 +63,29 @@ export async function deleteAccount(uid, { io = firestoreIo, onProgress = () => 
   const inviteTokens = await io.findInviteTokens(uid);
   for (const token of inviteTokens) await io.deleteInvite(token);
 
-  // 5. User-Doc. Nimmt Staedte, Laender, Consent und Profil mit, weil alles
+  // 5. Stories samt Medien und das Profilbild. Hier muss ALLES weg, auch
+  //    verwaiste Stories (Stadt existiert nicht mehr), die die App sonst nie
+  //    automatisch loescht. Je Story zuerst die Dateien, dann das Dokument:
+  //    Stirbt der Lauf dazwischen, steht das Dokument noch und der naechste
+  //    Versuch findet die Pfade wieder. Umgekehrt waeren die Dateien ohne
+  //    Dokument unauffindbar (es gibt keine list-Rule fuer Storage). Muss vor
+  //    dem Auth-Account laufen, weil die Storage-Rules ein Konto verlangen.
+  //    Grenze: Dateien, die kein Story-Doc mehr referenziert (Reste eines
+  //    fehlgeschlagenen Upload-Aufraeumens), sind ohne list nicht auffindbar.
+  onProgress('stories');
+  const stories = await io.loadStories(uid);
+  for (const story of stories) {
+    for (const path of storyPaths(story)) await io.deleteFile(path);
+    await io.deleteStoryDoc(uid, story.id);
+  }
+  await io.deleteAvatar(uid);
+
+  // 6. User-Doc. Nimmt Staedte, Laender, Consent und Profil mit, weil alles
   //    als Felder im Dokument liegt.
   onProgress('profileDoc');
   await io.deleteUserDoc(uid);
 
-  // 6. Zuletzt der Auth-Account.
+  // 7. Zuletzt der Auth-Account.
   onProgress('account');
   await io.deleteAuthUser();
 }

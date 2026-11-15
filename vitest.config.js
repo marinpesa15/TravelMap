@@ -11,13 +11,15 @@ export default defineConfig({
     alias: [
       { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-firestore\.js$/, replacement: stub('firebase-firestore.js') },
       { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-auth\.js$/, replacement: stub('firebase-auth.js') },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-storage\.js$/, replacement: stub('firebase-storage.js') },
+      { find: /^(\.\.?\/)*vendor\/firebase\/[^/]+\/firebase-functions\.js$/, replacement: stub('firebase-functions.js') },
       { find: /^\.\/config\.js(\?v=\d+)?$/, replacement: stub('config.js') },
       { find: /^\.\/constants\.js(\?v=\d+)?$/, replacement: stub('constants.js') }
     ]
   },
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.js'],
+    include: ['tests/**/*.test.js', 'functions/**/*.test.js'],
     // Rules-Tests brauchen den Firestore-Emulator und laufen separat
     // ueber `npm run test:rules`.
     exclude: ['tests/rules/**', '**/node_modules/**']

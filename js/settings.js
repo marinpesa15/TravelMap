@@ -1,31 +1,22 @@
-import { t, getLang, setLang } from './i18n.js?v=9';
-import { getTheme, setTheme } from './theme.js?v=22';
-import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=24';
+import { t, getLang, setLang } from './i18n.js?v=20';
+import { getTheme, setTheme } from './theme.js?v=30';
+import { signOutUser, linkedProviders, linkProvider } from './auth.js?v=26';
 import { isNative } from './platform.js?v=1';
-import { APP_VERSION } from './version.js?v=14';
+import { APP_VERSION } from './version.js?v=22';
 import { openOverlay, closeOverlay } from './anim.js?v=2';
-import { collectDeletionSummary, deleteAccount } from './account.js?v=6';
-import { auth } from './config.js?v=3';
+import { collectDeletionSummary, deleteAccount } from './account.js?v=10';
+import { auth } from './config.js?v=5';
 import { isOnline } from './net-status.js?v=1';
-import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
+import { markLeaving, cancelLeaving, shutdownFirestore } from './firestore-shutdown.js?v=3';
 
-/** Wires the gear button, settings modal, theme/language switches,
- *  sign-out and version display. Call once after map init. */
+/** Wires the settings in the profile sheet (js/hub.js): theme/language
+ *  switches, sign-in methods, sign-out, deletion and version display.
+ *  Call once after map init. */
 export function setupSettings(map) {
-  const modal = document.getElementById('settings-modal');
-  if (!modal) return;
+  const panel = document.getElementById('panel-profile');
+  if (!panel) return;
 
   document.getElementById('settings-version').textContent = `TravelMap v${APP_VERSION}`;
-
-  document.getElementById('btn-settings')?.addEventListener('click', () => {
-    _syncSelections();
-    _renderProviders();
-    openOverlay(modal);
-  });
-  document.getElementById('settings-close')?.addEventListener('click', _close);
-  modal.addEventListener('click', e => {
-    if (e.target === modal) _close();
-  });
 
   // Theme — single toggle like the old header button (☀️ in dark, 🌙 in light)
   document.getElementById('settings-theme-toggle')?.addEventListener('click', () => {
@@ -34,7 +25,7 @@ export function setupSettings(map) {
   });
 
   // Language
-  modal.querySelectorAll('#settings-lang .radio-opt').forEach(opt => {
+  panel.querySelectorAll('#settings-lang .radio-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       setLang(opt.dataset.lang);
       _syncSelections();
@@ -169,15 +160,16 @@ export function setupSettings(map) {
     }
   }
 
-  function _close() {
-    closeOverlay(modal);
-  }
-
   function _syncSelections() {
     const lang     = getLang();
     const themeBtn = document.getElementById('settings-theme-toggle');
     if (themeBtn) themeBtn.textContent = getTheme() === 'light' ? '🌙' : '☀️';
-    modal.querySelectorAll('#settings-lang .radio-opt').forEach(o =>
+    panel.querySelectorAll('#settings-lang .radio-opt').forEach(o =>
       o.classList.toggle('selected', o.dataset.lang === lang));
   }
+
+  // Das Sheet ist immer im DOM: einmal fuellen, Anbieter-Texte bei Sprachwechsel neu
+  _syncSelections();
+  _renderProviders();
+  window.addEventListener('tm-langchanged', _renderProviders);
 }

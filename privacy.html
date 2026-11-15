@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-v4.png">
   <link rel="manifest" href="manifest.webmanifest?v=6">
   <meta name="theme-color" content="#0b0d19">
-  <link rel="stylesheet" href="css/style.css?v=46">
+  <link rel="stylesheet" href="css/style.css?v=48">
   <style>
     .privacy-page {
       max-width: 720px; margin: 0 auto; padding: 40px 24px 80px;
@@ -54,7 +54,7 @@
     <!-- ═══ DEUTSCH ═══ -->
     <div id="content-de">
       <h1 id="privacy">Datenschutzerklärung</h1>
-      <p class="privacy-updated">Stand: 5. November 2026</p>
+      <p class="privacy-updated">Stand: 14. November 2026</p>
 
       <h2>1. Verantwortlicher</h2>
       <p>Marin Pesa<br>E-Mail: pesamarin81@gmail.com</p>
@@ -75,18 +75,50 @@
         <li>Freundschaften (wen du über einen Einladungslink hinzugefügt hast)</li>
         <li>Gruppen, Gruppenmitgliedschaften und in Gruppen geteilte Städte</li>
         <li>Optional hochgeladene Fotos an Gruppen-Städten (verkleinert gespeichert)</li>
-        <li>Ein zufälliger Einladungs-Token, über den Freunde dich hinzufügen können</li>
+        <li>Ein zufälliger Einladungs-Token, über den Freunde dich hinzufügen können.
+        Fügst du jemanden hinzu, speichern wir den dafür benutzten Einladungscode im
+        Freundeseintrag, als technischen Nachweis, dass die Freundschaft über einen
+        Einladungslink entstanden ist.</li>
+        <li>Optional ein Profilbild, das du selbst aus deinen Fotos wählst
+        (auf 512 Pixel verkleinert gespeichert)</li>
       </ul>
+      <h3>Stories</h3>
+      <p>Zu besuchten und gelebten Städten deiner Karte kannst du Stories anlegen.
+      Eine Story besteht aus einem Datum und optional aus einem Text (bis 2000 Zeichen),
+      bis zu 10 Fotos (je höchstens 1600 Pixel groß, als JPEG), einer Sprachnotiz
+      (bis 2 Minuten) und einem Song. Beim Song speichern wir nur die Angaben zum Titel
+      (Titel, Künstler, Cover, Spotify-Kennung), keine Musikdatei. Außerdem legst du pro Story fest,
+      ob sie für deine Freunde sichtbar ist.</p>
+      <h3>Mikrofon</h3>
+      <p>Die App greift auf das Mikrofon nur zu, solange du in der Story-Maske
+      eine Sprachnotiz aufnimmst. Du wirst vorher vom System um Erlaubnis gefragt.
+      Es wird nichts im Hintergrund aufgenommen. Gespeichert wird nur die
+      Sprachnotiz, die du selbst speicherst.</p>
       <p>Diese Daten sind nötig, damit die App funktioniert (Art. 6 Abs. 1 lit. b DSGVO);
       deine Einwilligung holen wir beim ersten Login ein (Art. 6 Abs. 1 lit. a DSGVO).
       Zeitpunkt und Version deiner Einwilligung werden gespeichert.</p>
 
       <h2>3. Wo die Daten liegen</h2>
       <p>Anmeldung und Datenspeicherung laufen über <strong>Google Firebase</strong>
-      (Firebase Authentication, Cloud Firestore, Firebase Hosting) der Google Ireland Ltd.
-      bzw. Google LLC (USA). Dabei kann eine Übermittlung in die USA stattfinden;
+      (Firebase Authentication, Cloud Firestore, Firebase Storage, Cloud Functions,
+      Firebase Hosting) der Google Ireland Ltd. bzw. Google LLC (USA). Dabei kann eine Übermittlung in die USA stattfinden;
       Google ist unter dem EU-US Data Privacy Framework zertifiziert.
       Details: <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a>.</p>
+      <p>Fotos und Sprachnotiz deiner Stories sowie dein Profilbild liegen in
+      <strong>Firebase Storage</strong>. Für Story-Fotos und Sprachnotizen gibt es keine
+      öffentlichen oder teilbaren Links, sie werden nur von der angemeldeten App
+      geladen. Zugriff hast immer du; ein Freund nur, solange du die Story für Freunde
+      sichtbar geschaltet hast.</p>
+      <p>Die Song-Suche läuft über eine <strong>Cloud Function</strong> (Region
+      europe-west1, Belgien). Dein Suchbegriff geht von der App an diese Funktion,
+      die damit mit den Zugangsdaten der App bei <strong>Spotify</strong>
+      (Spotify AB, Schweden) sucht. Deine Identität wird dabei nicht an Spotify
+      weitergegeben. Die Cover der Songs lädt dein Gerät direkt von den Bildservern von
+      Spotify, sobald ein Song angezeigt wird, dabei sieht Spotify die IP-Adresse deines
+      Geräts. Den Spotify-Player laden wir erst, wenn du auf den Song tippst. Dann
+      lädt Spotify eigene Inhalte und kann eigene Cookies setzen. „In Spotify öffnen"
+      verlässt die App. Details:
+      <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank" rel="noopener">Spotify Privacy</a>.</p>
       <p>Die Weltkarte ist vollständig in der App enthalten. Das Kartenmaterial stammt von
       <strong>Natural Earth</strong> (gemeinfrei) und liegt lokal auf deinem Gerät.
       Beim Anzeigen der Karte werden keine Daten übertragen.</p>
@@ -100,9 +132,12 @@
 
       <h2>4. Wer deine Daten sehen kann</h2>
       <ul>
-        <li>Dein Profil (Name, Avatar) und deine Karte: nur du und bestätigte Freunde</li>
+        <li>Dein Profil (Name, Avatar, Profilbild) und deine Karte: nur du und bestätigte Freunde</li>
+        <li>Deine Stories (Text, Fotos, Sprachnotiz, Song): immer du; bestätigte Freunde nur
+        bei Stories, die du als „für Freunde sichtbar" markiert hast. Das kannst du pro Story
+        jederzeit ändern.</li>
         <li>In Gruppen geteilte Städte und Fotos: alle Gruppenmitglieder</li>
-        <li>Niemand sonst, es gibt keine öffentlichen Profile und keine Weitergabe an Dritte</li>
+        <li>Niemand sonst, es gibt keine öffentlichen Profile. An Dritte gehen Daten nur wie in Abschnitt 3 beschrieben</li>
       </ul>
 
       <h2>5. Daten auf deinem Gerät</h2>
@@ -115,14 +150,17 @@
       löschst.</p>
 
       <h2>6. Speicherdauer</h2>
-      <p>Deine Daten bleiben gespeichert, bis du dein Konto löschen lässt (siehe unten).</p>
+      <p>Deine Daten bleiben gespeichert, bis du dein Konto löschen lässt (siehe unten).
+      Löschst du eine Story oder entfernst du eine Stadt (nach Bestätigung), werden die
+      Fotos und die Sprachnotiz dieser Story gelöscht.</p>
 
       <h2>7. Deine Rechte</h2>
       <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
       Verarbeitung, Datenübertragbarkeit und Widerruf deiner Einwilligung (Art. 15-21 DSGVO)
       sowie das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde.</p>
       <p>Dein Konto und alle zugehörigen Daten kannst du direkt in der App löschen,
-      unter Einstellungen, Konto löschen. Die Löschung erfolgt sofort und lässt sich
+      unter Einstellungen, Konto löschen. Dabei werden auch alle Stories samt Fotos und
+      Sprachnotizen sowie dein Profilbild gelöscht. Die Löschung erfolgt sofort und lässt sich
       nicht rückgängig machen. Hast du dich mit Apple angemeldet, wird dabei auch
       die Verknüpfung deiner Apple-ID mit TravelMap widerrufen. Für alles Weitere, etwa eine Auskunft über gespeicherte
       Daten, schreib eine E-Mail an pesamarin81@gmail.com.</p>
@@ -134,7 +172,7 @@
     <!-- ═══ ENGLISH ═══ -->
     <div id="content-en" style="display:none">
       <h1>Privacy Policy</h1>
-      <p class="privacy-updated">Last updated: November 5, 2026</p>
+      <p class="privacy-updated">Last updated: November 14, 2026</p>
 
       <h2>1. Controller</h2>
       <p>Marin Pesa<br>Email: pesamarin81@gmail.com</p>
@@ -154,18 +192,46 @@
         <li>Friendships (people you added via an invite link)</li>
         <li>Groups, group memberships and cities shared in groups</li>
         <li>Optional photos attached to group cities (stored downscaled)</li>
-        <li>A random invite token that lets friends add you</li>
+        <li>A random invite token that lets friends add you. When you add someone,
+        we store the invite code you used in the friend entry, as technical proof
+        that the friendship came from an invite link.</li>
+        <li>Optionally a profile picture that you pick from your own photos
+        (stored downscaled to 512 pixels)</li>
       </ul>
+      <h3>Stories</h3>
+      <p>You can add stories to visited and lived-in cities on your map. A story
+      consists of a date and, optionally, a text (up to 2000 characters), up to 10
+      photos (at most 1600 pixels each, as JPEG), a voice note (up to 2 minutes) and a
+      song. For the song we only store the track details (title, artist, cover,
+      Spotify ID), no music file. You also decide per story whether it is visible to
+      your friends.</p>
+      <h3>Microphone</h3>
+      <p>The app only uses the microphone while you record a voice note in the story
+      form. The system asks for your permission first. Nothing is recorded in the
+      background. Only the voice note you save yourself is stored.</p>
       <p>This data is required for the app to work (Art. 6(1)(b) GDPR);
       we ask for your consent on first login (Art. 6(1)(a) GDPR).
       Time and version of your consent are stored.</p>
 
       <h2>3. Where the data lives</h2>
       <p>Sign-in and data storage use <strong>Google Firebase</strong>
-      (Firebase Authentication, Cloud Firestore, Firebase Hosting) by Google Ireland Ltd.
-      / Google LLC (USA). Data may be transferred to the USA; Google is certified
+      (Firebase Authentication, Cloud Firestore, Firebase Storage, Cloud Functions,
+      Firebase Hosting) by Google Ireland Ltd. / Google LLC (USA). Data may be transferred to the USA; Google is certified
       under the EU-US Data Privacy Framework.
       Details: <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a>.</p>
+      <p>Photos and voice notes of your stories and your profile picture are stored in
+      <strong>Firebase Storage</strong>. Story photos and voice notes have no public or
+      shareable links, they are only loaded by the signed-in app. You always have access;
+      a friend only while you have marked the story as visible to friends.</p>
+      <p>Song search runs through a <strong>Cloud Function</strong> (region
+      europe-west1, Belgium). Your search term goes from the app to that function,
+      which searches <strong>Spotify</strong> (Spotify AB, Sweden) with the app's own
+      credentials. Your identity is not passed on to Spotify. Your device loads the
+      song covers directly from Spotify's image servers whenever a song is shown, so
+      Spotify sees your device's IP address. We only load the Spotify player after you
+      tap the song. Spotify then loads its own content and may set its own cookies.
+      "Open in Spotify" leaves the app. Details:
+      <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank" rel="noopener">Spotify Privacy</a>.</p>
       <p>The world map ships entirely inside the app. The map data comes from
       <strong>Natural Earth</strong> (public domain) and is stored on your device.
       Displaying the map transfers no data.</p>
@@ -178,9 +244,11 @@
 
       <h2>4. Who can see your data</h2>
       <ul>
-        <li>Your profile (name, avatar) and your map: only you and confirmed friends</li>
+        <li>Your profile (name, avatar, profile picture) and your map: only you and confirmed friends</li>
+        <li>Your stories (text, photos, voice note, song): always you; confirmed friends only
+        for stories you have marked as visible to friends. You can change that per story at any time.</li>
         <li>Cities and photos shared in groups: all group members</li>
-        <li>Nobody else, there are no public profiles and no sharing with third parties</li>
+        <li>Nobody else, there are no public profiles. Data is only passed on to third parties as described in section 3</li>
       </ul>
 
       <h2>5. Data on your device</h2>
@@ -192,14 +260,17 @@
       when you delete the app.</p>
 
       <h2>6. Retention</h2>
-      <p>Your data is kept until you request account deletion (see below).</p>
+      <p>Your data is kept until you request account deletion (see below).
+      If you delete a story or remove a city (after a confirmation), the photos and
+      the voice note of that story are deleted.</p>
 
       <h2>7. Your rights</h2>
       <p>You have the right to access, rectification, erasure, restriction of processing,
       data portability and withdrawal of consent (Art. 15-21 GDPR), and the right to
       lodge a complaint with a supervisory authority.</p>
       <p>You can delete your account and all related data directly in the app under
-      Settings, Delete account. Deletion happens immediately and cannot be undone.
+      Settings, Delete account. This also deletes all stories including their photos and
+      voice notes, and your profile picture. Deletion happens immediately and cannot be undone.
       If you signed in with Apple, the link between your Apple ID and TravelMap is
       revoked as part of it.
       For anything else, such as a request for information about stored data, email

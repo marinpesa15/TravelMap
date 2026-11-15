@@ -1,4 +1,4 @@
-import { onAuthChange, signOutUser } from './auth.js?v=24';
+import { onAuthChange, signOutUser } from './auth.js?v=26';
 import {
   loadUserDataFast, initUserProfile, getUserByToken,
   subscribeUserData, subscribeGroupData,
@@ -7,37 +7,45 @@ import {
   addVisitedCity, removeVisitedCity, addWishlistCity, removeWishlistCity,
   markWishlistCityVisited, markGroupWishlistCityVisited, dedupeUserCities,
   acceptConsent
-} from './db.js?v=27';
+} from './db.js?v=31';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=18';
-import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=21';
-import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=22';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=26';
+import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=24';
+import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=24';
 import {
   initCountryLayers, updateCountryFills,
   showCountryLayers, hideCountryLayers,
   setupCountryMapClick
-} from './countries.js?v=25';
-import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=22';
-import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=27';
+} from './countries.js?v=32';
+import { initMap, whenStyleReady, onMapState, retryMapStyle, useOfflineMap, setMapLanguage } from './map.js?v=30';
+import { renderAllMarkers, renderReadOnlyMarkers, renderGroupMarkers, clearAllMarkers, animateNextAdd } from './markers.js?v=29';
 import {
-  updateStats, replayStatsCountUp, updateCountriesView, setupSearch,
+  updateStats, renderPlacesList, updateCountriesView, setupSearch,
   showCityPopup, hideCityPopup, showToast, showGroupPhotoDialog,
   setupFriendsSidebar, renderFriendsList,
   setupGroupsSidebar, renderGroupsList,
   showViewBanner, hideViewBanner, showOfflineNotice, setupOfflineNotice, showOnlineFlash,
-  showMapHint, setupMapHint, showRelayHint,
-  openAddMemberModal, setupConfirmDialog,
+  showMapHint, setupMapHint, showRelayHint, renderStoryStartList,
+  openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=46';
-import { initTheme, getTheme } from './theme.js?v=22';
+} from './ui.js?v=53';
+import { initTheme, getTheme } from './theme.js?v=30';
 import { isOnline, onNetChange } from './net-status.js?v=1';
-import { setupSettings } from './settings.js?v=20';
-import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=1';
-import { t, getLang, applyTranslations } from './i18n.js?v=9';
-import { staggerIn } from './anim.js?v=2';
-import { startUpdateCheck } from './version.js?v=14';
-import { installLegalViewer } from './legal-view.js?v=2';
+import { setupSettings } from './settings.js?v=30';
+import { initHub, openPanel, closePanel } from './hub.js?v=2';
+import { isLeaving, markLeaving, shutdownFirestore } from './firestore-shutdown.js?v=3';
+import { t, getLang, applyTranslations } from './i18n.js?v=20';
+import { startUpdateCheck } from './version.js?v=22';
+import { installLegalViewer } from './legal-view.js?v=9';
 import { avatarEl } from './avatar.js?v=2';
+import { openStoryForm } from './story-form.js?v=10';
+import { openStoryViewer } from './story-viewer.js?v=7';
+import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=4';
+import { findVisitedCity } from './places-list-logic.js?v=3';
+import { sortStories, citiesWithStories, orphanStories, storyPaths } from './story-logic.js?v=1';
+import { deleteStoryWithMedia } from './story-save.js?v=6';
+import { initProfilePicture } from './profile.js?v=3';
+import { auth } from './config.js?v=5';
 import { watchAppLinks, launchInviteToken } from './app-links.js?v=1';
 
 let _uid            = null;
@@ -50,6 +58,9 @@ let _groups         = [];
 let _viewMode       = 'own'; // 'own' | 'friend' | 'group'
 let _currentGroupId = null;
 let _mapMode        = 'cities'; // 'cities' | 'countries'
+let _myStories      = []; // Stand aus subscribeMyStories
+let _friendViewSeq  = 0;  // verwirft verspaetete Antworten einer frueheren Freundesansicht
+let _storyAfterAdd  = false; // Neue Story > Neue Stadt: die naechste Stadt aus der Suche bekommt das Story-Formular
 
 // Real-time listener handles
 let _unsubUserData   = null;
@@ -57,6 +68,7 @@ let _unsubFriends    = null;
 let _unsubGroups     = null;
 let _unsubGroupView  = null;
 let _unsubFriendView = null;
+let _unsubMyStories  = null;
 
 // First-run flags (prevent double setup of listeners)
 let _friendsSetup   = false;
@@ -172,6 +184,7 @@ onAuthChange(async user => {
     // Abmelden und Loeschen leiten selbst weiter, nachdem aufgeraeumt ist
     if (isLeaving()) return;
     markLeaving();
+    if (_unsubMyStories) { _unsubMyStories(); _unsubMyStories = null; }
     await shutdownFirestore();
     // Preserve invite token across the login redirect
     const params = new URLSearchParams(window.location.search);
@@ -259,15 +272,18 @@ async function _init(user) {
 
     initTheme();
     setupSettings(_map);
-    _initMobileSidebar();
+    initHub({ onAdd: _onHubAdd, onPlace: _flyToPlace });
+    _setupStoryStart();
+    initProfilePicture({ onChange: () => _showUserProfile(auth.currentUser), toast: showToast, t });
     _initNetStatus();
     _setupFilterNav();
     _initMapModeTabs();
 
     setupCountryTooltip();
 
-    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+    _renderOwnMarkers();
     updateStats(_userData);
+    _renderPlaces();
     _mark('render');
 
     // Map + stats are on screen — reveal the app
@@ -276,9 +292,6 @@ async function _init(user) {
     console.info('[TM] start', _marks.join(' '));
 
     _maybeShowRelayHint(user, preData);
-
-    // One-time staggered entrance for the sidebar lists (app start only)
-    staggerIn('.collection-nav .nav-item, #recent-logs .recent-log-item');
 
     // Watch for newer deploys and offer a reload (Lumiq-style update prompt)
     startUpdateCheck();
@@ -290,9 +303,10 @@ async function _init(user) {
     if (_unsubUserData) _unsubUserData();
     _unsubUserData = subscribeUserData(_uid, data => {
       _userData = data;
+      _renderPlaces();
       if (_viewMode === 'own') {
         if (_mapMode === 'cities') {
-          renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+          _renderOwnMarkers();
           updateStats(_userData);
         } else {
           const { visited, wishlist } = _getFilteredCountryData();
@@ -300,6 +314,14 @@ async function _init(user) {
           updateCountriesView(_userData);
         }
       }
+    });
+
+    // ── Real-time: own stories (Ring an Pins und im Orte-Sheet) ───────────
+    if (_unsubMyStories) _unsubMyStories();
+    _unsubMyStories = subscribeMyStories(_uid, stories => {
+      _myStories = stories;
+      _renderPlaces();
+      if (_viewMode === 'own' && _mapMode === 'cities') _renderOwnMarkers();
     });
 
     // ── Real-time: friends list ───────────────────────────────────────────
@@ -334,16 +356,21 @@ async function _init(user) {
     });
 
     setupConfirmDialog();
-    setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode);
-
-    document.getElementById('btn-add-location')?.addEventListener('click', () => {
-      _closeMobileSidebar();
-      document.getElementById('city-search')?.focus();
+    setupSearch(_onAddCity, _onAddCountry, () => _viewMode === 'group' ? 'cities' : _mapMode, {
+      // Schon besucht: kein Dialog, gleich das Story-Formular
+      onPick: city => {
+        const visited = _storyAfterAdd && _viewMode === 'own' && findVisitedCity(_userData, city.name);
+        if (!visited) return false;
+        _storyAfterAdd = false;
+        openStoryForm({ uid: _uid, city: visited });
+        return true;
+      },
+      onCancel: () => { _storyAfterAdd = false; }
     });
 
     document.getElementById('btn-close-search')?.addEventListener('click', _closeMobileSearchOverlay);
 
-    _map.on('click', () => hideCityPopup());
+    _map.on('click', () => { hideCityPopup(); _storyAfterAdd = false; });
 
     // Live language switch: retranslate static DOM + re-render dynamic lists
     window.addEventListener('tm-langchanged', () => {
@@ -355,10 +382,11 @@ async function _init(user) {
         input.placeholder = (_viewMode === 'group' || _mapMode !== 'countries')
           ? t('search.cities') : t('search.countries');
       }
-      // Sidebar lists / stats
+      // Stats und Orte-Liste (Laendernamen haengen an der Sprache)
       if (_userData) {
         if (_mapMode === 'countries') updateCountriesView(_userData);
         else updateStats(_userData);
+        _renderPlaces();
       }
       renderFriendsList(_friends, _switchToFriendView, _onDeleteFriend);
       renderGroupsList(_groups, _uid, _switchToGroupView, _onLeaveGroup, _onAddMembersToGroup, _friends);
@@ -385,21 +413,22 @@ function _maybeShowRelayHint(user, preData) {
     if (localStorage.getItem(key) === '1') return;
     localStorage.setItem(key, '1');
   } catch { /* storage unavailable */ }
-  showRelayHint(() => document.getElementById('btn-settings')?.click());
+  showRelayHint(() => openPanel('profile'));
 }
 
 // ===== User Profile =====
 function _showUserProfile(user) {
-  const host   = document.getElementById('user-avatar');
-  const nameEl = document.getElementById('user-name');
   // Apple gibt kein Foto heraus, Google nur online: der Kreis mit der
   // Initiale steht immer, das Bild kommt dazu, wenn es laedt (js/avatar.js).
-  host?.replaceChildren(avatarEl({
-    name: user.displayName || user.email, url: user.photoURL, seed: user.uid, className: 'user-avatar'
-  }));
-  if (nameEl) {
-    nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
-  }
+  const avatar = className => avatarEl({
+    name: user.displayName || user.email, url: user.photoURL, seed: user.uid, className
+  });
+  document.getElementById('user-avatar')?.replaceChildren(avatar('user-avatar'));
+  document.getElementById('profile-avatar')?.replaceChildren(avatar('profile-avatar'));
+  const removeBtn = document.getElementById('profile-avatar-remove');
+  if (removeBtn) removeBtn.hidden = !user.photoURL;
+  const nameEl = document.getElementById('profile-name');
+  if (nameEl) nameEl.textContent = user.displayName || user.email?.split('@')[0] || 'User';
 }
 
 /**
@@ -437,7 +466,7 @@ async function _handleInviteToken(myData) {
       return;
     }
 
-    await addFriendship(_uid, them.uid, them, myData);
+    await addFriendship(_uid, them.uid, them, myData, token);
     clearToken();
     showToast(t('toast.nowFriends', { name: them.display_name || t('friend.fallback') }));
   } catch (err) {
@@ -485,11 +514,14 @@ async function _onAddCity(cityData, type, lived) {
     _closeMobileSearchOverlay();
     return;
   }
+  const storyAfter = _storyAfterAdd;
+  _storyAfterAdd = false;
   try {
     animateNextAdd(cityData.name);
     if (type === 'visited') {
       // Nimmt die Stadt auch von der Wunschliste und trackt ihr Land mit
       await addVisitedCity(_uid, { ...cityData, lived });
+      if (storyAfter) openStoryForm({ uid: _uid, city: { ...cityData, lived } });
     } else {
       const status = await addWishlistCity(_uid, cityData);
       if (status === 'alreadyVisited') {
@@ -509,7 +541,20 @@ function _onCityRemoveRequest(city, type, clientX, clientY) {
     showCityPopup(city, type, clientX, clientY, _onRemoveCityFromGroup, _onChangeGroupCityPhoto, _onMarkGroupCityVisited);
     return;
   }
-  showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited);
+  const stories = type === 'visited' ? _liveStories().filter(s => s.city === city.name) : [];
+  if (_viewMode === 'own' && stories.length) {
+    hideCityPopup();
+    openStoryViewer({
+      stories: sortStories(stories), own: true,
+      onEdit:   story => openStoryForm({ uid: _uid, city, story }),
+      onDelete: _onDeleteStory,
+      onAdd:    () => openStoryForm({ uid: _uid, city }),
+      onRemoveCity: () => _onRemoveCity(city, type)
+    });
+    return;
+  }
+  showCityPopup(city, type, clientX, clientY, _onRemoveCity, null, _onMarkCityVisited,
+    _viewMode === 'own' ? c => openStoryForm({ uid: _uid, city: c }) : null);
 }
 
 async function _onMarkCityVisited(city) {
@@ -564,7 +609,46 @@ async function _onRemoveCityFromGroup(city, type) {
   }
 }
 
-async function _onRemoveCity(city, type) {
+// Dateien lassen sich nur online loeschen. Ohne Dateien geht das Dokument offline in die
+// Warteschlange, ohne dass die Oberflaeche auf den Server wartet.
+function _storiesDeletable(stories) {
+  if (isOnline() || !stories.some(s => storyPaths(s).length)) return true;
+  showToast(t('story.needsConnection'));
+  return false;
+}
+const _deleteStory = (story, failToast) => deleteStoryWithMedia(_uid, story, {
+  online: isOnline(), onWriteError: () => showToast(t(failToast))
+});
+
+async function _onDeleteStory(story) {
+  if (!_storiesDeletable([story])) return;
+  try {
+    await _deleteStory(story, 'story.deleteFailed');
+  } catch (err) {
+    console.error('[TM] story delete failed:', err);
+    showToast(t('story.deleteFailed'));
+  }
+}
+
+// Eine Stadt mit Stories: erst nachfragen, dann Stories samt Dateien loeschen, dann die Stadt
+function _onRemoveCity(city, type) {
+  const stories = type === 'visited' ? _myStories.filter(s => s.city === city.name) : [];
+  if (!stories.length) { _removeCity(city, type); return; }
+  if (!_storiesDeletable(stories)) return;
+  showConfirm(t('story.removeCityWarning', { name: city.name, count: stories.length }), t('dialog.remove'), async () => {
+    if (!_storiesDeletable(stories)) return; // Netz waehrend der Rueckfrage verloren
+    try {
+      for (const story of stories) await _deleteStory(story, 'toast.removeFailed');
+    } catch (err) {
+      console.error('[TM] story delete failed:', err);
+      showToast(t('toast.removeFailed'));
+      return; // Stadt bleibt, damit keine Story ohne Stadt zurueckbleibt
+    }
+    await _removeCity(city, type);
+  });
+}
+
+async function _removeCity(city, type) {
   try {
     if (type === 'visited')  await removeVisitedCity(_uid, city.name);
     if (type === 'wishlist') await removeWishlistCity(_uid, city.name);
@@ -577,21 +661,22 @@ async function _onRemoveCity(city, type) {
 
 // ===== Friend View Mode =====
 async function _switchToFriendView(friend) {
-  _closeMobileSidebar(); // auf dem Handy verdeckt die Schublade sonst die Karte
+  closePanel(); // das Freunde-Sheet verdeckt sonst die Karte
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'friend';
 
   document.querySelectorAll('.social-item').forEach(el => el.classList.remove('active'));
   document.querySelector(`.social-item[data-uid="${friend.uid}"]`)?.classList.add('active');
-  document.getElementById('btn-add-location').style.display = 'none';
 
   try {
     if (_mapMode === 'countries') await _ensureCountryLayers();
 
-    // Real-time: friend's map updates live while we're watching it
-    if (_unsubFriendView) _unsubFriendView();
-    _unsubFriendView = subscribeUserData(friend.uid, friendData => {
-      if (_viewMode !== 'friend') return;
+    // Geteilte Stories einmal laden. Schlaegt das fehl, bleibt die Karte ohne Ringe.
+    const seq = ++_friendViewSeq;
+    let friendData = null;
+    let sharedStories = [];
+    const renderFriend = () => {
+      if (_viewMode !== 'friend' || seq !== _friendViewSeq || !friendData) return;
       clearAllMarkers();
       if (_mapMode === 'countries') {
         // Show friend's country fills in the current map mode
@@ -599,8 +684,22 @@ async function _switchToFriendView(friend) {
         showCountryLayers(_map);
       } else {
         hideCountryLayers(_map);
-        renderReadOnlyMarkers(_map, friendData);
+        const orphans = new Set(orphanStories(sharedStories, friendData));
+        const live = sharedStories.filter(s => !orphans.has(s));
+        renderReadOnlyMarkers(_map, friendData, citiesWithStories(live), city => openStoryViewer({
+          stories: sortStories(live.filter(s => s.city === city.name)), own: false
+        }));
       }
+    };
+    loadSharedStories(friend.uid)
+      .then(stories => { sharedStories = stories; renderFriend(); })
+      .catch(err => console.error('[TM] shared stories failed:', err));
+
+    // Real-time: friend's map updates live while we're watching it
+    if (_unsubFriendView) _unsubFriendView();
+    _unsubFriendView = subscribeUserData(friend.uid, data => {
+      friendData = data;
+      renderFriend();
     });
 
     showViewBanner(t('banner.friendsMap', { name: friend.display_name || t('friend.fallback') }), _returnToOwnView);
@@ -634,10 +733,8 @@ function _returnToOwnView() {
     }).catch(err => console.error('[TM] country layers failed:', err));
   } else {
     hideCountryLayers(_map); // remove any friend/group country fills
-    renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+    _renderOwnMarkers();
   }
-
-  document.getElementById('btn-add-location').style.display = '';
 
   // Restore placeholder to match current map mode
   const _ownSearchInput = document.getElementById('city-search');
@@ -699,7 +796,7 @@ async function _onAddMembersToGroup(groupId, friendUids) {
 
 // ===== Group View Mode =====
 function _switchToGroupView(group) {
-  _closeMobileSidebar(); // auf dem Handy verdeckt die Schublade sonst die Karte
+  closePanel(); // das Freunde-Sheet verdeckt sonst die Karte
   if (_viewMode !== 'own') _returnToOwnView();
   _viewMode = 'group';
   _currentGroupId = group.id;
@@ -754,12 +851,13 @@ function _setupFilterNav() {
       _currentFilter = item.dataset.filter;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
+      _renderPlaces();
       if (_viewMode === 'own') {
         if (_mapMode === 'countries') {
           const { visited, wishlist } = _getFilteredCountryData();
           updateCountryFills(_map, visited, wishlist);
         } else {
-          renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+          _renderOwnMarkers();
         }
       }
     });
@@ -795,7 +893,7 @@ function _setMapMode(mode) {
     if (results) results.innerHTML = '';
   }
 
-  // Toggle legends
+  // Legende (nur in der Freundes- und Gruppenansicht sichtbar, siehe hub.css)
   document.getElementById('legend-cities').style.display    = mode === 'cities'    ? '' : 'none';
   document.getElementById('legend-countries').style.display = mode === 'countries' ? '' : 'none';
 
@@ -812,6 +910,7 @@ function _setMapMode(mode) {
   } else {
     if (livedNav) livedNav.style.display = '';
   }
+  _renderPlaces(); // die Liste zeigt je nach Modus Staedte oder Laender
 
   // Hide any open tooltips
   hideCountryTooltip();
@@ -820,7 +919,7 @@ function _setMapMode(mode) {
   if (mode === 'cities') {
     hideCountryLayers(_map);
     if (_viewMode === 'own') {
-      renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest);
+      _renderOwnMarkers();
     }
     if (_userData) updateStats(_userData);
   } else {
@@ -871,7 +970,7 @@ function _onCountryMapClick({ isoCode, countryName }, point) {
 
 // ===== Mobile Banner / Search Overlay =====
 function _enterBannerMode(isGroup) {
-  if (window.innerWidth > 768) return;
+  document.body.classList.add('banner-mode'); // Tab-Leiste und Statistik aus
   const area = document.querySelector('.map-area');
   area?.classList.add('banner-active');
   if (isGroup) area?.classList.add('group-active');
@@ -885,7 +984,7 @@ function _enterBannerMode(isGroup) {
 }
 
 function _exitBannerMode() {
-  if (window.innerWidth > 768) return;
+  document.body.classList.remove('banner-mode');
   _closeMobileSearchOverlay();
   document.querySelector('.map-area')?.classList.remove('banner-active', 'group-active');
 }
@@ -927,24 +1026,60 @@ function _initNetStatus() {
   });
 }
 
-// ===== Mobile Sidebar =====
-function _closeMobileSidebar() {
-  document.getElementById('sidebar')?.classList.remove('open');
-  document.getElementById('sidebar-backdrop')?.classList.remove('open');
+// ===== Hub =====
+// Plus: Sheet "Neue Story", die Liste klappt erst mit "Besuchte Stadt" auf
+function _onHubAdd() {
+  document.getElementById('story-start-pick').hidden = true;
+  document.getElementById('story-start-visited').setAttribute('aria-expanded', 'false');
+  document.getElementById('story-start-filter').value = '';
+  openPanel('story');
 }
 
-function _initMobileSidebar() {
-  const btn      = document.getElementById('btn-menu');
-  const backdrop = document.getElementById('sidebar-backdrop');
-  if (!btn) return;
-
-  btn.addEventListener('click', () => {
-    const sidebar = document.getElementById('sidebar');
-    sidebar?.classList.toggle('open');
-    backdrop?.classList.toggle('open');
-    // The initial count-up played while the drawer was off-screen — replay it
-    // each time the drawer opens so the animation is actually visible.
-    if (sidebar?.classList.contains('open')) replayStatsCountUp();
+let _storyStartSetup = false;
+function _setupStoryStart() {
+  if (_storyStartSetup) return;
+  _storyStartSetup = true;
+  const filter = document.getElementById('story-start-filter');
+  const render = () => renderStoryStartList(_userData, filter.value, citiesWithStories(_liveStories()));
+  document.getElementById('story-start-visited').addEventListener('click', e => {
+    document.getElementById('story-start-pick').hidden = false;
+    e.currentTarget.setAttribute('aria-expanded', 'true');
+    render();
   });
-  backdrop?.addEventListener('click', _closeMobileSidebar);
+  filter.addEventListener('input', render);
+  document.getElementById('story-start-list').addEventListener('click', e => {
+    const city = findVisitedCity(_userData, e.target.closest('.place-row')?.dataset.name);
+    if (!city) return;
+    closePanel();
+    openStoryForm({ uid: _uid, city });
+  });
+  // Neue Stadt: die normale Suche oben, nach dem Hinzufuegen als besucht folgt das Formular
+  document.getElementById('story-start-new').addEventListener('click', () => {
+    closePanel();
+    if (_mapMode === 'countries') _setMapMode('cities');
+    _storyAfterAdd = true;
+    document.getElementById('city-search')?.focus();
+  });
+}
+
+function _renderPlaces() {
+  renderPlacesList(_userData, _currentFilter, citiesWithStories(_liveStories()), _viewMode === 'group' ? 'cities' : _mapMode);
+}
+
+function _renderOwnMarkers() {
+  renderAllMarkers(_map, _getFilteredUserData(), _onCityRemoveRequest, citiesWithStories(_liveStories()));
+}
+
+// Stories, deren Stadt noch besucht ist. Verwaiste bekommen keinen Ring.
+function _liveStories() {
+  const orphans = new Set(orphanStories(_myStories, _userData));
+  return _myStories.filter(s => !orphans.has(s));
+}
+
+// Tipp auf einen Ort im Orte-Sheet: Karte fliegt hin
+function _flyToPlace(name) {
+  const city = [...(_userData?.visited_cities ?? []), ...(_userData?.wishlist_cities ?? [])]
+    .find(c => c.name === name);
+  if (!city || !Number.isFinite(city.lng) || !Number.isFinite(city.lat)) return;
+  _map.flyTo({ center: [city.lng, city.lat], zoom: Math.max(_map.getZoom(), 6) });
 }

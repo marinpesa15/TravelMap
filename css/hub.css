@@ -1,0 +1,260 @@
+/* ===== Hub: Tab-Leiste unten, Statistik-Karte und Sheets (js/hub.js) =====
+   Gleiches Layout auf iPhone und iPad: alles schwebt zentriert ueber der
+   Karte, hoechstens 520 px breit. */
+:root {
+  --hub-h: 64px;
+  --hub-bottom: calc(12px + env(safe-area-inset-bottom));
+  /* Oberkante der Leiste plus Abstand: dort sitzt die Statistik */
+  --hub-top: calc(var(--hub-bottom) + var(--hub-h) + 14px);
+  --stats-h: 52px;
+  /* Oberkante der Statistik plus Abstand: darueber Toast und Attribution */
+  --stats-top: calc(var(--hub-top) + var(--stats-h) + 8px);
+}
+
+/* ----- Tab-Leiste ----- */
+#hub {
+  position: fixed; z-index: 45;
+  left: 12px; right: 12px; bottom: var(--hub-bottom);
+  max-width: 520px; height: var(--hub-h); margin: 0 auto;
+  display: flex; align-items: center; padding: 0 6px;
+  background: var(--bg-input); border: 1px solid var(--bd-input);
+  border-radius: 26px; backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+}
+.hub-tab {
+  flex: 1; position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 0; background: none; border: none; cursor: pointer;
+  color: var(--tx-secondary); font-family: inherit; font-weight: 600; font-size: 0.68rem; line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.hub-tab svg { width: 22px; height: 22px; }
+.hub-tab[aria-current="page"] { color: var(--accent); }
+.hub-tab[aria-current="page"]::after {
+  content: ''; position: absolute; bottom: -3px; left: 50%;
+  width: 22px; height: 3px; margin-left: -11px;
+  border-radius: 2px; background: var(--accent);
+}
+#hub-add {
+  flex-shrink: 0; width: 52px; height: 52px; margin: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: var(--accent-fill); color: var(--accent-ink);
+  box-shadow: 0 4px 18px rgba(250,204,21,0.35);
+  -webkit-tap-highlight-color: transparent;
+}
+#hub-add svg { width: 24px; height: 24px; }
+.hub-tab, #hub-add { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms; }
+.hub-tab:active, #hub-add:active { transform: scale(0.94); }
+
+/* Freundes- oder Gruppenkarte: dort zaehlt nur das Banner. Offenes Sheet:
+   es reicht bis unten, nichts liegt darunter oder davor. */
+body.banner-mode #hub,
+body.banner-mode #hub-stats,
+body.panel-open #hub,
+body.panel-open #hub-stats { display: none; }
+
+/* ----- Statistik-Karte ueber der Leiste (Staedte / Laender umschalten) ----- */
+#hub-stats {
+  position: fixed; z-index: 10;
+  left: 24px; right: 24px; bottom: var(--hub-top);
+  max-width: 420px; margin: 0 auto;
+  height: var(--stats-h); box-sizing: border-box;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+  background: var(--bg-input); border: 1px solid var(--bd-input);
+  border-radius: 20px; backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.stat-tab {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; border-radius: 16px;
+  border: 1px solid transparent; cursor: pointer; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.stat-tab.active { background: var(--bg-nav-act); border-color: var(--bd-nav-act); }
+.stat-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--secondary); }
+.stat-num   { font-size: 1.4rem; font-weight: 700; color: var(--tx-primary); line-height: 1; }
+.stat-label { font-size: 0.72rem; color: var(--tx-secondary); margin-top: 3px; }
+
+/* Leiste: Zahl und Wort in einer Zeile */
+#hub-stats .stat-tab { gap: 8px; padding: 0 12px; }
+#hub-stats .stat-tab > div { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+#hub-stats .stat-icon { width: 20px; height: 20px; }
+#hub-stats .stat-num { font-size: 1.15rem; }
+#hub-stats .stat-label { margin-top: 0; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Attribution ("i") und Toast ueber der Statistik. Die Legende gibt es nur in
+   der Freundes- und Gruppenansicht, auf der eigenen Karte zeigen die
+   Filter-Chips im Orte-Sheet die Farben. */
+.maplibregl-ctrl-bottom-right { margin-bottom: calc(var(--stats-top) - 10px) !important; }
+#toast { bottom: var(--stats-top); }
+body:not(.banner-mode) .map-legend { display: none; }
+.map-legend { bottom: var(--hub-bottom); }
+body.banner-mode .maplibregl-ctrl-bottom-right { margin-bottom: calc(var(--hub-bottom) - 10px) !important; }
+body.banner-mode #toast { bottom: calc(var(--hub-bottom) + 56px); }
+
+/* ----- Sheets ----- */
+.sheet {
+  position: fixed; inset: 0; z-index: 40;
+  display: none; align-items: flex-end; justify-content: center;
+  background: rgba(0,0,0,0.28);
+}
+.sheet.open { display: flex; }
+/* Das Story-Formular liegt ueber der Tab-Leiste, sonst bleibt sie darueber antippbar */
+#story-form { z-index: 50; }
+.sheet-card {
+  width: 100%; max-width: 520px; max-height: 72vh; overflow-y: auto;
+  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 8px 18px calc(env(safe-area-inset-bottom) + 18px);
+  background: var(--bg-sidebar); border: 1px solid var(--bd-dialog); border-bottom: none;
+  border-radius: 26px 26px 0 0;
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.35);
+  color: var(--tx-primary);
+}
+.sheet-grabber {
+  display: block; width: 44px; height: 5px; margin: 4px auto 14px; padding: 0;
+  border: none; border-radius: 3px; background: var(--bd-input); cursor: pointer;
+}
+/* Schliessen oben rechts, bleibt beim Scrollen stehen */
+.sheet-close {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; margin: 0 0 -34px auto; padding: 0;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: var(--bg-card); color: var(--tx-secondary);
+  font: inherit; font-size: 0.95rem; line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.sheet-close:active { transform: scale(0.94); }
+.sheet-title {
+  font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--tx-primary); margin-bottom: 14px;
+}
+.sheet-section { margin-bottom: 20px; }
+
+/* ----- Orte: Filter-Chips und Liste ----- */
+.collection-nav {
+  display: flex; gap: 8px; margin: 0 -18px 10px; padding: 0 18px 4px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.collection-nav::-webkit-scrollbar { display: none; }
+.nav-item {
+  flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 99px;
+  border: 1.5px solid transparent; background: var(--bg-card);
+  color: var(--tx-secondary); text-decoration: none;
+  font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item.active { border-color: var(--accent); color: var(--tx-primary); }
+.nav-icon { width: 15px; height: 15px; flex-shrink: 0; }
+/* Punkt in Pin-Farbe: die Chips sind zugleich die Legende */
+.nav-item .legend-dot { width: 10px; height: 10px; }
+.nav-badge {
+  font-size: 0.7rem; padding: 1px 7px; border-radius: 99px;
+  background: var(--bg-nav-badge); color: var(--tx-nav-badge);
+}
+
+.places-list { display: flex; flex-direction: column; }
+.place-row {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  padding: 12px 2px; background: none; border: none;
+  border-bottom: 1px solid var(--bd-card);
+  text-align: left; font-family: inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.place-row:last-child { border-bottom: none; }
+.place-row:active { background: var(--bg-card-hov); }
+.place-icon {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--secondary); border: 2px solid transparent;
+}
+.place-icon svg { width: 22px; height: 22px; }
+.place-row.lived .place-icon { color: #a78bfa; }
+.place-row.wishlist .place-icon { color: #10b981; }
+/* Story-Ring: Gold bleibt den Stories vorbehalten */
+.place-row.has-story .place-icon { border-color: var(--accent-fill); }
+.place-text { flex: 1; min-width: 0; }
+.place-name {
+  display: block; font-size: 1rem; font-weight: 600; color: var(--tx-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.place-meta { display: block; font-size: 0.8rem; color: var(--tx-secondary); margin-top: 2px; }
+.places-empty { font-size: 0.85rem; color: var(--tx-secondary); padding: 10px 2px; }
+
+/* ----- Freunde: Umschalter Freunde / Gruppen ----- */
+.friends-tabs .radio-opt { font: inherit; font-size: 0.85rem; font-weight: 600; }
+.friends-tabs .radio-opt:not(.selected) { background: none; }
+.sheet-section[hidden] { display: none; }
+
+/* ----- Neue Story ----- */
+.story-start-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.story-start-choice {
+  min-height: 52px; padding: 10px 12px; border-radius: 16px; cursor: pointer;
+  background: var(--bg-card); border: 1.5px solid var(--bd-card); color: var(--tx-primary);
+  font: inherit; font-size: 0.95rem; font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+}
+.story-start-choice[aria-expanded="true"] { border-color: var(--secondary); }
+.story-start-choice:active { transform: scale(0.97); }
+.story-start-filter {
+  width: 100%; box-sizing: border-box; padding: 10px 14px; margin-bottom: 4px;
+  border-radius: 12px; border: 1px solid var(--bd-input); background: var(--bg-input);
+  color: var(--tx-input); font: inherit; font-size: 16px;
+}
+
+/* ----- Freunde ----- */
+#panel-friends .social-item { padding: 10px; }
+#panel-friends .social-avatar,
+#panel-friends .social-avatar-placeholder { width: 34px; height: 34px; border-radius: 50%; }
+#panel-friends .social-name { font-size: 0.95rem; }
+
+/* ----- Profil ----- */
+.profile-head { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; }
+#profile-avatar { display: flex; }
+.profile-avatar-wrap { position: relative; }
+.profile-avatar-btn { position: relative; display: block; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+.profile-avatar-badge {
+  position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-fill); color: var(--accent-ink); border: 2px solid var(--bg-card, #080b11);
+}
+.profile-avatar-badge svg { width: 16px; height: 16px; }
+.profile-avatar-ring {
+  position: absolute; inset: -4px; border-radius: 50%; border: 3px solid transparent;
+  border-top-color: var(--accent); opacity: 0; pointer-events: none;
+}
+.profile-avatar-btn.busy .profile-avatar-ring { opacity: 1; animation: profile-avatar-spin 0.9s linear infinite; }
+@keyframes profile-avatar-spin { to { transform: rotate(360deg); } }
+.profile-avatar-remove { border: 0; background: none; color: var(--tx-secondary, inherit); font: inherit; font-size: 0.85rem; padding: 4px 8px; cursor: pointer; }
+.profile-avatar-remove[hidden] { display: none; }
+.profile-avatar { width: 96px; height: 96px; border-radius: 50%; }
+.profile-avatar .avatar-initials { font-size: 34px; }
+#profile-name { font-size: 1.5rem; font-weight: 700; color: var(--tx-primary); }
+.profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.profile-stat {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  background: var(--bg-card); border: 1px solid var(--bd-card); border-radius: 16px;
+}
+.profile-group {
+  background: var(--bg-card); border: 1px solid var(--bd-card);
+  border-radius: 16px; padding: 14px; margin-bottom: 12px;
+}
+.profile-group .settings-divider { margin: 14px 0; }
+.profile-group .settings-row { margin-bottom: 0; gap: 12px; }
+.profile-group .settings-links { margin-bottom: 0; }
+#panel-profile .radio-group { margin-bottom: 0; }
+#panel-profile .settings-providers { margin-bottom: 0; }
+#panel-profile .settings-signout {
+  display: block; width: 100%; padding: 12px; margin: 0 0 8px;
+  background: var(--bg-card); color: var(--tx-primary);
+  border: 1px solid var(--bd-card); border-radius: 12px;
+}
+#panel-profile .settings-delete {
+  display: block; width: 100%; padding: 12px; margin: 0;
+  background: transparent; color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.35); border-radius: 12px;
+}
