@@ -9,7 +9,7 @@ import {
   acceptConsent
 } from './db.js?v=31';
 import { planDedupeCities } from './city-logic.js?v=3';
-import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=26';
+import { CONSENT_VERSION, hasConsent, requestConsent } from './consent.js?v=27';
 import { loadFriends, addFriendship, isFriend, removeFriend } from './friends.js?v=24';
 import { loadGroups, createGroup, leaveGroup, addMembersToGroup, removeMemberFromGroup } from './groups.js?v=24';
 import {
@@ -28,7 +28,7 @@ import {
   showMapHint, setupMapHint, showRelayHint, renderStoryStartList,
   openAddMemberModal, setupConfirmDialog, showConfirm,
   setupCountryTooltip, showCountryTooltip, hideCountryTooltip
-} from './ui.js?v=53';
+} from './ui.js?v=54';
 import { initTheme, getTheme } from './theme.js?v=30';
 import { isOnline, onNetChange } from './net-status.js?v=1';
 import { setupSettings } from './settings.js?v=30';
@@ -38,8 +38,8 @@ import { t, getLang, applyTranslations } from './i18n.js?v=20';
 import { startUpdateCheck } from './version.js?v=22';
 import { installLegalViewer } from './legal-view.js?v=9';
 import { avatarEl } from './avatar.js?v=2';
-import { openStoryForm } from './story-form.js?v=10';
-import { openStoryViewer } from './story-viewer.js?v=7';
+import { openStoryForm } from './story-form.js?v=11';
+import { openStoryViewer } from './story-viewer.js?v=8';
 import { subscribeMyStories, loadSharedStories } from './stories-db.js?v=4';
 import { findVisitedCity } from './places-list-logic.js?v=3';
 import { sortStories, citiesWithStories, orphanStories, storyPaths } from './story-logic.js?v=1';
