@@ -17,6 +17,7 @@ App-Container des Simulators kopiert.
 | `stubs/demo/demo-data.js` | `demo/`: Nutzerdokument, Freunde, Gruppen, Stories |
 | `stubs/demo/driver.js` | `demo/`: öffnet nach dem Start den Zustand aus `demo/demo-state.js` |
 | `stubs/demo/{a,b,c}.jpg` | `demo/`: KI-generierte Lissabon-Fotos für die Story |
+| `stubs/demo/cover.jpg` | `demo/`: Song-Cover (Ausschnitt aus `b.jpg`), setzt der Treiber nur im DOM, weil die App nur Spotify-Cover lädt |
 
 Zustände: `karte`, `story`, `formular`, `orte`, `laender`, `freunde`.
 
@@ -40,7 +41,7 @@ scripts/store-screenshots/shoot.sh $UDID story      # nur einzelne Zustände
 xcrun simctl shutdown $UDID && xcrun simctl delete $UDID
 ```
 
-`shoot.sh` kopiert die Stubs, setzt die Statusleiste (9:41, voller Akku und
+`shoot.sh` kopiert die Stubs, setzt die Statusleiste (9:41, voller Akku ohne Ladesymbol und
 Empfang) und den Dunkelmodus, startet die App je Zustand neu, wartet `WAIT`
 Sekunden (Standard 30) und nimmt mit `simctl io screenshot` auf. Ein iPhone 18
 Pro Max liefert 1320x2868 (6,9 Zoll). Die 6,5-Zoll-Fassung entsteht daraus mit

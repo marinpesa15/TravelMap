@@ -31,8 +31,14 @@ cp "$HERE/stubs/config.js" "$PUB/js/config.js"
 cp "$HERE"/stubs/vendor/*.js "$PUB/vendor/firebase/10.12.0/"
 mkdir -p "$PUB/demo"
 cp "$HERE"/stubs/demo/* "$PUB/demo/"
+# Treiber-Importe auf die ?v=-Versionen aus js/app.js bringen (gleiche Modul-Instanz)
+for m in map hub story-viewer story-form i18n; do
+  v=$(grep -o "\./$m\.js?v=[0-9]*" "$PUB/js/app.js" | head -1 | sed 's/.*v=//')
+  [ -n "$v" ] || { echo "no version for $m.js in app.js" >&2; exit 1; }
+  sed -i '' "s#\.\./js/$m\.js?v=[0-9]*#../js/$m.js?v=$v#" "$PUB/demo/driver.js"
+done
 
-xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3
+xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState discharging --batteryLevel 100 --cellularBars 4 --wifiBars 3
 xcrun simctl ui "$UDID" appearance dark
 
 mkdir -p "$OUT69" "$OUT65"
