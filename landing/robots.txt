@@ -1,0 +1,5 @@
+# Cloudflare's managed robots.txt is prepended to (or replaces) this file at the edge.
+User-agent: *
+Allow: /
+
+Sitemap: https://travel.marinpesa.dev/sitemap.xml
